@@ -20,11 +20,11 @@ export default function ServicesPage() {
       }}
     >
       <div
-        style={{
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
+  style={{
+    height: "60vh",
+    overflow: "hidden",
+  }}
+>
         <ServiceMap />
       </div>
 
