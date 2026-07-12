@@ -29,10 +29,13 @@ export default function BottomNav() {
     <nav
       style={{
         position: "fixed",
-        bottom: 0,
         left: 0,
         right: 0,
-        height: "68px",
+        bottom: 0,
+        width: "100%",
+        minHeight: "68px",
+        paddingTop: "8px",
+        paddingBottom: "max(8px, env(safe-area-inset-bottom))",
         background: "var(--card)",
         borderTop: "1px solid var(--border)",
         display: "flex",
@@ -40,6 +43,7 @@ export default function BottomNav() {
         alignItems: "center",
         zIndex: 1000,
         boxShadow: "0 -8px 25px rgba(0,0,0,.25)",
+        boxSizing: "border-box",
       }}
     >
       {items.map((item) => {
@@ -55,6 +59,7 @@ export default function BottomNav() {
               color: active ? "#f97316" : "var(--text)",
               fontWeight: active ? "bold" : "normal",
               fontSize: "13px",
+              textDecoration: "none",
             }}
           >
             <div style={{ fontSize: "22px" }}>{item.icon}</div>
