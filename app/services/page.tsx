@@ -12,28 +12,34 @@ export default function ServicesPage() {
   return (
     <div
       style={{
-        height: "calc(100dvh - 68px)",
-        display: "grid",
-        gridTemplateRows: "1fr auto",
-        overflow: "hidden",
+        position: "relative",
+        minHeight: "100dvh",
+        paddingBottom: "180px",
         boxSizing: "border-box",
       }}
     >
       <div
-  style={{
-    height: "60vh",
-    overflow: "hidden",
-  }}
->
+        style={{
+          height: "60dvh",
+          minHeight: "320px",
+          overflow: "hidden",
+        }}
+      >
         <ServiceMap />
       </div>
 
       <div
         style={{
-          padding: "12px 16px 16px",
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: "calc(68px + env(safe-area-inset-bottom))",
+          padding: "12px 16px 14px",
           background: "var(--card)",
           borderTop: "1px solid var(--border)",
+          boxShadow: "0 -6px 20px rgba(0,0,0,0.25)",
           textAlign: "center",
+          zIndex: 999,
           boxSizing: "border-box",
         }}
       >
