@@ -12,13 +12,19 @@ export default function ServicesPage() {
   return (
     <div
       style={{
-        height: "calc(100vh - 136px)",
+        minHeight: "calc(100dvh - 68px)",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        paddingBottom: "calc(88px + env(safe-area-inset-bottom))",
+        boxSizing: "border-box",
       }}
     >
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          minHeight: "420px",
+        }}
+      >
         <ServiceMap />
       </div>
 
@@ -28,13 +34,21 @@ export default function ServicesPage() {
           background: "var(--card)",
           borderTop: "1px solid var(--border)",
           textAlign: "center",
+          position: "relative",
+          zIndex: 10,
         }}
       >
         <p style={{ margin: "0 0 8px 0", fontSize: "14px" }}>
           {t("haveService")}
         </p>
 
-        <Link href="/services/add">
+        <Link
+          href="/services/add"
+          style={{
+            display: "block",
+            textDecoration: "none",
+          }}
+        >
           <button
             style={{
               width: "100%",
