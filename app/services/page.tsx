@@ -10,74 +10,74 @@ const ServiceMap = dynamic(() => import("./ServiceMap"), {
 
 export default function ServicesPage() {
   return (
-    <div
+    <main
       style={{
         position: "relative",
-        minHeight: "100dvh",
-        paddingBottom: "180px",
-        boxSizing: "border-box",
+        height: "calc(100dvh - 68px - env(safe-area-inset-bottom))",
+        overflow: "hidden",
       }}
     >
-      <div
-        style={{
-          height: "60dvh",
-          minHeight: "320px",
-          overflow: "hidden",
-        }}
-      >
-        <ServiceMap />
-      </div>
+      {/* MAPA */}
+      <ServiceMap />
 
+      {/* FLOATING CTA */}
       <div
         style={{
           position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: "calc(68px + env(safe-area-inset-bottom))",
-          padding: "12px 16px 14px",
-          background: "var(--card)",
-          borderTop: "1px solid var(--border)",
-          boxShadow: "0 -6px 20px rgba(0,0,0,0.25)",
-          textAlign: "center",
-          zIndex: 999,
-          boxSizing: "border-box",
+          left: 16,
+          right: 16,
+          bottom: "calc(84px + env(safe-area-inset-bottom))",
+          zIndex: 9999,
+          pointerEvents: "none",
         }}
       >
-        <p
+        <div
           style={{
-            margin: "0 0 8px 0",
-            fontSize: "14px",
+            maxWidth: "500px",
+            margin: "0 auto",
+            background: "rgba(20,20,20,0.9)",
+            backdropFilter: "blur(12px)",
+            borderRadius: "16px",
+            padding: "14px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            pointerEvents: "auto",
           }}
         >
-          {t("haveService")}
-        </p>
-
-        <Link
-          href="/services/add"
-          style={{
-            display: "block",
-            textDecoration: "none",
-          }}
-        >
-          <button
-            type="button"
+          <p
             style={{
-              width: "100%",
-              maxWidth: "420px",
-              background: "#16a34a",
-              color: "white",
-              border: "none",
-              padding: "13px 20px",
-              borderRadius: "10px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              cursor: "pointer",
+              margin: "0 0 10px",
+              textAlign: "center",
+              fontSize: "14px",
             }}
           >
-            🏢 {t("addService")}
-          </button>
-        </Link>
+            {t("haveService")}
+          </p>
+
+          <Link
+            href="/services/add"
+            style={{
+              display: "block",
+              textDecoration: "none",
+            }}
+          >
+            <div
+              style={{
+                background: "#16a34a",
+                color: "#fff",
+                textAlign: "center",
+                padding: "15px",
+                borderRadius: "12px",
+                fontWeight: 700,
+                fontSize: "16px",
+                cursor: "pointer",
+              }}
+            >
+              🏢 {t("addService")}
+            </div>
+          </Link>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
