@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "./Header";
@@ -32,11 +32,28 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Header />
-       <main style={{ flex: 1 }}>
-  <PageTransition>
-    {children}
-  </PageTransition>
-</main>
+
+        <main style={{ flex: 1 }}>
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </main>
+
+        <footer
+          style={{
+            textAlign: "center",
+            padding: "18px",
+            fontSize: "13px",
+            color: "#888",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            background: "var(--background)",
+          }}
+        >
+          © {new Date().getFullYear()} TruckDiag™
+          <br />
+          All rights reserved.
+        </footer>
+
         <BottomNav />
       </body>
     </html>

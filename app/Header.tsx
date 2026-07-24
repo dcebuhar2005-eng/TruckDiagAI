@@ -14,71 +14,71 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-useEffect(() => {
-  let mounted = true;
+  useEffect(() => {
+    let mounted = true;
 
-  async function checkAdmin(userId: string | null) {
-    if (!userId) {
-      if (mounted) {
-        setIsAdmin(false);
+    async function checkAdmin(userId: string | null) {
+      if (!userId) {
+        if (mounted) {
+          setIsAdmin(false);
+        }
+        return;
       }
-      return;
-    }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("role, is_admin")
-      .eq("id", userId)
-      .single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, is_admin")
+        .eq("id", userId)
+        .single();
 
-    if (!mounted) return;
-
-    if (error) {
-      console.error("Admin provjera nije uspjela:", error);
-      setIsAdmin(false);
-      return;
-    }
-
-    const admin =
-      data?.is_admin === true ||
-      data?.role === "admin";
-
-    setIsAdmin(admin);
-  }
-
-  async function loadUser() {
-    const { data, error } = await supabase.auth.getUser();
-
-    if (!mounted) return;
-
-    if (error || !data.user) {
-      setEmail(null);
-      setIsAdmin(false);
-      return;
-    }
-
-    setEmail(data.user.email || null);
-    await checkAdmin(data.user.id);
-  }
-
-  loadUser();
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    async (_event, session) => {
       if (!mounted) return;
 
-      const user = session?.user ?? null;
+      if (error) {
+        console.error("Admin provjera nije uspjela:", error);
+        setIsAdmin(false);
+        return;
+      }
 
-      setEmail(user?.email || null);
-      await checkAdmin(user?.id || null);
+      const admin =
+        data?.is_admin === true ||
+        data?.role === "admin";
+
+      setIsAdmin(admin);
     }
-  );
 
-  return () => {
-    mounted = false;
-    listener.subscription.unsubscribe();
-  };
-}, []);
+    async function loadUser() {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (!mounted) return;
+
+      if (error || !data.user) {
+        setEmail(null);
+        setIsAdmin(false);
+        return;
+      }
+
+      setEmail(data.user.email || null);
+      await checkAdmin(data.user.id);
+    }
+
+    loadUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!mounted) return;
+
+        const user = session?.user ?? null;
+
+        setEmail(user?.email || null);
+        await checkAdmin(user?.id || null);
+      }
+    );
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -138,18 +138,40 @@ useEffect(() => {
           zIndex: 50,
         }}
       >
-        <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-          <img
-            src="/logo.png"
-            alt="TruckDiag AI"
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            minWidth: 0,
+          }}
+        >
+          <Link href="/" style={{ display: "flex", alignItems: "center" }}>
+            <img
+              src="/logo.png"
+              alt="TruckDiag AI"
+              style={{
+                height: "70px",
+                width: "auto",
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+          </Link>
+
+          <div
             style={{
-              height: "70px",
-              width: "auto",
-              objectFit: "contain",
-              display: "block",
+              fontSize: "11px",
+              lineHeight: 1.35,
+              color: "var(--text)",
+              opacity: 0.65,
+              whiteSpace: "nowrap",
             }}
-          />
-        </Link>
+          >
+            <div>© 2026 TruckDiag™</div>
+            <div>All rights reserved.</div>
+          </div>
+        </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={headerIconButtonStyle}>
@@ -220,13 +242,13 @@ useEffect(() => {
             onClick={() => setMenuOpen(false)}
             style={{
               ...headerIconButtonStyle,
-               width: "40px",
-  height: "40px",
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
-  fontSize: "24px",
-  color: "var(--text)",
+              width: "40px",
+              height: "40px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              fontSize: "24px",
+              color: "var(--text)",
             }}
           >
             ✕
@@ -252,32 +274,31 @@ useEffect(() => {
           </Link>
 
           <Link href="/add" onClick={() => setMenuOpen(false)}>
-          <button style={menuButtonStyle}>{t("addFaultMenu")}</button>
+            <button style={menuButtonStyle}>{t("addFaultMenu")}</button>
           </Link>
 
           <Link href="/services" onClick={() => setMenuOpen(false)}>
-           <button style={menuButtonStyle}>{t("servicesMenu")}</button>
+            <button style={menuButtonStyle}>{t("servicesMenu")}</button>
           </Link>
 
           <Link href="/ai" onClick={() => setMenuOpen(false)}>
-           <button style={menuButtonStyle}>{t("aiToolsMenu")}</button>
+            <button style={menuButtonStyle}>{t("aiToolsMenu")}</button>
           </Link>
-          
+
           {isAdmin && (
-  <Link href="/admin" onClick={() => setMenuOpen(false)}>
-    <button
-      style={{
-        ...menuButtonStyle,
-        background:
-          "linear-gradient(180deg, #f59e0b, #d97706)",
-        color: "#ffffff",
-        border: "1px solid #fbbf24",
-      }}
-    >
-      🛡️ Admin dashboard
-    </button>
-  </Link>
-)}
+            <Link href="/admin" onClick={() => setMenuOpen(false)}>
+              <button
+                style={{
+                  ...menuButtonStyle,
+                  background: "linear-gradient(180deg, #f59e0b, #d97706)",
+                  color: "#ffffff",
+                  border: "1px solid #fbbf24",
+                }}
+              >
+                🛡️ Admin dashboard
+              </button>
+            </Link>
+          )}
 
           {email ? (
             <button onClick={logout} style={menuButtonStyle}>
