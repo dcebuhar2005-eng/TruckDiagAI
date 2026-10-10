@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Zasebna aplikacija s vlastitom konfiguracijom.
+    "lovacki-dnevnik/**",
   ]),
 ]);
 
