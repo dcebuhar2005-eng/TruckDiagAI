@@ -104,3 +104,20 @@ create policy "lov_lokacije_izmjena" on public.lov_lokacije
 drop policy if exists "lov_lokacije_brisanje" on public.lov_lokacije;
 create policy "lov_lokacije_brisanje" on public.lov_lokacije
   for delete to authenticated using (korisnik = auth.uid());
+
+-- Automatske sigurnosne kopije dnevnika: privatni spremnik, svaki korisnik samo u svojoj mapi (<uid>/...).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('lov-kopije', 'lov-kopije', false, 52428800, array['application/json'])
+on conflict (id) do nothing;
+
+drop policy if exists "lov_kopije_citanje" on storage.objects;
+create policy "lov_kopije_citanje" on storage.objects for select to authenticated
+  using (bucket_id = 'lov-kopije' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "lov_kopije_unos" on storage.objects;
+create policy "lov_kopije_unos" on storage.objects for insert to authenticated
+  with check (bucket_id = 'lov-kopije' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "lov_kopije_brisanje" on storage.objects;
+create policy "lov_kopije_brisanje" on storage.objects for delete to authenticated
+  using (bucket_id = 'lov-kopije' and (storage.foldername(name))[1] = auth.uid()::text);

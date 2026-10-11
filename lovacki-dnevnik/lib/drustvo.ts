@@ -13,7 +13,7 @@ const KLJUC = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 export const konfigurirano = Boolean(URL_ && KLJUC);
 
 let klijent: SupabaseClient | null = null;
-function sb(): SupabaseClient {
+export function sb(): SupabaseClient {
   if (!konfigurirano) throw new Error("Prijatelji nisu konfigurirani");
   if (!klijent) {
     klijent = createClient(URL_!, KLJUC!, {
