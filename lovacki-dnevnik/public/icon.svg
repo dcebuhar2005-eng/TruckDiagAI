@@ -1,1 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0b75a"/><stop offset="1" stop-color="#b9781a"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="#142016"/><path d="M22 14c-1 6 1 10 5 13M42 14c1 6-1 10-5 13M18 20c2 2 5 3 8 3M46 20c-2 2-5 3-8 3" stroke="url(#g)" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M24 30c0-3 3-5 8-5s8 2 8 5c0 6-3 12-8 18-5-6-8-12-8-18z" fill="url(#g)"/><circle cx="28.5" cy="32" r="1.6" fill="#142016"/><circle cx="35.5" cy="32" r="1.6" fill="#142016"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="poz" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#22361f"/>
+      <stop offset="0.55" stop-color="#132115"/>
+      <stop offset="1" stop-color="#090f0a"/>
+    </radialGradient>
+    <linearGradient id="zlato" gradientUnits="userSpaceOnUse" x1="0" y1="120" x2="0" y2="860">
+      <stop offset="0" stop-color="#f6cf7d"/>
+      <stop offset="0.55" stop-color="#e3a240"/>
+      <stop offset="1" stop-color="#b8741a"/>
+    </linearGradient>
+    <radialGradient id="sjaj" cx="50%" cy="45%" r="40%">
+      <stop offset="0" stop-color="#e8a947" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#e8a947" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect fill="url(#poz)"/>
+  <!-- slojnice (topografska karta) -->
+  <g fill="none" stroke="#8cbf6e" stroke-opacity="0.09" stroke-width="5">
+    <path d="M-40 840 C 180 760 320 900 540 830 S 900 700 1080 780"/>
+    <path d="M-40 900 C 200 830 340 960 560 900 S 900 790 1080 850"/>
+    <path d="M-40 960 C 220 900 360 1010 580 965 S 920 870 1080 920"/>
+    <path d="M-40 150 C 160 220 300 90 520 160 S 880 260 1080 190"/>
+    <path d="M-40 90 C 180 150 320 30 540 95 S 900 190 1080 130"/>
+  </g>
+  <circle cx="512" cy="470" r="400" fill="url(#sjaj)"/>
+  <!-- rogovlje -->
+  <g fill="none" stroke="url(#zlato)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <g id="rog">
+      <path d="M468 452 C 420 410 372 360 352 286 C 338 232 344 186 366 138"/>
+      <path d="M362 330 C 312 316 272 286 250 236"/>
+      <path d="M350 238 C 312 222 294 196 286 160"/>
+      <path d="M430 410 C 396 404 360 392 330 368"/>
+    </g>
+    <use href="#rog" transform="translate(1024 0) scale(-1 1)"/>
+  </g>
+  <!-- uši -->
+  <ellipse cx="372" cy="500" rx="78" ry="32" transform="rotate(22 372 500)" fill="url(#zlato)"/>
+  <ellipse cx="652" cy="500" rx="78" ry="32" transform="rotate(-22 652 500)" fill="url(#zlato)"/>
+  <!-- glava -->
+  <path d="M512 860 C 470 800 418 680 414 586 C 410 512 456 466 512 466 C 568 466 614 512 610 586 C 606 680 554 800 512 860 Z" fill="url(#zlato)"/>
+  <!-- oči i nos -->
+  <path d="M448 586 C 462 572 482 574 490 590 C 476 600 458 598 448 586 Z" fill="#132115"/>
+  <path d="M576 586 C 562 572 542 574 534 590 C 548 600 566 598 576 586 Z" fill="#132115"/>
+  <path d="M494 808 C 504 796 520 796 530 808 C 524 826 500 826 494 808 Z" fill="#132115"/>
+</svg>
