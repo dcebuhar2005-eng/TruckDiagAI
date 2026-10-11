@@ -53,7 +53,11 @@ drop policy if exists "lov_prijateljstva_brisanje" on public.lov_prijateljstva;
 create policy "lov_prijateljstva_brisanje" on public.lov_prijateljstva
   for delete to authenticated using (auth.uid() in (od, za));
 
-create or replace function public.lov_su_prijatelji(a uuid, b uuid)
+-- Pomoćna funkcija u privatnoj shemi (nije izložena preko API-ja).
+create schema if not exists lov_privatno;
+grant usage on schema lov_privatno to authenticated;
+
+create or replace function lov_privatno.su_prijatelji(a uuid, b uuid)
 returns boolean
 language sql
 stable
@@ -66,6 +70,9 @@ as $$
       and ((od = a and za = b) or (od = b and za = a))
   );
 $$;
+
+revoke execute on function lov_privatno.su_prijatelji(uuid, uuid) from public, anon;
+grant execute on function lov_privatno.su_prijatelji(uuid, uuid) to authenticated;
 
 -- Zadnja poznata lokacija dok korisnik dijeli ("U lovu sam"). Vidljiva samo prihvaćenim prijateljima i samo do isteka.
 create table if not exists public.lov_lokacije (
@@ -83,7 +90,7 @@ drop policy if exists "lov_lokacije_citanje" on public.lov_lokacije;
 create policy "lov_lokacije_citanje" on public.lov_lokacije
   for select to authenticated using (
     korisnik = auth.uid()
-    or (aktivno_do > now() and public.lov_su_prijatelji(auth.uid(), korisnik))
+    or (aktivno_do > now() and lov_privatno.su_prijatelji(auth.uid(), korisnik))
   );
 
 drop policy if exists "lov_lokacije_unos" on public.lov_lokacije;
