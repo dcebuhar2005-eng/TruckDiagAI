@@ -117,7 +117,8 @@ export async function odjava() {
 
 function prevedi(poruka: string) {
   const p = poruka.toLowerCase();
-  if (p.includes("invalid login")) return new Error("Pogrešan e-mail ili lozinka.");
+  if (p.includes("invalid login"))
+    return new Error("Pogrešan e-mail ili lozinka. Ako još nemate račun, odaberite „Novi račun”.");
   if (p.includes("email not confirmed")) return new Error("Najprije potvrdite e-mail adresu (poveznica je u e-pošti).");
   if (p.includes("already registered")) return new Error("Taj e-mail je već registriran. Prijavite se.");
   if (p.includes("password")) return new Error("Lozinka mora imati barem 6 znakova.");
