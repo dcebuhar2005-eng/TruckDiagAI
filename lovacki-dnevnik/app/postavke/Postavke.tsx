@@ -1,10 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
-import { Gumb, Naslov, Polje, Segmenti, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
+import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
+import { konfigurirano, useDrustvo } from "@/lib/drustvo";
+import { datumDugi } from "@/lib/format";
+import { RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
 import { demoBaza } from "@/lib/demo";
 import { spremiFoto, sveFotografije } from "@/lib/foto";
 import { db, praznaBaza, useBaza } from "@/lib/store";
@@ -196,6 +200,8 @@ function Obrazac({ baza }: { baza: Baza }) {
           </div>
         </Sekcija>
 
+        <AutomatskaKopija />
+
         <motion.p variants={djeteListe} className="text-[12.5px] text-tekst-3 lg:col-span-2">
           Prognoza: Open-Meteo · Karte: Esri, OpenTopoMap, OpenStreetMap · Astronomski izračuni lokalno na uređaju. Solunarna
           razdoblja i procjena aktivnosti su orijentacijske.
@@ -220,5 +226,93 @@ function Sekcija({ ikona, naslov, opis, children }: { ikona: ImeIkone; naslov: s
       </div>
       {children}
     </motion.section>
+  );
+}
+
+function AutomatskaKopija() {
+  const d = useDrustvo();
+  const k = useKopije();
+  const potvrda = usePotvrda();
+  const prijavljen = !!d.sesija;
+
+  useEffect(() => {
+    if (prijavljen && !k.ucitano) ucitajPopis().catch(() => {});
+  }, [prijavljen, k.ucitano]);
+
+  const zadnja = k.kopije[0];
+  const sljedeca = zadnja ? new Date(zadnja.datum + RAZMAK_DANA * 86400000) : null;
+
+  return (
+    <Sekcija
+      ikona="ucitaj"
+      naslov="Automatska sigurnosna kopija"
+      opis={`Jednom mjesečno dnevnik se sprema na vaš privatni račun. Kopije starije od ${RAZMAK_DANA} dana brišu se same.`}
+    >
+      {!konfigurirano || !prijavljen ? (
+        <div className="rounded-2xl bg-povrsina-2 p-4 text-[14px] text-tekst-2">
+          Za automatsku kopiju prijavite se na stranici{" "}
+          <Link href="/lovci" transitionTypes={["naprijed"]} className="font-medium text-naglasak">
+            Lovci
+          </Link>
+          . Bez prijave podaci postoje samo na ovom uređaju.
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-povrsina-2 p-3.5">
+            <span className={cx("size-2.5 rounded-full", zadnja ? "bg-mahovina" : "bg-naglasak")} />
+            <div className="min-w-0 flex-1 text-[14px]">
+              {zadnja ? (
+                <>
+                  Zadnja kopija: <span className="font-medium">{datumDugi(new Date(zadnja.datum))}</span>
+                  <div className="text-[12.5px] text-tekst-3">Sljedeća: {sljedeca ? datumDugi(sljedeca) : "–"}</div>
+                </>
+              ) : k.ucitano ? (
+                "Još nema kopije – napravit će se automatski ili odmah gumbom."
+              ) : (
+                "Provjeravam kopije…"
+              )}
+            </div>
+            <Gumb
+              velicina="sm"
+              ikona="ucitaj"
+              disabled={k.radim}
+              onClick={() =>
+                napraviKopiju()
+                  .then(() => obavijest("Sigurnosna kopija je spremljena"))
+                  .catch((e) => obavijest(e.message, "greska"))
+              }
+            >
+              {k.radim ? "Spremam…" : "Kopiraj sada"}
+            </Gumb>
+          </div>
+          {k.greska && <p className="text-[13px] text-opasnost">{k.greska}</p>}
+          {k.kopije.map((kop) => (
+            <div key={kop.naziv} className="flex items-center gap-3 rounded-xl border border-rub px-3.5 py-2.5 text-[14px]">
+              <span className="flex-1">
+                {datumDugi(new Date(kop.datum))}
+                <span className="brojke ml-2 text-[12.5px] text-tekst-3">{(kop.velicina / 1024).toLocaleString("hr-HR", { maximumFractionDigits: 0 })} KB</span>
+              </span>
+              <Gumb
+                velicina="sm"
+                vrsta="tihi"
+                onClick={() =>
+                  potvrda.pitaj(
+                    "Vratiti ovu kopiju?",
+                    "Sadašnji podaci na ovom uređaju bit će zamijenjeni podacima iz kopije.",
+                    () =>
+                      vratiKopiju(kop.naziv)
+                        .then((r) => obavijest(`Vraćeno: ${r.izlasci} izlazaka, ${r.odstrel} odstrela`))
+                        .catch((e) => obavijest(e.message, "greska")),
+                  )
+                }
+              >
+                Vrati
+              </Gumb>
+            </div>
+          ))}
+        </div>
+      )}
+      {potvrda.element}
+    </Sekcija>
   );
 }

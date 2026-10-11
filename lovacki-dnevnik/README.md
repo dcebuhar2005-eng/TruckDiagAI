@@ -11,6 +11,7 @@ Evidencija izlazaka, odstrela, lovišta i dozvola – na hrvatskom. Zasebna Next
 - **Dozvole** – lovačka iskaznica, dozvole za lov, oružni list, osiguranje; rokovi valjanosti i iskorištenost kvota.
 - **Statistika** – po lovnim godinama: mjeseci, vrste, doba dana, ruža vjetrova, uspješnost po načinu lova, trofeji; izvoz u CSV i ispis.
 - **Lovci** – prijatelji (pretraga po imenu ili @korisničkom imenu, zahtjevi) i „U lovu sam”: dijeljenje lokacije s prijateljima na ograničeno vrijeme, prikaz na karti s krugom od 300 m i upozorenje kad je prijatelj bliže od 600 m.
+- **Automatska sigurnosna kopija** – za prijavljene korisnike jednom mjesečno u privatni Supabase Storage; kopije starije od 30 dana brišu se same.
 - **Postavke** – profil, zadana lokacija, tamna/svijetla tema, izvoz/uvoz sigurnosne kopije (JSON s fotografijama).
 
 Dnevnik se čuva isključivo na uređaju (localStorage, fotografije u IndexedDB-u). Za prijatelje se na poslužitelj (Supabase) šalju samo profil, prijateljstva i lokacija dok je korisnik sam dijeli.
