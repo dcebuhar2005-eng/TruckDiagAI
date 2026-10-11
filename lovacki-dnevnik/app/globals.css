@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-tema="tamna"], [data-tema="tamna"] *));
+
+:root {
+  --pozadina: #f2f0e8;
+  --povrsina: #fbfaf6;
+  --povrsina-2: #efece3;
+  --povrsina-3: #e5e1d5;
+  --rub: rgba(40, 45, 30, 0.1);
+  --rub-jaki: rgba(40, 45, 30, 0.18);
+  --tekst: #1b231c;
+  --tekst-2: #55604f;
+  --tekst-3: #8a9284;
+  --naglasak: #b9781a;
+  --naglasak-meki: rgba(185, 120, 26, 0.12);
+  --mahovina: #4f7a3a;
+  --mahovina-meka: rgba(79, 122, 58, 0.12);
+  --opasnost: #b8483c;
+  --opasnost-meka: rgba(184, 72, 60, 0.1);
+  --sjena: 0 1px 2px rgba(30, 35, 20, 0.06), 0 8px 24px -12px rgba(30, 35, 20, 0.18);
+  --sjena-jaka: 0 24px 60px -20px rgba(20, 25, 15, 0.35);
+  color-scheme: light;
+}
+
+[data-tema="tamna"] {
+  --pozadina: #0b100c;
+  --povrsina: #121913;
+  --povrsina-2: #18211a;
+  --povrsina-3: #212c23;
+  --rub: rgba(220, 235, 210, 0.07);
+  --rub-jaki: rgba(220, 235, 210, 0.14);
+  --tekst: #e8eee4;
+  --tekst-2: #a5b2a2;
+  --tekst-3: #6c7a6b;
+  --naglasak: #e8a947;
+  --naglasak-meki: rgba(232, 169, 71, 0.13);
+  --mahovina: #8cbf6e;
+  --mahovina-meka: rgba(140, 191, 110, 0.12);
+  --opasnost: #e2735f;
+  --opasnost-meka: rgba(226, 115, 95, 0.12);
+  --sjena: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -16px rgba(0, 0, 0, 0.7);
+  --sjena-jaka: 0 30px 80px -20px rgba(0, 0, 0, 0.85);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-pozadina: var(--pozadina);
+  --color-povrsina: var(--povrsina);
+  --color-povrsina-2: var(--povrsina-2);
+  --color-povrsina-3: var(--povrsina-3);
+  --color-rub: var(--rub);
+  --color-rub-jaki: var(--rub-jaki);
+  --color-tekst: var(--tekst);
+  --color-tekst-2: var(--tekst-2);
+  --color-tekst-3: var(--tekst-3);
+  --color-naglasak: var(--naglasak);
+  --color-naglasak-meki: var(--naglasak-meki);
+  --color-mahovina: var(--mahovina);
+  --color-mahovina-meka: var(--mahovina-meka);
+  --color-opasnost: var(--opasnost);
+  --color-opasnost-meka: var(--opasnost-meka);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --shadow-meka: var(--sjena);
+  --shadow-jaka: var(--sjena-jaka);
+}
+
+html,
+body {
+  background: var(--pozadina);
+  color: var(--tekst);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, var(--naglasak-meki), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, var(--mahovina-meka), transparent 60%);
+}
+
+::selection {
+  background: var(--naglasak);
+  color: #111;
+}
+
+.brojke {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+.kartica {
+  background: var(--povrsina);
+  border: 1px solid var(--rub);
+  border-radius: 20px;
+  box-shadow: var(--sjena);
+}
+
+.unos {
+  width: 100%;
+  background: var(--povrsina-2);
+  border: 1px solid var(--rub);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font-size: 15px;
+  color: var(--tekst);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.unos:focus {
+  border-color: var(--naglasak);
+  box-shadow: 0 0 0 4px var(--naglasak-meki);
+  background: var(--povrsina);
+}
+
+.unos::placeholder {
+  color: var(--tekst-3);
+}
+
+select.unos {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23888' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.2rem;
+}
+
+}
+
+.skriven-klizac {
+  scrollbar-width: none;
+}
+.skriven-klizac::-webkit-scrollbar {
+  display: none;
+}
+
+.svjetlucanje {
+  background: linear-gradient(90deg, var(--povrsina-2) 0%, var(--povrsina-3) 50%, var(--povrsina-2) 100%);
+  background-size: 200% 100%;
+  animation: svjetlucanje 1.4s ease-in-out infinite;
+}
+
+@keyframes svjetlucanje {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ---------- Prijelazi između stranica (View Transitions) ---------- */
+
+::view-transition-old(.naprijed),
+::view-transition-old(.natrag) {
+  animation:
+    160ms cubic-bezier(0.4, 0, 1, 1) both nestani,
+    380ms cubic-bezier(0.65, 0, 0.35, 1) both klizi-van;
+}
+::view-transition-new(.naprijed),
+::view-transition-new(.natrag) {
+  animation:
+    240ms cubic-bezier(0, 0, 0.2, 1) 120ms both pojavi,
+    420ms cubic-bezier(0.22, 1, 0.36, 1) both klizi-unutra;
+}
+::view-transition-old(.naprijed) { --pomak: -48px; }
+::view-transition-new(.naprijed) { --pomak: 48px; }
+::view-transition-old(.natrag) { --pomak: 48px; }
+::view-transition-new(.natrag) { --pomak: -48px; }
+
+::view-transition-old(.izblijedi) {
+  animation: 160ms ease-in both nestani;
+}
+::view-transition-new(.izblijedi) {
+  animation: 260ms ease-out 80ms both pojavi;
+}
+
+@keyframes nestani {
+  to { opacity: 0; filter: blur(2px); }
+}
+@keyframes pojavi {
+  from { opacity: 0; filter: blur(3px); }
+}
+@keyframes klizi-van {
+  to { translate: var(--pomak) 0; }
+}
+@keyframes klizi-unutra {
+  from { translate: var(--pomak) 0; }
+}
+
+::view-transition-group(navigacija),
+::view-transition-group(zaglavlje) {
+  animation: none;
+  z-index: 50;
+}
+::view-transition-old(navigacija),
+::view-transition-old(zaglavlje) {
+  display: none;
+}
+::view-transition-new(navigacija),
+::view-transition-new(zaglavlje) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* ---------- Leaflet ---------- */
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--povrsina-2);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: #ddd !important;
+  border-radius: 8px 0 0 0;
+}
+.leaflet-control-attribution a {
+  color: #fff !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--povrsina) !important;
+  color: var(--tekst) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--sjena-jaka) !important;
+}
+
+.oznaka-karte {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.oznaka-karte:hover {
+  transform: translateY(-3px) scale(1.06);
+}
+
+@keyframes puls {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.puls::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+  animation: puls 2s ease-out infinite;
+}
+
+@media print {
+  body::before,
+  nav,
+  header,
+  .bez-ispisa {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
+
+.leaflet-tooltip.etiketa-lovista {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.leaflet-tooltip.etiketa-lovista::before {
+  display: none;
+}
