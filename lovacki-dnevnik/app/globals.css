@@ -287,3 +287,15 @@ select.unos {
 .leaflet-tooltip.etiketa-lovista::before {
   display: none;
 }
+
+/* Oznaka izvora karte mora biti vidljiva – na mobitelu iznad donje navigacije i alata. */
+@media (max-width: 1023px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: calc(env(safe-area-inset-bottom) + 5.2rem);
+  }
+  .leaflet-control-attribution {
+    max-width: 70vw;
+    border-radius: 8px 0 0 8px;
+    line-height: 1.35;
+  }
+}

@@ -49,6 +49,7 @@ const PUTANJE = {
   ispis: "M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z",
   strelica: "M12 19V5M5 12l7-7 7 7",
   stit: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  legenda: "M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01",
   vaga: "M12 3v18M5 7h14M5 7l-3 7a3.5 3.5 0 0 0 6 0zM19 7l-3 7a3.5 3.5 0 0 0 6 0z",
 } as const;
 
