@@ -25,6 +25,7 @@ import { TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
+import SumskiPutevi from "./SumskiPutevi";
 import type { Baza, Tocka } from "@/lib/types";
 import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
 
@@ -47,6 +48,13 @@ const PODLOGE: Record<string, { naziv: string; slojevi: SlojPodloge[] }> = {
       { url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, attr: "Esri, Maxar, Earthstar Geographics", nativni: 19, retina: true },
       { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
       { url: `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
+    ],
+  },
+  hd: {
+    naziv: "Satelit HD",
+    slojevi: [
+      { url: "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr: "Esri World Imagery (Clarity), Maxar", nativni: 19, retina: true },
+      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
     ],
   },
   satelit: {
@@ -264,7 +272,8 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
-  const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const [slojevi, setSlojevi] = useState({ putevi: true, lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const [stanjePuteva, setStanjePuteva] = useState<"malo" | "ucitava" | "ok" | "greska">("ok");
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [nacin, setNacin] = useState<Nacin>("pregled");
@@ -415,6 +424,7 @@ export default function KartaPrikaz() {
             setPodloga("hibrid");
           }}
         />
+        {slojevi.putevi && <SumskiPutevi onStanje={setStanjePuteva} />}
         <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} />
         <Pracenje moja={moja} pratim={pratim} />
         <Upravljac cilj={cilj} />
@@ -529,6 +539,24 @@ export default function KartaPrikaz() {
         )}
       </MapContainer>
 
+      <AnimatePresence>
+        {slojevi.putevi && stanjePuteva !== "ok" && (
+          <motion.div
+            key={stanjePuteva}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+5.5rem)] left-1/2 z-[500] -translate-x-1/2 rounded-full border border-white/10 bg-[#0d130e]/85 px-3.5 py-1.5 text-[12.5px] whitespace-nowrap text-white/85 backdrop-blur-xl md:top-28"
+          >
+            {stanjePuteva === "malo"
+              ? "Približite kartu da vidite šumske puteve"
+              : stanjePuteva === "ucitava"
+                ? "Učitavam šumske puteve…"
+                : "Šumski putevi trenutno nisu dostupni"}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Gornja traka: vjetar */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex items-start gap-2 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:p-5">
         <motion.div
@@ -606,6 +634,7 @@ export default function KartaPrikaz() {
             <div className="mb-1.5 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Slojevi</div>
             {(
               [
+                ["putevi", "Šumski putevi i staze"],
                 ["lovista", "Granice lovišta"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
