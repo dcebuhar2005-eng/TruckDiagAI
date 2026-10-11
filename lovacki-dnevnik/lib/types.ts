@@ -145,6 +145,8 @@ export interface Postavke {
   lokacijaNaziv?: string;
   tema: "tamna" | "svijetla" | "auto";
   dovrsenUvod: boolean;
+  /** Učitani su primjeri podataka (prikazuje se ponuda za brisanje). */
+  primjer?: boolean;
 }
 
 export interface Baza {
