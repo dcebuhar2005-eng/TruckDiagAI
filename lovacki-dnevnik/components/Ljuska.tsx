@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
+import { pokreniDrustvo } from "@/lib/drustvo";
 import { useBaza } from "@/lib/store";
 import Navigacija from "./Navigacija";
 import Uvod from "./Uvod";
@@ -11,6 +12,10 @@ import { Obavijesti } from "./ui";
 export default function Ljuska({ children }: { children: ReactNode }) {
   const baza = useBaza();
   const tema = baza?.postavke.tema;
+
+  useEffect(() => {
+    pokreniDrustvo();
+  }, []);
 
   useEffect(() => {
     if (!tema) return;

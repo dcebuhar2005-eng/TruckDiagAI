@@ -4,7 +4,7 @@ import L from "leaflet";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Circle,
   CircleMarker,
@@ -23,6 +23,7 @@ import { Gumb, cx, obavijest, opruga } from "@/components/ui";
 import { TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
+import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import type { Baza, Tocka } from "@/lib/types";
 import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
 
@@ -71,6 +72,22 @@ function ikonaOdstrela(boja: string) {
     iconAnchor: [11, 11],
     html: `<div class="oznaka-karte" style="width:22px;height:22px;display:grid;place-items:center;border-radius:999px;background:${boja};border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45)">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>`,
+  });
+}
+
+function ikonaLovca(ime: string) {
+  const inicijali = ime
+    .split(/\s+/)
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
+    .replace(/[<>&"]/g, "");
+  return L.divIcon({
+    className: "",
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+    html: `<div class="oznaka-karte" style="width:38px;height:38px;border-radius:999px;background:#f26b1d;border:3px solid #fff;box-shadow:0 0 0 4px rgba(242,107,29,.35),0 4px 10px rgba(0,0,0,.5);display:grid;place-items:center;font:700 13px system-ui;color:#fff">${inicijali}</div>`,
   });
 }
 
@@ -131,7 +148,8 @@ export default function KartaPrikaz() {
   const router = useRouter();
   const params = useSearchParams();
   const [podloga, setPodloga] = useState<Podloga>("satelit");
-  const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true });
+  const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [nacin, setNacin] = useState<Nacin>("pregled");
   const [odabir, setOdabir] = useState<Odabir>(null);
@@ -315,6 +333,31 @@ export default function KartaPrikaz() {
               />
             ))}
 
+        {slojevi.lovci &&
+          drustvo.lokacije.map((l) => (
+            <Fragment key={l.profil.id}>
+              <Circle
+                center={[l.lat, l.lng]}
+                radius={300}
+                interactive={false}
+                pathOptions={{ color: "#f26b1d", weight: 1.5, dashArray: "6 6", fillColor: "#f26b1d", fillOpacity: 0.08 }}
+              />
+              <Marker position={[l.lat, l.lng]} icon={ikonaLovca(l.profil.ime)} zIndexOffset={1000}>
+                <Tooltip direction="top" offset={[0, -20]}>
+                  <b>{l.profil.ime}</b> · {prijeKoliko(l.azurirano)}
+                </Tooltip>
+              </Marker>
+            </Fragment>
+          ))}
+
+        {!moja && drustvo.dijelim && drustvo.pozicija && (
+          <CircleMarker
+            center={[drustvo.pozicija.lat, drustvo.pozicija.lng]}
+            radius={7}
+            pathOptions={{ color: "#fff", weight: 3, fillColor: "#4ea1ff", fillOpacity: 1 }}
+          />
+        )}
+
         {moja && (
           <>
             <Circle center={[moja.lat, moja.lng]} radius={moja.tocnost} pathOptions={{ color: "#4ea1ff", weight: 1, fillOpacity: 0.1 }} />
@@ -417,6 +460,7 @@ export default function KartaPrikaz() {
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
                 ["miris", "Zona mirisa (vjetar)"],
+                ["lovci", "Prijatelji u lovu"],
               ] as [keyof typeof slojevi, string][]
             ).map(([k, n]) => (
               <button key={k} onClick={() => setSlojevi((s) => ({ ...s, [k]: !s[k] }))} className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-[14px] hover:bg-white/5">

@@ -159,7 +159,7 @@ export interface MjesecevaVremena {
 
 export function mjesecevaVremena(datum: Date, lat: number, lng: number): MjesecevaVremena {
   const pocetak = new Date(datum.getFullYear(), datum.getMonth(), datum.getDate()).getTime();
-  const korak = 10 * 60 * 1000;
+  const korak = 5 * 60 * 1000;
   const h0 = 0.133 * rad;
   let izlazak: Date | null = null;
   let zalazak: Date | null = null;

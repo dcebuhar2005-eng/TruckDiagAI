@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Evidencija izlazaka, odstrela, lovišta i dozvola",
     start_url: "/",
     display: "standalone",
-    background_color: "#0b100c",
+    background_color: "#13221a",
     theme_color: "#0b100c",
     lang: "hr",
     icons: [
