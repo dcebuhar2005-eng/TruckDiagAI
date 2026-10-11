@@ -14,6 +14,7 @@ import {
   Polyline,
   TileLayer,
   Tooltip,
+  WMSTileLayer,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -27,27 +28,90 @@ import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import type { Baza, Tocka } from "@/lib/types";
 import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
 
-const PODLOGE = {
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
+const MAKS_ZOOM = 21;
+
+interface SlojPodloge {
+  url: string;
+  attr: string;
+  /** Najveći zoom za koji poslužitelj ima slike; iznad toga se slike uvećavaju. */
+  nativni: number;
+  retina?: boolean;
+  wms?: { layers: string; format: string };
+}
+
+const PODLOGE: Record<string, { naziv: string; slojevi: SlojPodloge[] }> = {
+  hibrid: {
+    naziv: "Hibrid",
+    slojevi: [
+      { url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, attr: "Esri, Maxar, Earthstar Geographics", nativni: 19, retina: true },
+      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
+      { url: `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
+    ],
+  },
   satelit: {
     naziv: "Satelit",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attr: "Esri, Maxar, Earthstar Geographics",
-    maxZoom: 19,
+    slojevi: [{ url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, attr: "Esri, Maxar, Earthstar Geographics", nativni: 19, retina: true }],
+  },
+  dgu: {
+    naziv: "HR ortofoto",
+    slojevi: [
+      {
+        url: "https://geoportal.dgu.hr/services/inspire/orthophoto_2019_2020/wms",
+        attr: "© Državna geodetska uprava (DOF 2019/2020)",
+        nativni: 20,
+        wms: { layers: "OI.OrthoimageCoverage", format: "image/jpeg" },
+      },
+    ],
   },
   topo: {
-    naziv: "Topografska",
-    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-    attr: "© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)",
-    maxZoom: 17,
+    naziv: "Topo",
+    slojevi: [{ url: `${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`, attr: "Esri, HERE, Garmin, © OpenStreetMap", nativni: 19 }],
+  },
+  reljef: {
+    naziv: "Reljef",
+    slojevi: [{ url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)", nativni: 17 }],
   },
   karta: {
     naziv: "Karta",
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attr: "© OpenStreetMap",
-    maxZoom: 19,
+    slojevi: [{ url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap", nativni: 19 }],
   },
-} as const;
+};
 type Podloga = keyof typeof PODLOGE;
+
+const KLJUC_PODLOGE = "lovacki-dnevnik:podloga";
+
+/** Iscrtava odabranu podlogu; ako sloj ne učita slike, javlja grešku (npr. DGU servis nedostupan). */
+function SlojeviPodloge({ podloga, onGreska }: { podloga: Podloga; onGreska: () => void }) {
+  const greske = useRef(0);
+  const uspjesi = useRef(0);
+  return (
+    <>
+      {PODLOGE[podloga].slojevi.map((sl, i) => {
+        const zajednicko = {
+          attribution: sl.attr,
+          maxNativeZoom: sl.nativni,
+          maxZoom: MAKS_ZOOM,
+          keepBuffer: 4,
+          eventHandlers: {
+            tileload: () => {
+              uspjesi.current++;
+            },
+            tileerror: () => {
+              greske.current++;
+              if (greske.current === 6 && uspjesi.current === 0) onGreska();
+            },
+          },
+        };
+        return sl.wms ? (
+          <WMSTileLayer key={`${podloga}-${i}`} url={sl.url} params={{ layers: sl.wms.layers, format: sl.wms.format, transparent: false, version: "1.3.0" }} {...zajednicko} />
+        ) : (
+          <TileLayer key={`${podloga}-${i}`} url={sl.url} detectRetina={sl.retina} {...zajednicko} />
+        );
+      })}
+    </>
+  );
+}
 
 type Nacin = "pregled" | "tocka" | "granica" | "mjerenje";
 type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { tip: "loviste"; id: string } | null;
@@ -147,7 +211,19 @@ export default function KartaPrikaz() {
   const baza = useBaza();
   const router = useRouter();
   const params = useSearchParams();
-  const [podloga, setPodloga] = useState<Podloga>("satelit");
+  const [podloga, setPodlogaStanje] = useState<Podloga>(() => {
+    try {
+      const p = localStorage.getItem(KLJUC_PODLOGE);
+      if (p && p in PODLOGE) return p;
+    } catch {}
+    return "hibrid";
+  });
+  const setPodloga = (p: Podloga) => {
+    setPodlogaStanje(p);
+    try {
+      localStorage.setItem(KLJUC_PODLOGE, p);
+    } catch {}
+  };
   const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
@@ -261,11 +337,20 @@ export default function KartaPrikaz() {
       <MapContainer
         center={[pocetni.lat, pocetni.lng]}
         zoom={13}
+        maxZoom={MAKS_ZOOM}
         zoomControl={false}
         className="h-full w-full"
         attributionControl
       >
-        <TileLayer key={podloga} url={PODLOGE[podloga].url} attribution={PODLOGE[podloga].attr} maxZoom={PODLOGE[podloga].maxZoom} />
+        <SlojeviPodloge
+          key={podloga}
+          podloga={podloga}
+          onGreska={() => {
+            if (podloga === "hibrid") return;
+            obavijest(`Podloga „${PODLOGE[podloga].naziv}” trenutno nije dostupna – prikazujem hibrid`, "greska");
+            setPodloga("hibrid");
+          }}
+        />
         <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} />
         <Upravljac cilj={cilj} />
         <GraniceNaPocetku baza={baza} />
