@@ -7,6 +7,7 @@ import { mjesec, suncevaVremena } from "@/lib/astro";
 import { NACINI_LOVA, TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
 import { danUTjednu, datumDugi, izIso, sat, trajanjeIzlaska } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
+import { duljinaTraga } from "@/lib/lov";
 import type { Baza } from "@/lib/types";
 import { centarLovista, nazivLovista } from "@/lib/upiti";
 import { opisVremena, smjerVjetra } from "@/lib/vrijeme";
@@ -247,13 +248,46 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
         <Podatak ikona="tlak" oznaka="Tlak" vrijednost={v?.tlak ? `${Math.round(v.tlak)} hPa` : "–"} />
       </motion.div>
 
+      {i.uTijeku && (
+        <Link
+          href="/lov"
+          onClick={zatvori}
+          className="mt-5 flex items-center gap-3 rounded-2xl bg-mahovina p-3.5 font-semibold text-[#0b100c]"
+        >
+          <Ikona ime="sat" /> <span className="flex-1">Lov je u tijeku – nastavi bilježiti</span> <Ikona ime="desno" />
+        </Link>
+      )}
+
+      {i.trag && i.trag.length > 1 && (
+        <Link
+          href={`/karta?trag=${i.id}`}
+          onClick={zatvori}
+          className="mt-5 flex items-center gap-3 rounded-2xl border border-rub p-3 transition-colors hover:bg-povrsina-2"
+        >
+          <span className="grid size-10 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+            <Ikona ime="ravnalo" />
+          </span>
+          <span className="flex-1">
+            <span className="block text-sm font-medium">GPS trag · {(duljinaTraga(i.trag) / 1000).toFixed(1)} km</span>
+            <span className="block text-[12.5px] text-tekst-2">Prikaži kretanje na karti</span>
+          </span>
+          <Ikona ime="desno" className="text-tekst-3" />
+        </Link>
+      )}
+
+      {i.fotoIds && i.fotoIds.length > 0 && <TrakaFotografija ids={i.fotoIds} />}
+
       <h3 className="mt-6 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Opažanja</h3>
       {i.opazanja.length ? (
         <div className="grid gap-1.5">
           {i.opazanja.map((o, k) => (
             <div key={k} className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3.5 py-2.5">
+              {o.vrijeme && <span className="brojke w-11 text-[13px] text-tekst-3">{o.vrijeme}</span>}
               <span className="size-2 rounded-full" style={{ background: bojaVrste(o.vrsta) }} />
-              <span className="flex-1 text-[15px]">{o.vrsta}</span>
+              <span className="flex-1 text-[15px]">
+                {o.vrsta}
+                {o.spol && <span className="text-tekst-3"> · {nazivSpola(o.vrsta, o.spol)}</span>}
+              </span>
               <span className="brojke font-semibold">× {o.broj}</span>
             </div>
           ))}
@@ -286,7 +320,7 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
       )}
 
       {(i.pratitelji || i.napomena) && (
-        <div className="mt-6 rounded-2xl bg-povrsina-2 p-4 text-[15px] leading-relaxed text-tekst-2">
+        <div className="mt-6 rounded-2xl bg-povrsina-2 p-4 text-[15px] leading-relaxed whitespace-pre-line text-tekst-2">
           {i.pratitelji && (
             <p className="mb-1.5">
               <span className="text-tekst-3">Pratitelji: </span>
@@ -297,5 +331,62 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
         </div>
       )}
     </Ploca>
+  );
+}
+
+/** Fotografije izlaska: traka sličica, dodir otvara preko cijelog zaslona. */
+function TrakaFotografija({ ids }: { ids: string[] }) {
+  const [fotke, setFotke] = useState<string[]>([]);
+  const [puni, setPuni] = useState<number | null>(null);
+  const kljuc = ids.join(",");
+  useEffect(() => {
+    let ziv = true;
+    Promise.all(kljuc.split(",").map((fid) => dohvatiFoto(fid))).then((r) => ziv && setFotke(r.filter((x): x is string => !!x)));
+    return () => {
+      ziv = false;
+    };
+  }, [kljuc]);
+  if (!fotke.length) return null;
+  return (
+    <>
+      <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+        {fotke.map((f, k) => (
+          <button key={k} onClick={() => setPuni(k)} className="shrink-0" aria-label={`Fotografija ${k + 1}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={f} alt="" className="size-24 rounded-2xl object-cover" />
+          </button>
+        ))}
+      </div>
+      <AnimatePresence>
+        {puni != null && fotke[puni] && (
+          <motion.div
+            className="fixed inset-0 z-[2600] flex items-center justify-center bg-black/95"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPuni(null)}
+          >
+            <motion.img
+              key={puni}
+              src={fotke[puni]}
+              alt=""
+              className="max-h-full max-w-full object-contain"
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              onDragEnd={(_, d) => {
+                if (d.offset.x < -60 && puni < fotke.length - 1) setPuni(puni + 1);
+                if (d.offset.x > 60 && puni > 0) setPuni(puni - 1);
+              }}
+            />
+            <div className="brojke absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] text-[14px] text-white/80">
+              {puni + 1} / {fotke.length}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

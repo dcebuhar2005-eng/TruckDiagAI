@@ -439,14 +439,21 @@ export default function KartaPrikaz() {
   // Parametri iz adrese: ?fokus=lat,lng ili ?granica=<lovisteId>
   const fokus = params.get("fokus");
   const granicaParam = params.get("granica");
+  const tragParam = params.get("trag");
   const obradeno = useRef<string | null>(null);
   useEffect(() => {
-    const kljuc = `${fokus}|${granicaParam}`;
+    const kljuc = `${fokus}|${granicaParam}|${tragParam}`;
     if (!baza || obradeno.current === kljuc) return;
     obradeno.current = kljuc;
     if (fokus) {
       const [lat, lng] = fokus.split(",").map(Number);
       if (Number.isFinite(lat) && Number.isFinite(lng)) setTimeout(() => setCilj({ lat, lng, zoom: 16, k: Date.now() }), 350);
+    }
+    const t = baza.izlasci.find((x) => x.id === tragParam)?.trag;
+    if (t && t.length > 1) {
+      const lat = t.map((p) => p[0]);
+      const lng = t.map((p) => p[1]);
+      setTimeout(() => setOkvir({ j: Math.min(...lat), s: Math.max(...lat), z: Math.min(...lng), i: Math.max(...lng), k: Date.now() }), 350);
     }
     if (granicaParam && baza.lovista.some((l) => l.id === granicaParam)) {
       const l = baza.lovista.find((x) => x.id === granicaParam)!;
@@ -457,7 +464,7 @@ export default function KartaPrikaz() {
         obavijest("Dodirujte kartu za vrhove granice", "info");
       }, 0);
     }
-  }, [baza, fokus, granicaParam]);
+  }, [baza, fokus, granicaParam, tragParam]);
 
   if (!baza) return <div className="svjetlucanje h-full w-full" />;
 
@@ -688,6 +695,17 @@ export default function KartaPrikaz() {
             <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer)} interactive={false} zIndexOffset={2000} />
           </>
         )}
+
+        {/* GPS trag: lov u tijeku i izlazak otvoren iz detalja */}
+        {baza.izlasci
+          .filter((x) => (x.uTijeku || x.id === tragParam) && (x.trag?.length ?? 0) > 1)
+          .map((x) => (
+            <Fragment key={`trag-${x.id}`}>
+              <Polyline positions={x.trag!} interactive={false} pathOptions={{ color: "#0b100c", weight: 7, opacity: 0.55 }} />
+              <Polyline positions={x.trag!} interactive={false} pathOptions={{ color: x.uTijeku ? "#6fbf73" : "#4fc3f7", weight: 4 }} />
+              <CircleMarker center={x.trag![0]} radius={6} interactive={false} pathOptions={{ color: "#fff", weight: 2, fillColor: "#6fbf73", fillOpacity: 1 }} />
+            </Fragment>
+          ))}
 
         {(nacin === "granica" || nacin === "mjerenje") && crtez.length > 0 && (
           <>

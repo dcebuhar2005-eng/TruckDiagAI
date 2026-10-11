@@ -6,6 +6,7 @@ import { konfigurirano, pokreniDrustvo, useDrustvo } from "@/lib/drustvo";
 import { pokreniSinkronizaciju, useSinkronizacija } from "@/lib/sinkronizacija";
 import { automatskaKopija } from "@/lib/kopije";
 import { registrirajSW } from "@/lib/offline";
+import { aktivniLov, uskladiPracenje } from "@/lib/lov";
 import { useBaza } from "@/lib/store";
 import AlarmBlizine from "./AlarmBlizine";
 import Navigacija from "./Navigacija";
@@ -32,6 +33,11 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     pokreniSinkronizaciju(prijavljen ?? null);
     if (prijavljen) automatskaKopija();
   }, [prijavljen, drustvo.spremno]);
+  // GPS trag dok je lov u tijeku.
+  const lovId = aktivniLov(baza)?.id ?? null;
+  useEffect(() => {
+    uskladiPracenje(lovId);
+  }, [lovId]);
   const trebaPrijava = konfigurirano && drustvo.spremno && !drustvo.sesija;
   const spremnoZaUvod = !konfigurirano || sinkronizacija.spremno;
 

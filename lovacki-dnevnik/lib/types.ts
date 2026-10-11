@@ -68,6 +68,11 @@ export type VrstaLova =
 export interface Opazanje {
   vrsta: string;
   broj: number;
+  /** Zabilježeno uživo tijekom lova: vrijeme (HH:MM), spol i mjesto. */
+  vrijeme?: string;
+  spol?: Spol;
+  lat?: number;
+  lng?: number;
 }
 
 export interface Izlazak {
@@ -86,6 +91,11 @@ export interface Izlazak {
   opazanja: Opazanje[];
   ocjena?: number;
   napomena?: string;
+  /** Lov je u tijeku (pokrenut gumbom „Kreni u lov”). */
+  uTijeku?: boolean;
+  /** Snimljeni GPS trag kretanja tijekom lova [lat, lng]. */
+  trag?: [number, number][];
+  fotoIds?: string[];
   createdAt: number;
 }
 

@@ -56,6 +56,8 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
         await prijava(email.trim(), lozinka);
         obavijest("Prijavljeni ste");
       } else {
+        if (lozinka.length < 8 || !/[a-zA-ZčćžšđČĆŽŠĐ]/.test(lozinka) || !/\d/.test(lozinka))
+          throw new Error("Lozinka mora imati barem 8 znakova, i slova i brojke.");
         const { trebaPotvrda } = await registracija(email.trim(), lozinka);
         if (trebaPotvrda) {
           setPoruka({ tekst: "Poslali smo vam e-mail. Kliknite poveznicu u njemu, zatim se vratite ovdje i prijavite.", greska: false });
@@ -101,13 +103,13 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
           <Polje oznaka="E-mail">
             <input id="lov-email" type="email" autoComplete="email" required className="unos" value={email} onChange={(e) => setEmail(e.target.value)} />
           </Polje>
-          <Polje oznaka="Lozinka" pomoc={nacin === "registracija" ? "Najmanje 6 znakova" : undefined}>
+          <Polje oznaka="Lozinka" pomoc={nacin === "registracija" ? "Najmanje 8 znakova, slova i brojke" : undefined}>
             <input
               id="lov-lozinka"
               type="password"
               autoComplete={nacin === "prijava" ? "current-password" : "new-password"}
               required
-              minLength={6}
+              minLength={nacin === "registracija" ? 8 : 6}
               className="unos"
               value={lozinka}
               onChange={(e) => setLozinka(e.target.value)}

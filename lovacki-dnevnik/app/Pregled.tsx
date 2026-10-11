@@ -19,6 +19,7 @@ import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza } from "@/lib/types";
 import { nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
 import { usePrognoza } from "@/lib/vrijeme";
+import { aktivniLov } from "@/lib/lov";
 
 function pozdrav(h: number) {
   if (h < 5) return "Laku noć";
@@ -132,6 +133,11 @@ export default function Pregled() {
       </motion.header>
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-3">
+        {/* Kreni u lov / lov u tijeku */}
+        <motion.div variants={djeteListe} className="lg:col-span-3">
+          <KreniULovKartica baza={baza} />
+        </motion.div>
+
         {/* Vjetar i vrijeme */}
         <motion.section variants={djeteListe} className="kartica relative overflow-hidden p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
@@ -415,6 +421,34 @@ function UpozorenjeLovaca() {
         </span>
         <Ikona ime="desno" velicina={16} className="text-tekst-3" />
       </motion.div>
+    </Link>
+  );
+}
+
+function KreniULovKartica({ baza }: { baza: Baza }) {
+  const i = aktivniLov(baza);
+  return (
+    <Link
+      href="/lov"
+      transitionTypes={["naprijed"]}
+      className={cx(
+        "group relative flex items-center gap-4 overflow-hidden rounded-[22px] p-4 pr-5 transition-transform active:scale-[0.99]",
+        i ? "bg-mahovina text-[#0b100c]" : "bg-naglasak text-[#17130a] shadow-[0_14px_34px_-16px_var(--naglasak)]",
+      )}
+    >
+      <span className="pointer-events-none absolute -top-10 -right-6 size-40 rounded-full bg-white/20 blur-2xl" />
+      <span className="relative grid size-12 shrink-0 place-items-center rounded-2xl bg-black/10">
+        <Ikona ime={i ? "sat" : "nisan"} velicina={24} />
+      </span>
+      <span className="relative min-w-0 flex-1">
+        <span className="block font-display text-[21px] leading-tight font-semibold">{i ? "Lov je u tijeku" : "Kreni u lov"}</span>
+        <span className="block truncate text-[13.5px] opacity-75">
+          {i
+            ? `Od ${i.od} · ${i.opazanja.reduce((s, o) => s + o.broj, 0)} viđeno – nastavi bilježiti`
+            : "Pokreni izlazak i bilježi uživo što vidiš"}
+        </span>
+      </span>
+      <Ikona ime="desno" velicina={20} debljina={2.4} className="relative transition-transform group-hover:translate-x-1" />
     </Link>
   );
 }

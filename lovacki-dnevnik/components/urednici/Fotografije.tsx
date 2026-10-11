@@ -12,7 +12,7 @@ export interface Slika {
   url: string;
 }
 
-export const MAKS_SLIKA = 6;
+export const MAKS_SLIKA = 10;
 
 export default function Fotografije({ slike, promjena }: { slike: Slika[]; promjena: (s: Slika[]) => void }) {
   const kamera = useRef<HTMLInputElement>(null);
