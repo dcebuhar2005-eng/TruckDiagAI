@@ -28,6 +28,7 @@ export type TipTocke =
   | "pojiliste"
   | "zaklon"
   | "zasjeda"
+  | "prijelaz"
   | "parking"
   | "ostalo";
 
@@ -39,6 +40,8 @@ export interface Tocka {
   lng: number;
   lovisteId?: ID;
   napomena?: string;
+  /** Za prijelaz divljači: koja divljač njime prelazi (ključevi iz DIVLJAC_PRIJELAZA). */
+  divljac?: string[];
   /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */
   vjetrovi?: number[];
   createdAt: number;

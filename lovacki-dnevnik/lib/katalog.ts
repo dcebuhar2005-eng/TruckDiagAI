@@ -80,9 +80,28 @@ export const TIPOVI_TOCAKA: Record<TipTocke, { naziv: string; boja: string; slov
   pojiliste: { naziv: "Pojilište", boja: "#4fb3bf", slovo: "P" },
   zaklon: { naziv: "Zaklon", boja: "#9c8ade", slovo: "Z" },
   zasjeda: { naziv: "Zasjeda", boja: "#e07a4f", slovo: "T" },
+  prijelaz: { naziv: "Prijelaz divljači", boja: "#d6b25e", slovo: "Pr" },
   parking: { naziv: "Parking", boja: "#90a4ae", slovo: "P" },
   ostalo: { naziv: "Ostalo", boja: "#bdbdbd", slovo: "•" },
 };
+
+/** Divljač koja koristi prijelaz (odabire se naknadno, može ih biti više). */
+export const DIVLJAC_PRIJELAZA: { k: string; naziv: string; slovo: string; boja: string }[] = [
+  { k: "jelenska", naziv: "Jelenska", slovo: "J", boja: "#c08a52" },
+  { k: "svinje", naziv: "Svinje / prasci", slovo: "S", boja: "#8d6e63" },
+  { k: "srneca", naziv: "Srneća", slovo: "Sr", boja: "#d4a373" },
+  { k: "lopatar", naziv: "Lopatar", slovo: "L", boja: "#b08968" },
+  { k: "muflon", naziv: "Muflon", slovo: "M", boja: "#9c8a6e" },
+  { k: "divokoza", naziv: "Divokoza", slovo: "D", boja: "#a1887f" },
+  { k: "medvjed", naziv: "Medvjed", slovo: "Me", boja: "#6d4c41" },
+  { k: "sitna", naziv: "Sitna divljač", slovo: "Si", boja: "#c5b358" },
+  { k: "grabezljivci", naziv: "Lisica / čagalj", slovo: "Li", boja: "#e0864a" },
+];
+
+export function opisPrijelaza(divljac?: string[]) {
+  const n = DIVLJAC_PRIJELAZA.filter((d) => divljac?.includes(d.k)).map((d) => d.naziv.toLowerCase());
+  return n.length ? n.join(", ") : "divljač nije odabrana";
+}
 
 export const NACINI_LOVA: Record<VrstaLova, string> = {
   cekanje: "Čekanje",
