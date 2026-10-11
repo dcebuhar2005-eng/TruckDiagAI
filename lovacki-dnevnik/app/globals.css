@@ -299,3 +299,8 @@ select.unos {
     line-height: 1.35;
   }
 }
+
+/* Karta za odabir lokacije: pripisivanje iznad donje ploče. */
+.karta-odabira .leaflet-bottom {
+  bottom: calc(9.5rem + env(safe-area-inset-bottom));
+}

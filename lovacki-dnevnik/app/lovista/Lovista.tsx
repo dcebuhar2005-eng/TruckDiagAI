@@ -230,7 +230,7 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Akcija ikona="uredi" oznaka="Uredi" onClick={() => otvori({ tip: "loviste", id: l.id })} />
           <Akcija ikona="poligon" oznaka={l.granica?.length ? "Uredi granicu" : "Ucrtaj granicu"} href={`/karta?granica=${l.id}`} />
-          <Akcija ikona="lokacija" oznaka="Dodaj točku" onClick={() => otvori({ tip: "tocka", pocetno: { lovisteId: l.id, ...(l.granica?.length ? { lat: l.granica.reduce((s, p) => s + p[0], 0) / l.granica.length, lng: l.granica.reduce((s, p) => s + p[1], 0) / l.granica.length } : baza.postavke.lokacija) } })} />
+          <Akcija ikona="lokacija" oznaka="Dodaj točku" onClick={() => otvori({ tip: "tocka", pocetno: { lovisteId: l.id } })} />
           <Akcija ikona="dnevnik" oznaka="Izlazak" onClick={() => otvori({ tip: "izlazak", pocetno: { lovisteId: l.id } })} />
         </div>
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { demoBaza } from "@/lib/demo";
 import { db } from "@/lib/store";
 import Ikona, { type ImeIkone } from "./Ikona";
+import { OdabirNaKarti } from "./lokacija/PoljeLokacije";
 import { Znak } from "./Navigacija";
 import { Gumb, Polje, cx, obavijest } from "./ui";
 
@@ -22,6 +23,7 @@ export default function Uvod() {
   const [drustvo, setDrustvo] = useState("");
   const [lokacija, setLokacija] = useState<{ lat: number; lng: number } | null>(null);
   const [trazim, setTrazim] = useState(false);
+  const [karta, setKarta] = useState(false);
 
   const idi = (k: number) => {
     setSmjer(k > korak ? 1 : -1);
@@ -47,13 +49,13 @@ export default function Uvod() {
   const zavrsi = (primjer: boolean) => {
     if (primjer) {
       db.zamijeni(demoBaza(ime.trim()));
-      if (lokacija) db.postavke({ lokacija, lokacijaNaziv: "Moja lokacija" });
+      if (lokacija) db.postavke({ lokacija, lokacijaNaziv: "Područje lova" });
       obavijest("Učitani su primjeri podataka");
     } else {
       db.postavke({
         ime: ime.trim() || "Lovac",
         drustvo: drustvo.trim() || undefined,
-        ...(lokacija ? { lokacija, lokacijaNaziv: "Moja lokacija" } : {}),
+        ...(lokacija ? { lokacija, lokacijaNaziv: "Područje lova" } : {}),
         dovrsenUvod: true,
       });
       obavijest("Dobrodošli u Lovački dnevnik");
@@ -208,6 +210,19 @@ export default function Uvod() {
                       </div>
                     </div>
                   </motion.button>
+                  <button
+                    onClick={() => setKarta(true)}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-rub bg-povrsina p-3.5 text-[14.5px] font-medium text-tekst-2 transition-colors hover:border-naglasak hover:text-tekst"
+                  >
+                    <Ikona ime="karta" velicina={18} /> Odaberi područje lova na karti
+                  </button>
+                  <OdabirNaKarti
+                    otvoren={karta}
+                    pocetak={lokacija ?? undefined}
+                    naslov="Gdje najčešće lovite?"
+                    potvrdi={setLokacija}
+                    zatvori={() => setKarta(false)}
+                  />
 
                   <div className="mt-8 grid gap-3">
                     <button
