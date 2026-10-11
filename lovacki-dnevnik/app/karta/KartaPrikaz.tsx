@@ -4,7 +4,7 @@ import L from "leaflet";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   Circle,
   CircleMarker,
@@ -13,6 +13,7 @@ import {
   Polygon,
   Polyline,
   TileLayer,
+  Rectangle,
   Tooltip,
   WMSTileLayer,
   useMap,
@@ -27,8 +28,11 @@ import { db, useBaza } from "@/lib/store";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
 import SumskiPutevi from "./SumskiPutevi";
+import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
+import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, Tocka } from "@/lib/types";
-import { beaufort, smjerVjetra, usePrognoza } from "@/lib/vrijeme";
+import { beaufort, smjerVjetra, usePrognoza, type SatnaPrognoza } from "@/lib/vrijeme";
+import { OCJENE, imaVjetrove, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const MAKS_ZOOM = 21;
@@ -229,18 +233,66 @@ function Dogadaji({
   onKlik,
   onPomak,
   onPovlacenje,
+  onGranice,
 }: {
   onKlik: (ll: L.LatLng) => void;
   onPomak: (c: L.LatLng) => void;
   onPovlacenje: () => void;
+  onGranice?: (g: Granice) => void;
 }) {
-  useMapEvents({
+  const javiGranice = (m: L.Map) => {
+    const b = m.getBounds();
+    onGranice?.({ j: b.getSouth(), s: b.getNorth(), z: b.getWest(), i: b.getEast() });
+  };
+  const map = useMapEvents({
     click: (e) => onKlik(e.latlng),
-    moveend: (e) => onPomak(e.target.getCenter()),
+    moveend: (e) => {
+      onPomak(e.target.getCenter());
+      javiGranice(e.target);
+    },
     dragstart: onPovlacenje,
   });
+  useEffect(() => {
+    javiGranice(map);
+  }, [map]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
+
+function Okvir({ g }: { g: (Granice & { k: number }) | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (g) map.flyToBounds([[g.j, g.z], [g.s, g.i]], { duration: 1, padding: [30, 30] });
+  }, [g, map]);
+  return null;
+}
+
+/** Podloge koje se smiju spremiti za rad bez signala (XYZ pločice s CORS-om). */
+const OFFLINE_PODLOGE: PodlogaZaOffline[] = [
+  {
+    kljuc: "hibrid",
+    naziv: "Hibrid",
+    slojevi: [
+      { url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, retina: true },
+      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}` },
+    ],
+  },
+  { kljuc: "satelit", naziv: "Satelit", slojevi: [{ url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, retina: true }] },
+  { kljuc: "topo", naziv: "Topo", slojevi: [{ url: `${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}` }] },
+];
+
+const useNaMrezi = () =>
+  useSyncExternalStore(
+    (f) => {
+      window.addEventListener("online", f);
+      window.addEventListener("offline", f);
+      return () => {
+        window.removeEventListener("online", f);
+        window.removeEventListener("offline", f);
+      };
+    },
+    () => navigator.onLine,
+    () => true,
+  );
 
 function Upravljac({ cilj }: { cilj: { lat: number; lng: number; zoom?: number; k: number } | null }) {
   const map = useMap();
@@ -352,6 +404,11 @@ export default function KartaPrikaz() {
     [],
   );
   const [centar, setCentar] = useState<{ lat: number; lng: number } | null>(null);
+  const [granice, setGranice] = useState<Granice | null>(null);
+  const [okvir, setOkvir] = useState<(Granice & { k: number }) | null>(null);
+  const [offlinePanel, setOfflinePanel] = useState(false);
+  const offlinePodrucja = useOfflinePodrucja();
+  const mreza = useNaMrezi();
   const [satIndeks, setSatIndeks] = useState(0);
 
   const pocetni = useMemo(() => baza?.postavke.lokacija ?? { lat: 45.1, lng: 15.2 }, [baza?.postavke.lokacija]);
@@ -490,7 +547,17 @@ export default function KartaPrikaz() {
           }}
         />
         {slojevi.putevi && <SumskiPutevi onStanje={setStanjePuteva} />}
-        <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} />
+        <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} onGranice={setGranice} />
+        <Okvir g={okvir} />
+        {offlinePanel &&
+          offlinePodrucja.map((p) => (
+            <Rectangle
+              key={p.id}
+              bounds={[[p.granice.j, p.granice.z], [p.granice.s, p.granice.i]]}
+              interactive={false}
+              pathOptions={{ color: "#6fbf73", weight: 2, dashArray: "6 6", fillOpacity: 0.06 }}
+            />
+          ))}
         <Pracenje moja={moja} pratim={pratim} />
         <Upravljac cilj={cilj} />
         <GraniceNaPocetku baza={baza} />
@@ -521,14 +588,17 @@ export default function KartaPrikaz() {
 
         {slojevi.miris &&
           vjetarSmjer != null &&
-          zaMiris.map((t) => (
-            <Polygon
-              key={`m-${t.id}`}
-              positions={stozac(t.lat, t.lng, vjetarSmjer, 200 + (vjetarBrzina ?? 5) * 18)}
-              interactive={false}
-              pathOptions={{ color: "#e8a947", weight: 1, fillColor: "#e8a947", fillOpacity: 0.22, opacity: 0.6 }}
-            />
-          ))}
+          zaMiris.map((t) => {
+            const boja = OCJENE[ocjenaVjetra(t, vjetarSmjer, vjetarBrzina)].boja;
+            return (
+              <Polygon
+                key={`m-${t.id}`}
+                positions={stozac(t.lat, t.lng, vjetarSmjer, 200 + (vjetarBrzina ?? 5) * 18, (vjetarBrzina ?? 5) < 6 ? 34 : 22)}
+                interactive={false}
+                pathOptions={{ color: boja, weight: 1, fillColor: boja, fillOpacity: 0.24, opacity: 0.7 }}
+              />
+            );
+          })}
 
         {slojevi.tocke &&
           baza.tocke.map((t) => (
@@ -678,16 +748,28 @@ export default function KartaPrikaz() {
             aktivan={izbornik}
             onClick={() => {
               setLegenda(false);
+              setOfflinePanel(false);
               setIzbornik((s) => !s);
             }}
           />
           <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
+          <KartaGumb
+            ikona="preuzmi"
+            oznaka="Karta bez signala"
+            aktivan={offlinePanel}
+            onClick={() => {
+              setIzbornik(false);
+              setLegenda(false);
+              setOfflinePanel((x) => !x);
+            }}
+          />
           <KartaGumb
             ikona="legenda"
             oznaka="Legenda"
             aktivan={legenda}
             onClick={() => {
               setIzbornik(false);
+              setOfflinePanel(false);
               setLegenda((s) => !s);
             }}
           />
@@ -756,6 +838,32 @@ export default function KartaPrikaz() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {offlinePanel && (
+          <OfflinePanel
+            vidljivo={granice}
+            lovista={baza.lovista}
+            podloge={OFFLINE_PODLOGE}
+            zadana={podloga}
+            zatvori={() => setOfflinePanel(false)}
+            pokazi={(g) => setOkvir({ ...g, k: Date.now() })}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!mreza && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+6.2rem)] left-3 z-[500] flex items-center gap-1.5 rounded-full bg-[#0d130e]/90 px-3 py-1.5 text-[12px] text-white/85 backdrop-blur lg:bottom-5"
+          >
+            <span className="size-2 rounded-full bg-[#e0574f]" /> Bez signala · {offlinePodrucja.length ? "prikazujem spremljena područja" : "nema spremljenih područja"}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Legenda */}
       <AnimatePresence>
         {legenda && (
@@ -794,6 +902,9 @@ export default function KartaPrikaz() {
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>
                   {odabranaTocka.napomena && <p className="mt-1 line-clamp-2 text-[13px] text-white/75">{odabranaTocka.napomena}</p>}
+                  {(odabranaTocka.tip === "ceka" || odabranaTocka.tip === "zaklon") && (
+                    <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />
+                  )}
                   <div className="mt-1 text-[12px] text-white/50">
                     {baza.izlasci.filter((i) => i.tockaId === odabranaTocka.id).length} izlazaka s ove točke
                   </div>
@@ -937,6 +1048,30 @@ export default function KartaPrikaz() {
           />
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+function StanjeVjetra({ t, smjer, brzina, satno }: { t: Tocka; smjer?: number; brzina?: number; satno: SatnaPrognoza[] }) {
+  const [sada] = useState(() => Date.now());
+  if (!imaVjetrove(t)) {
+    return (
+      <button onClick={() => otvori({ tip: "tocka", id: t.id })} className="mt-1.5 text-left text-[12.5px] font-medium text-[#e8a947]">
+        Odredite dobre vjetrove za ovu čeku →
+      </button>
+    );
+  }
+  const o = ocjenaVjetra(t, smjer, brzina);
+  const sljedeci = o !== "dobar" ? sljedeciDobar(t, satno, sada) : null;
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12.5px]">
+      <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold text-[#0b100c]" style={{ background: OCJENE[o].boja }}>
+        {OCJENE[o].naziv}
+      </span>
+      <span className="text-white/60">
+        dobar: {opisVjetrova(t.vjetrovi)}
+        {sljedeci && ` · dobar od ${sat(sljedeci.od)}`}
+      </span>
     </div>
   );
 }

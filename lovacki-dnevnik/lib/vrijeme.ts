@@ -54,8 +54,15 @@ export async function dohvatiPrognozu(lat: number, lng: number): Promise<Prognoz
     wind_speed_unit: "kmh",
   }).toString();
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Prognoza nije dostupna");
+  let res: Response;
+  try {
+    res = await fetch(url);
+    if (!res.ok) throw new Error();
+  } catch {
+    // Bez signala: zadnja spremljena prognoza je bolja od nikakve.
+    if (p && Date.now() - p.dohvaceno < 3 * 86400000) return p;
+    throw new Error("Prognoza nije dostupna");
+  }
   const j = await res.json();
   const c = j.current;
   const h = j.hourly;

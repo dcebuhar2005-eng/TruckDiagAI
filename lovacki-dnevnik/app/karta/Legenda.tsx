@@ -51,15 +51,21 @@ export default function Legenda() {
           </svg>
         }
       />
-      <Stavka
-        naziv="Zona mirisa"
-        opis="Kamo vjetar nosi vaš miris s čeke"
-        uzorak={
-          <svg width="46" height="18" viewBox="0 0 46 18">
-            <path d="M4 9 L42 2 L42 16 Z" fill="#e8a947" fillOpacity="0.3" stroke="#e8a947" strokeOpacity="0.7" />
-          </svg>
-        }
-      />
+      {[
+        { naziv: "Zona mirisa – dobar vjetar", opis: "Vjetar puše s jedne od strana koje ste označili za čeku", boja: "#6fbf73" },
+        { naziv: "Zona mirisa – loš vjetar", opis: "Miris ide prema divljači; crvena = loše, žuta = rubno ili nije određeno", boja: "#e0574f" },
+      ].map((z) => (
+        <Stavka
+          key={z.naziv}
+          naziv={z.naziv}
+          opis={z.opis}
+          uzorak={
+            <svg width="46" height="18" viewBox="0 0 46 18">
+              <path d="M4 9 L42 2 L42 16 Z" fill={z.boja} fillOpacity="0.3" stroke={z.boja} strokeOpacity="0.7" />
+            </svg>
+          }
+        />
+      ))}
       <Stavka
         naziv="Prijatelj u lovu"
         opis="Krug od 300 m oko njega"

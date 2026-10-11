@@ -38,6 +38,8 @@ export interface Tocka {
   lng: number;
   lovisteId?: ID;
   napomena?: string;
+  /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */
+  vjetrovi?: number[];
   createdAt: number;
 }
 

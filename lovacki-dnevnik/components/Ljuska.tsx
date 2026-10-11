@@ -4,7 +4,9 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 import { pokreniDrustvo, useDrustvo } from "@/lib/drustvo";
 import { automatskaKopija } from "@/lib/kopije";
+import { registrirajSW } from "@/lib/offline";
 import { useBaza } from "@/lib/store";
+import AlarmBlizine from "./AlarmBlizine";
 import Navigacija from "./Navigacija";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
@@ -16,6 +18,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     pokreniDrustvo();
+    registrirajSW();
   }, []);
 
   // Mjesečna sigurnosna kopija kad je korisnik prijavljen.
@@ -52,6 +55,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <AnimatePresence>{baza && !baza.postavke.dovrsenUvod && <Uvod key="uvod" />}</AnimatePresence>
       <Urednici />
       <Obavijesti />
+      <AlarmBlizine />
     </>
   );
 }

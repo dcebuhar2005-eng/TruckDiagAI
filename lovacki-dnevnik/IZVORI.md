@@ -12,7 +12,7 @@ važeće uvjete na poveznicama, jer se mijenjaju.
 
 | Izvor | Koristi se za | Licenca / uvjeti | Kako aplikacija štedi |
 |---|---|---|---|
-| Esri World Imagery, Clarity, World Topo, Reference | Satelit, Hibrid, Satelit HD, Topo | Esri uvjeti, atribucija „Esri, Maxar, Earthstar Geographics" | Predmemorija preglednika |
+| Esri World Imagery, Clarity, World Topo, Reference | Satelit, Hibrid, Satelit HD, Topo, **karta bez signala** | Esri uvjeti, atribucija „Esri, Maxar, Earthstar Geographics" | Service worker čuva do 2 500 nedavnih pločica; ručno spremanje područja najviše 5 000 pločica, svaka se preuzima samo jednom |
 | Mapbox Satellite (opcionalno) | Satelit Pro | Vlastiti ključ `NEXT_PUBLIC_MAPBOX_TOKEN`, atribucija „© Mapbox © Maxar" | Besplatni mjesečni limit |
 | DGU ortofoto i TK25 (WMS) | HR ortofoto, HR TK25 | Otvoreni podaci RH, atribucija „© Državna geodetska uprava" | — |
 | OpenTopoMap | Reljef | CC-BY-SA, fair use | — |
@@ -41,6 +41,10 @@ Znakovi da je vrijeme za promjene:
    `customer-api.open-meteo.com` i dodati `apikey`.
 4. **Esri → ArcGIS Location Platform ključ** (besplatni paket s velikim mjesečnim limitom
    pločica); ključ dodati u URL-ove u `app/karta/KartaPrikaz.tsx` (`?token=...`).
+   **Karta bez signala** (`lib/offline.ts`, `public/sw.js`) sprema Esri pločice na uređaj. To je
+   za osobnu upotrebu umjereno, ali Esri trajno offline spremanje izvan svojih alata formalno
+   veže uz ArcGIS licencu – kod rasta prijeći na pružatelja koji izričito dopušta offline
+   (npr. MapTiler s offline licencom ili vlastite PMTiles pločice s DGU ortofotom).
 5. **Šumski putevi bez javnog Overpassa**: jednom tjedno izvesti puteve za Hrvatsku
    (`highway=track|path|bridleway|footway|unclassified|service`) iz Geofabrik izvoza
    (croatia-latest.osm.pbf) u vektorske pločice (PMTiles) i posluživati ih sa Supabase Storagea

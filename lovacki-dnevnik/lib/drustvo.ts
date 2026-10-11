@@ -5,6 +5,7 @@
 
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
+import { ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
 import { udaljenostM } from "./format";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -232,6 +233,18 @@ async function osvjeziInterno() {
       aktivnoDo: Date.parse(l.aktivno_do),
     }));
   postavi({ profil: (prof.data as Profil | null) ?? null, prijateljstva, lokacije });
+  provjeriAlarm();
+}
+
+/** Alarm blizine radi dok sam u lovu (tada je poznata moja pozicija). */
+function provjeriAlarm() {
+  const p = stanje.pozicija;
+  if (!stanje.dijelim || !p || Date.now() - p.t > 120000) return;
+  provjeriBlizinu(
+    stanje.lokacije
+      .filter((l) => Date.now() - l.azurirano < 30 * 60000)
+      .map((l) => ({ id: l.profil.id, ime: l.profil.ime, udaljenost: udaljenostM(p, l) })),
+  );
 }
 
 /* ---------------- Dijeljenje lokacije ---------------- */
@@ -297,6 +310,7 @@ function pokreniPracenje() {
     (pos) => {
       const p = { lat: pos.coords.latitude, lng: pos.coords.longitude, tocnost: pos.coords.accuracy, t: Date.now() };
       postavi({ pozicija: p, greskaLokacije: null });
+      provjeriAlarm();
       posaljiPoziciju(p).catch(() => {});
     },
     (e) =>
@@ -319,6 +333,8 @@ function zaustaviPracenje() {
 
 export async function pokreniDijeljenje(minuta: number) {
   const doT = Date.now() + minuta * 60000;
+  pripremiZvuk();
+  ponistiBlizinu();
   try {
     localStorage.setItem(KLJUC_DIJELJENJA, String(doT));
   } catch {}
@@ -333,6 +349,7 @@ export async function zaustaviDijeljenje() {
     localStorage.removeItem(KLJUC_DIJELJENJA);
   } catch {}
   zaustaviPracenje();
+  ponistiBlizinu();
   postavi({ dijelim: null });
   const ja = stanje.sesija?.user.id;
   if (ja) await sb().from("lov_lokacije").delete().eq("korisnik", ja);
@@ -416,10 +433,16 @@ export function pokreniDrustvo() {
     if (sesija && promjena) osvjezi();
   });
 
+  // U lovu se pozicije prijatelja osvježavaju češće (zbog alarma blizine).
+  let otkucaj = 0;
   setInterval(() => {
+    otkucaj++;
     if (stanje.dijelim && Date.now() > stanje.dijelim.do) zaustaviDijeljenje().catch(() => {});
-    if (stanje.sesija && document.visibilityState === "visible") osvjezi();
-  }, 20000);
+    if (stanje.sesija && document.visibilityState === "visible" && (stanje.dijelim || otkucaj % 2 === 0)) osvjezi();
+  }, 10000);
+
+  // Zvuk alarma smije se pripremiti tek nakon dodira korisnika.
+  document.addEventListener("pointerdown", () => stanje.dijelim && pripremiZvuk(), { passive: true });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
@@ -434,7 +457,7 @@ export function pokreniDrustvo() {
 }
 
 /** Prijatelji u lovu blizu mene (za upozorenje). */
-export function lovciUBlizini(s: Stanje, granicaM = 600) {
+export function lovciUBlizini(s: Stanje, granicaM = postavkeBlizine().granica) {
   if (!s.pozicija) return [];
   return s.lokacije
     .map((l) => ({ ...l, udaljenost: udaljenostM(s.pozicija!, l) }))
