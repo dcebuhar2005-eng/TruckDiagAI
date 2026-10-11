@@ -7,6 +7,7 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
 import {
+  ISTEK_PRIJAVE_DANA,
   drziZaslonUkljucen,
   konfigurirano,
   lovciUBlizini,
@@ -69,6 +70,7 @@ function NijePostavljeno() {
 /* ---------------- Prijava ---------------- */
 
 function Prijava() {
+  const istekla = useDrustvo().prijavaIstekla;
   const [nacin, setNacin] = useState<"prijava" | "registracija">("prijava");
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
@@ -106,6 +108,11 @@ function Prijava() {
         animate={{ opacity: 1, y: 0 }}
         className="kartica mx-auto max-w-md p-5"
       >
+        {istekla && (
+          <p className="mb-4 rounded-xl bg-naglasak-meki p-3 text-[14px]">
+            Aplikacija nije otvarana više od {ISTEK_PRIJAVE_DANA / 30} mjeseca, pa vas je radi sigurnosti odjavila. Prijavite se ponovno.
+          </p>
+        )}
         <Segmenti
           className="mb-5"
           vrijednost={nacin}
