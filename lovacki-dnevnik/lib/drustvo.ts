@@ -7,6 +7,7 @@ import { createClient, type Session, type SupabaseClient } from "@supabase/supab
 import { useSyncExternalStore } from "react";
 import { ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
 import { udaljenostM } from "./format";
+import { postaviVlasnika } from "./store";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KLJUC = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -104,7 +105,7 @@ export async function registracija(email: string, lozinka: string) {
   const { data, error } = await sb().auth.signUp({
     email,
     password: lozinka,
-    options: { emailRedirectTo: window.location.origin + "/lovci" },
+    options: { emailRedirectTo: window.location.origin + "/" },
   });
   if (error) throw prevedi(error.message);
   return { trebaPotvrda: !data.session };
@@ -121,9 +122,12 @@ export async function prijava(email: string, lozinka: string) {
 }
 
 export async function odjava() {
-  await zaustaviDijeljenje();
-  await sb().auth.signOut();
-  postavi({ profil: null, prijateljstva: [], lokacije: [] });
+  await zaustaviDijeljenje().catch(() => {});
+  const { error } = await sb().auth.signOut();
+  // Bez interneta odjavi barem ovaj uređaj.
+  if (error) await sb().auth.signOut({ scope: "local" });
+  postaviVlasnika(null);
+  postavi({ sesija: null, profil: null, prijateljstva: [], lokacije: [] });
 }
 
 function prevedi(poruka: string) {
@@ -388,10 +392,23 @@ function zadnjaAktivnost() {
   }
 }
 
+function spremljenaSesija(): Session | null {
+  try {
+    const s = JSON.parse(localStorage.getItem(KLJUC_PRIJAVE) ?? "null") as Session | null;
+    return s?.user?.id && s.refresh_token ? s : null;
+  } catch {
+    return null;
+  }
+}
+
 let pokrenuto = false;
 export function pokreniDrustvo() {
   if (pokrenuto || !konfigurirano) {
-    if (!konfigurirano) postavi({ spremno: true });
+    if (!konfigurirano) {
+      // Bez poslužitelja nema računa – dnevnik je lokalan kao prije.
+      postaviVlasnika("lokalno");
+      postavi({ spremno: true });
+    }
     return;
   }
   pokrenuto = true;
@@ -411,10 +428,19 @@ export function pokreniDrustvo() {
     if (localStorage.getItem(KLJUC_ISTEKLA)) postavi({ prijavaIstekla: true });
   } catch {}
   const k = sb();
-  k.auth.getSession().then(({ data }) => {
+  k.auth.getSession().then(({ data, error }) => {
     zabiljeziAktivnost();
-    postavi({ sesija: data.session, spremno: true });
-    if (data.session) {
+    // Bez signala (npr. u šumi) istekli token se ne može obnoviti pa Supabase ne vraća sesiju,
+    // iako je prijava i dalje spremljena. Tada koristimo spremljenu prijavu; token se obnovi
+    // čim se veza vrati.
+    let sesija = data.session;
+    if (!sesija && (error || !navigator.onLine)) {
+      sesija = spremljenaSesija();
+      if (sesija) window.addEventListener("online", () => k.auth.getSession().catch(() => {}), { once: true });
+    }
+    postaviVlasnika(sesija?.user.id ?? null);
+    postavi({ sesija, spremno: true });
+    if (sesija) {
       osvjezi();
       // Nastavi dijeljenje ako je bilo uključeno i još nije isteklo.
       let doT = 0;
@@ -427,8 +453,11 @@ export function pokreniDrustvo() {
       }
     }
   });
-  k.auth.onAuthStateChange((_d, sesija) => {
+  k.auth.onAuthStateChange((dogadaj, sesija) => {
+    // Prazna sesija bez stvarne odjave (npr. neuspjelo obnavljanje bez signala) ne odjavljuje korisnika.
+    if (!sesija && dogadaj !== "SIGNED_OUT") return;
     const promjena = sesija?.user.id !== stanje.sesija?.user.id;
+    if (stanje.spremno) postaviVlasnika(sesija?.user.id ?? null);
     postavi({ sesija });
     if (sesija && promjena) osvjezi();
   });

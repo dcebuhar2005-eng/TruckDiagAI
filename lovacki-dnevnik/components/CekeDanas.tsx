@@ -8,7 +8,7 @@ import { otvori } from "./urednici/kontroler";
 import { cx } from "./ui";
 import { sat } from "@/lib/format";
 import type { Baza } from "@/lib/types";
-import { OCJENE, imaVjetrove, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
+import { OCJENE, imaVjetrove, zaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 import { smjerVjetra, type Prognoza } from "@/lib/vrijeme";
 
 const REDOSLIJED = { dobar: 0, rubno: 1, nestalan: 2, los: 3, nepoznato: 4 } as const;
@@ -16,7 +16,7 @@ const REDOSLIJED = { dobar: 0, rubno: 1, nestalan: 2, los: 3, nepoznato: 4 } as 
 /** Koje čeke danas odgovaraju vjetru (HuntStand „Hunt Area“ na naš način). */
 export default function CekeDanas({ baza, p }: { baza: Baza; p: Prognoza | null }) {
   const [sada] = useState(() => Date.now());
-  const ceke = baza.tocke.filter((t) => t.tip === "ceka" || t.tip === "zaklon");
+  const ceke = baza.tocke.filter((t) => zaVjetar(t.tip));
   if (!ceke.length) return null;
 
   const smjer = p?.trenutno.vjetarSmjer;
@@ -30,7 +30,7 @@ export default function CekeDanas({ baza, p }: { baza: Baza; p: Prognoza | null 
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Čeke za ovaj vjetar</h2>
+        <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Čeke i zasjede za ovaj vjetar</h2>
         {smjer != null && (
           <span className="brojke text-[12.5px] text-tekst-3">
             Sada {smjerVjetra(smjer)} · {Math.round(brzina ?? 0)} km/h
@@ -61,7 +61,9 @@ export default function CekeDanas({ baza, p }: { baza: Baza; p: Prognoza | null 
             <div className="min-w-0 flex-1">
               <div className="truncate font-medium">{t.naziv}</div>
               <div className="truncate text-[12.5px] text-tekst-3">
-                {o === "nepoznato" ? (
+                {o === "nepoznato" && imaVjetrove(t) ? (
+                  <>Vjetar trenutno nije dostupan · dobar: {opisVjetrova(t.vjetrovi)}</>
+                ) : o === "nepoznato" ? (
                   <button className="font-medium text-naglasak" onClick={() => otvori({ tip: "tocka", id: t.id })}>
                     Odredite dobar vjetar
                   </button>

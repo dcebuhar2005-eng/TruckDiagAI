@@ -5,21 +5,18 @@ import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
-import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
+import { ObrazacPrijave } from "@/components/PrijavaZaslon";
+import { Gumb, Naslov, Polje, Segmenti, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
 import {
-  ISTEK_PRIJAVE_DANA,
   drziZaslonUkljucen,
   konfigurirano,
   lovciUBlizini,
-  odjava,
   osvjeziPoziciju,
   pokreniDijeljenje,
   posaljiZahtjev,
   postaviDrzanjeZaslona,
   prihvati,
-  prijava,
   prijeKoliko,
-  registracija,
   spremiProfil,
   trazi,
   ukloni,
@@ -39,12 +36,13 @@ import {
 } from "@/lib/blizina";
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { useBaza } from "@/lib/store";
+import { odjaviSe } from "@/lib/sinkronizacija";
 
 export default function Lovci() {
   const d = useDrustvo();
   if (!konfigurirano) return <NijePostavljeno />;
   if (!d.spremno) return <Kostur redova={2} />;
-  if (!d.sesija) return <Prijava />;
+  if (!d.sesija) return <ObrazacPrijave />;
   if (!d.profil) return <PostaviProfil />;
   return <Glavno />;
 }
@@ -78,102 +76,6 @@ function NijePostavljeno() {
 }
 
 /* ---------------- Prijava ---------------- */
-
-function Prijava() {
-  const istekla = useDrustvo().prijavaIstekla;
-  const [nacin, setNacin] = useState<"prijava" | "registracija">("prijava");
-  const [email, setEmail] = useState("");
-  const [lozinka, setLozinka] = useState("");
-  const [radim, setRadim] = useState(false);
-  const [poruka, setPoruka] = useState<{ tekst: string; greska: boolean } | null>(null);
-
-  const posalji = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRadim(true);
-    setPoruka(null);
-    try {
-      if (nacin === "prijava") {
-        await prijava(email.trim(), lozinka);
-        obavijest("Prijavljeni ste");
-      } else {
-        const { trebaPotvrda } = await registracija(email.trim(), lozinka);
-        if (trebaPotvrda) {
-          setPoruka({ tekst: "Poslali smo vam e-mail. Kliknite poveznicu u njemu, zatim se vratite ovdje i prijavite.", greska: false });
-          setNacin("prijava");
-        }
-      }
-    } catch (err) {
-      setPoruka({ tekst: (err as Error).message, greska: true });
-    } finally {
-      setRadim(false);
-    }
-  };
-
-  return (
-    <div>
-      <Zaglavlje />
-      <motion.form
-        onSubmit={posalji}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="kartica mx-auto max-w-md p-5"
-      >
-        {istekla && (
-          <p className="mb-4 rounded-xl bg-naglasak-meki p-3 text-[14px]">
-            Aplikacija nije otvarana više od {ISTEK_PRIJAVE_DANA / 30} mjeseca, pa vas je radi sigurnosti odjavila. Prijavite se ponovno.
-          </p>
-        )}
-        <Segmenti
-          className="mb-5"
-          vrijednost={nacin}
-          promjena={(v) => {
-            setNacin(v);
-            setPoruka(null);
-          }}
-          opcije={[
-            { vrijednost: "prijava", oznaka: "Prijava" },
-            { vrijednost: "registracija", oznaka: "Novi račun" },
-          ]}
-        />
-        <div className="grid gap-3.5">
-          <Polje oznaka="E-mail">
-            <input id="lov-email" type="email" autoComplete="email" required className="unos" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </Polje>
-          <Polje oznaka="Lozinka" pomoc={nacin === "registracija" ? "Najmanje 6 znakova" : undefined}>
-            <input
-              id="lov-lozinka"
-              type="password"
-              autoComplete={nacin === "prijava" ? "current-password" : "new-password"}
-              required
-              minLength={6}
-              className="unos"
-              value={lozinka}
-              onChange={(e) => setLozinka(e.target.value)}
-            />
-          </Polje>
-        </div>
-        <AnimatePresence>
-          {poruka && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className={cx("mt-4 rounded-xl p-3 text-[14px]", poruka.greska ? "bg-opasnost-meka text-opasnost" : "bg-mahovina-meka text-tekst")}
-            >
-              {poruka.tekst}
-            </motion.p>
-          )}
-        </AnimatePresence>
-        <Gumb type="submit" vrsta="primarni" className="mt-5 w-full" disabled={radim}>
-          {radim ? "Pričekajte…" : nacin === "prijava" ? "Prijavi se" : "Napravi račun"}
-        </Gumb>
-        <p className="mt-4 text-[12.5px] text-tekst-3">
-          Vaš dnevnik ostaje samo na ovom uređaju. Na poslužitelj idu samo profil, popis prijatelja i lokacija dok je sami dijelite.
-        </p>
-      </motion.form>
-    </div>
-  );
-}
 
 function PostaviProfil() {
   const baza = useBaza();
@@ -258,7 +160,7 @@ function Glavno() {
           </>
         }
         akcija={
-          <Gumb vrsta="tihi" velicina="sm" onClick={() => odjava().then(() => obavijest("Odjavljeni ste", "info"))}>
+          <Gumb vrsta="tihi" velicina="sm" onClick={() => odjaviSe().then(() => obavijest("Odjavljeni ste", "info"))}>
             Odjava
           </Gumb>
         }

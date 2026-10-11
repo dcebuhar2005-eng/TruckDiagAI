@@ -12,6 +12,7 @@ import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import OdabirVjetrova from "./OdabirVjetrova";
+import { zaVjetar } from "@/lib/vjetarCeke";
 import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
 
 const ZUPANIJE = [
@@ -309,12 +310,12 @@ export function TockaUrednik({
   const [napomena, setNapomena] = useState(p?.napomena ?? "");
   const [vjetrovi, setVjetrovi] = useState<number[]>(p?.vjetrovi ?? []);
   const potvrda = usePotvrda();
-  const zaVjetar = tip === "ceka" || tip === "zaklon";
+  const imaVjetar = zaVjetar(tip);
 
   const spremi = () => {
     const podaci = {
       tip,
-      vjetrovi: zaVjetar && vjetrovi.length ? vjetrovi : undefined,
+      vjetrovi: imaVjetar && vjetrovi.length ? vjetrovi : undefined,
       naziv: naziv.trim() || TIPOVI_TOCAKA[tip].naziv,
       lovisteId,
       lat: lok!.lat,
@@ -380,6 +381,12 @@ export function TockaUrednik({
               );
             })}
           </div>
+          {tip === "zasjeda" && (
+            <p className="mt-3 rounded-xl bg-povrsina-2 p-3 text-[13px] text-tekst-2">
+              Zasjeda je mjesto na kojem čekate na tlu – sa štapom ili tronošcem. Označite dobre vjetrove pa ćete na karti i
+              pregledu vidjeti kad je ovdje dobar vjetar.
+            </p>
+          )}
         </Odjeljak>
         <Odjeljak naslov="Podaci">
           <Polje oznaka="Naziv">
@@ -401,7 +408,7 @@ export function TockaUrednik({
             <textarea className="unos min-h-20" value={napomena} onChange={(e) => setNapomena(e.target.value)} placeholder="Smjer pogleda, stanje, pristup…" />
           </Polje>
         </Odjeljak>
-        {zaVjetar && (
+        {imaVjetar && (
           <Odjeljak naslov="Dobar vjetar">
             <OdabirVjetrova vrijednost={vjetrovi} promjena={setVjetrovi} />
           </Odjeljak>

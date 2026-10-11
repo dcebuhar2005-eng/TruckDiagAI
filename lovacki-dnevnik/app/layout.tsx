@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 };
 
 // Postavlja temu prije prvog iscrtavanja kako ne bi bljesnula pogrešna boja.
-const skriptaTeme = `try{var p=JSON.parse(localStorage.getItem("lovacki-dnevnik:v1")||"{}").postavke||{};var t=p.tema||"tamna";if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"tamna":"svijetla";document.documentElement.dataset.tema=t}catch(e){}`;
+const skriptaTeme = `try{var t=localStorage.getItem("lovacki-dnevnik:tema")||"tamna";if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"tamna":"svijetla";document.documentElement.dataset.tema=t}catch(e){}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

@@ -19,7 +19,7 @@ važeće uvjete na poveznicama, jer se mijenjaju.
 | CyclOSM (OSM France) | Putevi | ODbL podaci, fair use poslužitelja | — |
 | OpenStreetMap preko Overpass API-ja | Sloj šumskih puteva | ODbL, atribucija „© OpenStreetMap", umjerena upotreba | Ćelije 0,05°, najviše 12 po prikazu, IndexedDB predmemorija **14 dana** |
 | Open-Meteo | Vjetar i prognoza | CC BY 4.0, besplatno nekomercijalno (< ~10 000 poziva/dan) | Memorija + localStorage **15 min**, zaokruživanje lokacije |
-| Supabase (Free) | Prijava, prijatelji, lokacija, kopije | 500 MB baza, 1 GB pohrana, pauza nakon 7 dana neaktivnosti | Kopija jednom mjesečno, stare se brišu |
+| Supabase (Free) | Prijava, privatni dnevnik (`lov_dnevnici`, vidi ga samo vlasnik), prijatelji, lokacija, kopije | 500 MB baza, 1 GB pohrana, pauza nakon 7 dana neaktivnosti | Kopija jednom mjesečno, stare se brišu |
 | Vercel (Hobby) | Objava | **Samo nekomercijalno** | — |
 
 Sve atribucije prikazuju se na karti (dolje desno, na mobitelu iznad navigacije).

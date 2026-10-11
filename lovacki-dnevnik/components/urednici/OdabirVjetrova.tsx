@@ -59,7 +59,7 @@ export default function OdabirVjetrova({ vrijednost, promjena }: { vrijednost: n
         })}
         <circle cx="100" cy="100" r={r0 - 4} fill="var(--povrsina)" stroke="var(--rub)" />
         <text x="100" y="100" textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="700" fill="var(--naglasak)">
-          ČEKA
+          VI
         </text>
       </svg>
       <div className="text-[13px] text-tekst-2">
