@@ -1,4 +1,4 @@
-# Lovački dnevnik
+# Huntora – lovački dnevnik
 
 Evidencija izlazaka, odstrela, lovišta i dozvola – na hrvatskom. Zasebna Next.js aplikacija unutar ovog repozitorija.
 

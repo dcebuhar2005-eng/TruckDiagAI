@@ -13,10 +13,10 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Lovački dnevnik", template: "%s · Lovački dnevnik" },
+  title: { default: "Huntora", template: "%s · Huntora" },
   description: "Evidencija izlazaka, odstrela, lovišta i dozvola – s prognozom vjetra i solunarnim kalendarom.",
-  applicationName: "Lovački dnevnik",
-  appleWebApp: { capable: true, title: "Lovni dnevnik", statusBarStyle: "black-translucent" },
+  applicationName: "Huntora",
+  appleWebApp: { capable: true, title: "Huntora", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

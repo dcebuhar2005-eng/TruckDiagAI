@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lovački dnevnik",
-    short_name: "Lovni dnevnik",
+    name: "Huntora – lovački dnevnik",
+    short_name: "Huntora",
     description: "Evidencija izlazaka, odstrela, lovišta i dozvola",
     start_url: "/",
     display: "standalone",

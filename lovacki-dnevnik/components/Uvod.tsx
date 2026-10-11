@@ -58,7 +58,7 @@ export default function Uvod() {
         ...(lokacija ? { lokacija, lokacijaNaziv: "Područje lova" } : {}),
         dovrsenUvod: true,
       });
-      obavijest("Dobrodošli u Lovački dnevnik");
+      obavijest("Dobrodošli u Huntoru");
     }
   };
 
@@ -111,7 +111,7 @@ export default function Uvod() {
               {korak === 0 && (
                 <div>
                   <p className="mb-3 text-[12px] font-semibold tracking-[0.2em] text-naglasak uppercase">
-                    Lovački dnevnik
+                    Huntora · lovački dnevnik
                   </p>
                   <h1 className="font-display text-[40px] leading-[1.02] font-semibold tracking-tight">
                     Svaki izlazak.

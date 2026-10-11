@@ -61,7 +61,7 @@ export default function Navigacija() {
         <Link href="/" className="mb-8 flex items-center gap-3 px-2">
           <Znak />
           <div>
-            <div className="font-display text-[19px] leading-none font-semibold">Lovački dnevnik</div>
+            <div className="font-display text-[19px] leading-none font-semibold">Huntora</div>
             <div className="mt-1 text-[11.5px] tracking-wide text-tekst-3">Evidencija lova</div>
           </div>
         </Link>
