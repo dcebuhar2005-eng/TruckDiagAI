@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import L from "leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Polyline, Tooltip, useMap, useMapEvents } from "react-leaflet";
 
 // Šumske ceste, vlake i staze iz OpenStreetMapa (Overpass API), crtane preko bilo koje podloge.
 
 interface Put {
   id: number;
-  vrsta: "track" | "path" | "bridleway" | "footway";
+  vrsta: "track" | "path" | "bridleway" | "footway" | "unclassified" | "service";
   stupanj?: string;
   naziv?: string;
   tocke: [number, number][];
@@ -31,7 +32,8 @@ async function dohvatiCeliju(kljuc: string, signal: AbortSignal): Promise<Put[]>
   if (pr) return pr;
   const [la, lo] = kljuc.split(",").map(Number);
   const bbox = `${la},${lo},${(la + 0.05).toFixed(2)},${(lo + 0.05).toFixed(2)}`;
-  const upit = `[out:json][timeout:25];way["highway"~"^(track|path|bridleway|footway)$"](${bbox});out geom;`;
+  // Šumske i poljske ceste, vlake, staze te makadamske/servisne ceste (bez prilaza i parkirališta).
+  const upit = `[out:json][timeout:25];(way["highway"~"^(track|path|bridleway|footway|unclassified)$"](${bbox});way["highway"="service"][!"service"](${bbox}););out geom;`;
   let zadnjaGreska: unknown;
   for (const url of POSLUZITELJI) {
     try {
@@ -59,18 +61,30 @@ async function dohvatiCeliju(kljuc: string, signal: AbortSignal): Promise<Put[]>
   throw zadnjaGreska;
 }
 
-function stil(p: Put) {
-  if (p.vrsta === "track") {
-    // grade1 = tvrda/asfaltirana šumska cesta … grade5 = jedva vidljiva vlaka
-    const g = Number(p.stupanj?.replace("grade", "")) || 3;
-    return { color: "#ffcf5a", weight: g <= 2 ? 4 : 3, dashArray: g <= 2 ? undefined : g === 3 ? "10 6" : "6 6", opacity: 0.95 };
+/** Stil kao u navigacijskim kartama: tamni obrub + svijetla linija; isprekidano za lošije vlake. */
+function stil(p: Put, z: number) {
+  const k = z >= 16 ? 1.5 : z >= 14 ? 1.15 : 1;
+  if (p.vrsta === "unclassified" || p.vrsta === "service") {
+    return { linija: { color: "#fff4d6", weight: 3.2 * k }, obrub: { color: "#2a2116", weight: 5.6 * k, opacity: 0.75 } };
   }
-  return { color: "#ffffff", weight: 2, dashArray: "2 6", opacity: 0.9 };
+  if (p.vrsta === "track") {
+    // grade1 = tvrda šumska cesta … grade5 = jedva vidljiva vlaka
+    const g = Number(p.stupanj?.replace("grade", "")) || 3;
+    const crtice = g <= 2 ? undefined : g === 3 ? `${8 * k} ${5 * k}` : `${5 * k} ${5 * k}`;
+    return {
+      linija: { color: g <= 2 ? "#ffd27a" : "#f5b84a", weight: (g <= 2 ? 3 : 2.4) * k, dashArray: crtice },
+      obrub: { color: "#2a1c0c", weight: (g <= 2 ? 5.4 : 4.6) * k, opacity: 0.7 },
+    };
+  }
+  return { linija: { color: "#ffffff", weight: 1.8 * k, dashArray: `${2 * k} ${4 * k}` }, obrub: { color: "#1c1c1c", weight: 3.6 * k, opacity: 0.45 } };
 }
 
 export default function SumskiPutevi({ onStanje }: { onStanje?: (s: "malo" | "ucitava" | "ok" | "greska") => void }) {
   const map = useMap();
   const [puti, setPuti] = useState<Put[]>([]);
+  const [zoom, setZoom] = useState(() => map.getZoom());
+  // Canvas je mnogo brži od SVG-a za tisuće linija.
+  const platno = useMemo(() => L.canvas({ padding: 0.5, tolerance: 6 }), []);
   const kontrola = useRef<AbortController | null>(null);
   const odgoda = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -106,7 +120,7 @@ export default function SumskiPutevi({ onStanje }: { onStanje?: (s: "malo" | "uc
     }, 500);
   };
 
-  useMapEvents({ moveend: ucitaj });
+  useMapEvents({ moveend: ucitaj, zoomend: () => setZoom(map.getZoom()) });
 
   useEffect(() => {
     ucitaj();
@@ -117,13 +131,32 @@ export default function SumskiPutevi({ onStanje }: { onStanje?: (s: "malo" | "uc
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Najprije svi obrubi, zatim sve linije – tako se raskrižja ne prekrivaju obrubima.
+  const redoslijed = [...puti].sort((a, b) => rang(a) - rang(b));
   return (
     <>
-      {puti.map((p) => (
-        <Polyline key={p.id} positions={p.tocke} pathOptions={stil(p)} interactive={!!p.naziv}>
+      {redoslijed.map((p) => (
+        <Polyline
+          key={`o${p.id}`}
+          positions={p.tocke}
+          pathOptions={{ ...stil(p, zoom).obrub, renderer: platno, lineCap: "round", lineJoin: "round" }}
+          interactive={false}
+        />
+      ))}
+      {redoslijed.map((p) => (
+        <Polyline
+          key={`l${p.id}`}
+          positions={p.tocke}
+          pathOptions={{ ...stil(p, zoom).linija, renderer: platno, lineCap: "round", lineJoin: "round", opacity: 1 }}
+          interactive={!!p.naziv}
+        >
           {p.naziv && <Tooltip sticky>{p.naziv}</Tooltip>}
         </Polyline>
       ))}
     </>
   );
+}
+
+function rang(p: Put) {
+  return p.vrsta === "path" || p.vrsta === "footway" || p.vrsta === "bridleway" ? 0 : p.vrsta === "track" ? 1 : 2;
 }
