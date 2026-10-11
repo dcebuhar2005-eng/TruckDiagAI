@@ -6,10 +6,11 @@ import { DOBNI_RAZREDI, nazivSpola, vrsta as nadiVrstu } from "@/lib/katalog";
 import { datumKratki, isoDatum, isoVrijeme } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela, obrisiFoto, spremiFoto } from "@/lib/foto";
 import Fotografije, { type Slika } from "./Fotografije";
+import PoljeLokacije from "../lokacija/PoljeLokacije";
+import { centarLovista } from "@/lib/upiti";
 import { db, noviId } from "@/lib/store";
 import type { Baza, Odstrel, Spol } from "@/lib/types";
-import Ikona from "../Ikona";
-import { Gumb, Ploca, Polje, Segmenti, obavijest, usePotvrda } from "../ui";
+import { Ploca, Polje, Segmenti, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import { OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
 
@@ -60,7 +61,6 @@ export default function OdstrelUrednik({
   const pocetneFoto = fotografijeOdstrela(p);
   const [slike, setSlike] = useState<Slika[]>([]);
   const [slikeUcitane, setSlikeUcitane] = useState(pocetneFoto.length === 0);
-  const [trazim, setTrazim] = useState(false);
   const potvrda = usePotvrda();
   const postaviV = <K extends keyof typeof v>(k: K, x: (typeof v)[K]) => setV((s) => ({ ...s, [k]: x }));
 
@@ -80,21 +80,6 @@ export default function OdstrelUrednik({
 
   const krupna = nadiVrstu(v.vrsta)?.skupina === "krupna";
   const izlasciDana = baza.izlasci.filter((i) => i.datum === v.datum);
-
-  const gps = () => {
-    setTrazim(true);
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => {
-        setLok({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setTrazim(false);
-      },
-      () => {
-        setTrazim(false);
-        obavijest("Lokacija nije dostupna", "greska");
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  };
 
   const spremi = async () => {
     // Obriši uklonjene, spremi nove fotografije; redoslijed određuje naslovnu.
@@ -249,25 +234,14 @@ export default function OdstrelUrednik({
               </select>
             </Polje>
           </Red>
-          <div className="flex items-center gap-3 rounded-2xl border border-rub bg-povrsina-2 p-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
-              <Ikona ime="lokacija" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium">Mjesto odstrela</div>
-              <div className="brojke truncate text-[12.5px] text-tekst-2">
-                {lok ? `${lok.lat.toFixed(5)}°, ${lok.lng.toFixed(5)}°` : "Nije zabilježeno"}
-              </div>
-            </div>
-            {lok && (
-              <button className="p-2 text-tekst-3 hover:text-opasnost" onClick={() => setLok(undefined)} aria-label="Ukloni lokaciju">
-                <Ikona ime="x" velicina={16} />
-              </button>
-            )}
-            <Gumb velicina="sm" ikona="gps" onClick={gps} disabled={trazim}>
-              {trazim ? "…" : "GPS"}
-            </Gumb>
-          </div>
+          <PoljeLokacije
+            naslov="Mjesto odstrela"
+            naslovKarte="Gdje je divljač odstrijeljena?"
+            prazno="Nije zabilježeno"
+            vrijednost={lok}
+            sredina={centarLovista(baza, v.lovisteId)}
+            promjena={setLok}
+          />
         </Odjeljak>
 
         <Odjeljak naslov="Hitac">

@@ -12,7 +12,8 @@ import { RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from 
 import { demoBaza } from "@/lib/demo";
 import { spremiFoto, sveFotografije } from "@/lib/foto";
 import { db, praznaBaza, useBaza } from "@/lib/store";
-import type { Baza, Postavke as TPostavke } from "@/lib/types";
+import type { Baza, Tocka2D, Postavke as TPostavke } from "@/lib/types";
+import PoljeLokacije from "@/components/lokacija/PoljeLokacije";
 
 export default function Postavke() {
   const baza = useBaza();
@@ -26,39 +27,28 @@ function Obrazac({ baza }: { baza: Baza }) {
   const [ime, setIme] = useState(p.ime);
   const [drustvo, setDrustvo] = useState(p.drustvo ?? "");
   const [iskaznica, setIskaznica] = useState(p.iskaznica ?? "");
-  const [lat, setLat] = useState(p.lokacija.lat.toFixed(5));
-  const [lng, setLng] = useState(p.lokacija.lng.toFixed(5));
+  const [lok, setLok] = useState<Tocka2D>(p.lokacija);
   const [lokNaziv, setLokNaziv] = useState(p.lokacijaNaziv ?? "");
   const datoteka = useRef<HTMLInputElement>(null);
   const potvrda = usePotvrda();
 
-  const spremiProfil = () => {
-    const la = Number(lat.replace(",", "."));
-    const ln = Number(lng.replace(",", "."));
-    if (!Number.isFinite(la) || !Number.isFinite(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180) {
-      return obavijest("Neispravne koordinate", "greska");
-    }
+  const spremiProfil = (lokacija: Tocka2D = lok, naziv = lokNaziv) => {
     db.postavke({
       ime: ime.trim() || "Lovac",
       drustvo: drustvo.trim() || undefined,
       iskaznica: iskaznica.trim() || undefined,
-      lokacija: { lat: la, lng: ln },
-      lokacijaNaziv: lokNaziv.trim() || undefined,
+      lokacija,
+      lokacijaNaziv: naziv.trim() || undefined,
     });
     obavijest("Postavke su spremljene");
   };
 
-  const gps = () =>
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude.toFixed(5));
-        setLng(pos.coords.longitude.toFixed(5));
-        if (!lokNaziv) setLokNaziv("Moja lokacija");
-        obavijest("Lokacija preuzeta – spremite promjene", "info");
-      },
-      () => obavijest("Lokacija nije dostupna", "greska"),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+  // Odabir lokacije sprema se odmah – o njoj ovise vjetar, prognoza i Sunce.
+  const promijeniLokaciju = (t: Tocka2D | undefined) => {
+    if (!t) return;
+    setLok(t);
+    spremiProfil(t, lokNaziv);
+  };
 
   const izvezi = async () => {
     let fotografije: Record<string, string> = {};
@@ -114,25 +104,23 @@ function Obrazac({ baza }: { baza: Baza }) {
           </div>
         </Sekcija>
 
-        <Sekcija ikona="lokacija" naslov="Zadana lokacija" opis="Za izlazak/zalazak Sunca, solunarna razdoblja i prognozu.">
+        <Sekcija ikona="lokacija" naslov="Zadana lokacija" opis="Na ovom mjestu mjere se vjetar i prognoza, izlazak/zalazak Sunca i solunarna razdoblja.">
           <div className="grid gap-3.5">
             <Polje oznaka="Naziv">
               <input className="unos" value={lokNaziv} onChange={(e) => setLokNaziv(e.target.value)} placeholder="npr. Lovište Bukovac" />
             </Polje>
-            <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-3">
-              <Polje oznaka="Širina">
-                <input inputMode="decimal" className="unos brojke" value={lat} onChange={(e) => setLat(e.target.value)} />
-              </Polje>
-              <Polje oznaka="Dužina">
-                <input inputMode="decimal" className="unos brojke" value={lng} onChange={(e) => setLng(e.target.value)} />
-              </Polje>
-              <Gumb ikona="gps" onClick={gps} aria-label="Preuzmi GPS lokaciju" />
-            </div>
+            <PoljeLokacije
+              naslov="Područje vjetra i prognoze"
+              naslovKarte="Odaberite područje lova"
+              vrijednost={lok}
+              promjena={promijeniLokaciju}
+              obavezno
+            />
           </div>
         </Sekcija>
 
         <motion.div variants={djeteListe} className="flex justify-end lg:col-span-2">
-          <Gumb vrsta="primarni" ikona="kvacica" onClick={spremiProfil}>
+          <Gumb vrsta="primarni" ikona="kvacica" onClick={() => spremiProfil()}>
             Spremi promjene
           </Gumb>
         </motion.div>

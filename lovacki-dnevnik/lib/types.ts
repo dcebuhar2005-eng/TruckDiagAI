@@ -74,6 +74,9 @@ export interface Izlazak {
   do?: string;
   lovisteId?: ID;
   tockaId?: ID;
+  /** Mjesto izlaska kad nije vezano uz točku (odabrano na karti ili GPS-om). */
+  lat?: number;
+  lng?: number;
   nacin: VrstaLova;
   vrijeme?: Vrijeme;
   pratitelji?: string;

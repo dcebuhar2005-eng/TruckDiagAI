@@ -5,10 +5,11 @@ import { useState } from "react";
 import { NACINI_LOVA } from "@/lib/katalog";
 import { isoDatum, isoVrijeme } from "@/lib/format";
 import { db } from "@/lib/store";
-import type { Baza, Izlazak, Opazanje, VrstaLova, Vrijeme } from "@/lib/types";
+import type { Baza, Izlazak, Opazanje, Tocka2D, VrstaLova, Vrijeme } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
 import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona from "../Ikona";
+import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import {
@@ -52,6 +53,7 @@ export default function IzlazakUrednik({
   const [doV, setDo] = useState(p.do ?? "");
   const [lovisteId, setLoviste] = useState(p.lovisteId);
   const [tockaId, setTocka] = useState(p.tockaId);
+  const [lok, setLok] = useState<Tocka2D | undefined>(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : undefined);
   const [nacin, setNacin] = useState<VrstaLova>(p.nacin ?? "cekanje");
   const [vrijeme, setVrijeme] = useState<Vrijeme>(p.vrijeme ?? {});
   const [opazanja, setOpazanja] = useState<Opazanje[]>(p.opazanja ?? []);
@@ -67,7 +69,7 @@ export default function IzlazakUrednik({
     setUcitavam(true);
     try {
       const t = baza.tocke.find((x) => x.id === tockaId);
-      const loc = t ?? centarLovista(baza, lovisteId);
+      const loc = t ?? lok ?? centarLovista(baza, lovisteId);
       const pr = await dohvatiPrognozu(loc.lat, loc.lng);
       setVrijeme(pr.trenutno);
       obavijest(`${opisVremena(pr.trenutno.kod)}, ${Math.round(pr.trenutno.temperatura ?? 0)} °C`, "info");
@@ -85,6 +87,8 @@ export default function IzlazakUrednik({
       do: tekst(doV),
       lovisteId,
       tockaId,
+      lat: tockaId ? undefined : lok?.lat,
+      lng: tockaId ? undefined : lok?.lng,
       nacin,
       vrijeme: Object.values(vrijeme).some((v) => v != null) ? vrijeme : undefined,
       opazanja: opazanja.filter((o) => o.broj > 0),
@@ -162,6 +166,16 @@ export default function IzlazakUrednik({
               </select>
             </Polje>
           </Red>
+          {!tockaId && (
+            <PoljeLokacije
+              naslov="Mjesto izlaska"
+              naslovKarte="Gdje ste bili u lovu?"
+              prazno="Neobavezno – koristi se središte lovišta"
+              vrijednost={lok}
+              sredina={centarLovista(baza, lovisteId)}
+              promjena={setLok}
+            />
+          )}
           <Polje oznaka="Način lova">
             <Cipovi
               opcije={Object.entries(NACINI_LOVA).map(([v, o]) => ({ vrijednost: v, oznaka: o }))}

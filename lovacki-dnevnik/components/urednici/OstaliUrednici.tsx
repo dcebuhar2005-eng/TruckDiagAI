@@ -5,8 +5,10 @@ import { useState } from "react";
 import { BOJE_LOVISTA, TIPOVI_DOZVOLA, TIPOVI_TOCAKA } from "@/lib/katalog";
 import { povrsinaHa } from "@/lib/format";
 import { db } from "@/lib/store";
-import type { Baza, Kvota, Loviste, Spol, Tocka, TipDozvole, TipTocke } from "@/lib/types";
+import type { Baza, Kvota, Loviste, Spol, Tocka, Tocka2D, TipDozvole, TipTocke } from "@/lib/types";
+import { centarLovista } from "@/lib/upiti";
 import Ikona from "../Ikona";
+import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
@@ -302,8 +304,7 @@ export function TockaUrednik({
   const [tip, setTip] = useState<TipTocke>(p?.tip ?? "ceka");
   const [naziv, setNaziv] = useState(p?.naziv ?? "");
   const [lovisteId, setLoviste] = useState<string | undefined>(p?.lovisteId ?? baza.lovista[0]?.id);
-  const [lat, setLat] = useState(p?.lat?.toFixed(6) ?? "");
-  const [lng, setLng] = useState(p?.lng?.toFixed(6) ?? "");
+  const [lok, setLok] = useState<Tocka2D | undefined>(p?.lat != null && p?.lng != null ? { lat: p.lat, lng: p.lng } : undefined);
   const [napomena, setNapomena] = useState(p?.napomena ?? "");
   const potvrda = usePotvrda();
 
@@ -312,8 +313,8 @@ export function TockaUrednik({
       tip,
       naziv: naziv.trim() || TIPOVI_TOCAKA[tip].naziv,
       lovisteId,
-      lat: Number(lat),
-      lng: Number(lng),
+      lat: lok!.lat,
+      lng: lok!.lng,
       napomena: tekst(napomena),
     };
     if (postojeca) {
@@ -345,7 +346,7 @@ export function TockaUrednik({
             onSpremi={spremi}
             onOdustani={zatvori}
             onObrisi={postojeca ? obrisi : undefined}
-            onemoguceno={!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng)) || !lat || !lng}
+            onemoguceno={!lok}
           />
         }
       >
@@ -383,14 +384,15 @@ export function TockaUrednik({
           <Polje oznaka="Lovište">
             <OdabirLovista baza={baza} vrijednost={lovisteId} promjena={setLoviste} />
           </Polje>
-          <Red>
-            <Polje oznaka="Geo. širina">
-              <input inputMode="decimal" className="unos brojke" value={lat} onChange={(e) => setLat(e.target.value)} />
-            </Polje>
-            <Polje oznaka="Geo. dužina">
-              <input inputMode="decimal" className="unos brojke" value={lng} onChange={(e) => setLng(e.target.value)} />
-            </Polje>
-          </Red>
+          <PoljeLokacije
+            naslov="Položaj"
+            naslovKarte={naziv.trim() || `Gdje je ${TIPOVI_TOCAKA[tip].naziv.toLowerCase()}?`}
+            prazno="Odaberite na karti ili uzmite svoju lokaciju"
+            vrijednost={lok}
+            sredina={centarLovista(baza, lovisteId)}
+            promjena={setLok}
+            obavezno
+          />
           <Polje oznaka="Napomena">
             <textarea className="unos min-h-20" value={napomena} onChange={(e) => setNapomena(e.target.value)} placeholder="Smjer pogleda, stanje, pristup…" />
           </Polje>
