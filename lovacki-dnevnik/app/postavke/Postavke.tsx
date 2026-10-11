@@ -202,10 +202,22 @@ function Obrazac({ baza }: { baza: Baza }) {
 
         <AutomatskaKopija />
 
-        <motion.p variants={djeteListe} className="text-[12.5px] text-tekst-3 lg:col-span-2">
-          Prognoza: Open-Meteo · Karte: Esri, OpenTopoMap, OpenStreetMap · Astronomski izračuni lokalno na uređaju. Solunarna
-          razdoblja i procjena aktivnosti su orijentacijske.
-        </motion.p>
+        <motion.div variants={djeteListe} className="lg:col-span-2">
+          <Link
+            href="/izvori"
+            transitionTypes={["naprijed"]}
+            className="kartica flex items-center gap-3 p-4 transition-colors hover:border-rub-jaki"
+          >
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+              <Ikona ime="slojevi" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-[17px] font-semibold">Izvori i licence</div>
+              <div className="text-[13px] text-tekst-3">Karte, vrijeme, putevi i servisi – uvjeti korištenja</div>
+            </div>
+            <Ikona ime="desno" className="text-tekst-3" />
+          </Link>
+        </motion.div>
       </motion.div>
       {potvrda.element}
     </div>

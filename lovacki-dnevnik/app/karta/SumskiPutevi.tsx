@@ -3,6 +3,7 @@
 import L from "leaflet";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Polyline, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { procitaj, zapisi } from "@/lib/predmemorija";
 
 // Šumske ceste, vlake i staze iz OpenStreetMapa (Overpass API), crtane preko bilo koje podloge.
 
@@ -16,6 +17,8 @@ interface Put {
 
 const POSLUZITELJI = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
 const MIN_ZOOM = 12;
+/** Isto područje dohvaća se najviše jednom u 14 dana (umjerena upotreba Overpassa). */
+const TRAJANJE_PREDMEMORIJE = 14 * 86400000;
 const predmemorija = new Map<string, Put[]>();
 
 /** Područje zaokruženo na mrežu od 0,05° da se isti dijelovi ne dohvaćaju ponovno. */
@@ -28,8 +31,11 @@ function celije(j: number, z: number, i: number, s: number) {
 }
 
 async function dohvatiCeliju(kljuc: string, signal: AbortSignal): Promise<Put[]> {
-  const pr = predmemorija.get(kljuc);
-  if (pr) return pr;
+  const pr = predmemorija.get(kljuc) ?? (await procitaj<Put[]>(`putevi:${kljuc}`, TRAJANJE_PREDMEMORIJE));
+  if (pr) {
+    predmemorija.set(kljuc, pr);
+    return pr;
+  }
   const [la, lo] = kljuc.split(",").map(Number);
   const bbox = `${la},${lo},${(la + 0.05).toFixed(2)},${(lo + 0.05).toFixed(2)}`;
   // Šumske i poljske ceste, vlake, staze te makadamske/servisne ceste (bez prilaza i parkirališta).
@@ -52,6 +58,7 @@ async function dohvatiCeliju(kljuc: string, signal: AbortSignal): Promise<Put[]>
           tocke: e.geometry!.map((g) => [g.lat, g.lon] as [number, number]),
         }));
       predmemorija.set(kljuc, puti);
+      zapisi(`putevi:${kljuc}`, puti);
       return puti;
     } catch (e) {
       if (signal.aborted) throw e;

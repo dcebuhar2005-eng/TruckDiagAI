@@ -7,7 +7,7 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { FazaMjeseca, TrakaDana } from "@/components/Nebo";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
-import { StrelicaVjetra } from "@/components/Vjetar";
+import VjetarKartica from "@/components/VjetarKartica";
 import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { lovnaGodina, mjesec, mjesecevaVremena, solunar, suncevaVremena } from "@/lib/astro";
 import { bojaVrste, nazivSpola, NACINI_LOVA } from "@/lib/katalog";
@@ -16,7 +16,7 @@ import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
 import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza } from "@/lib/types";
 import { nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
-import { opisVremena, smjerVjetra, trendTlaka, usePrognoza } from "@/lib/vrijeme";
+import { usePrognoza } from "@/lib/vrijeme";
 
 function pozdrav(h: number) {
   if (h < 5) return "Laku noć";
@@ -54,8 +54,6 @@ export default function Pregled() {
     .filter((x) => x.s.status === "istice" || x.s.status === "istekla");
 
   const p = prognoza.podaci;
-  const trend = p ? trendTlaka(p) : null;
-  const satno = p ? p.satno.filter((s) => s.vrijeme.getTime() > p.dohvaceno - 3600000).slice(0, 12) : [];
 
   const aktivnost = [
     ...baza.izlasci.map((i) => ({ tip: "izlazak" as const, datum: i.datum, vr: i.od, i })),
@@ -132,72 +130,23 @@ export default function Pregled() {
       </motion.header>
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-3">
-        {/* Uvjeti – vrijeme i vjetar */}
+        {/* Vjetar i vrijeme */}
         <motion.section variants={djeteListe} className="kartica relative overflow-hidden p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Uvjeti sada</h2>
-            {p && (
-              <span className="text-[12px] text-tekst-3">
-                Ažurirano {sat(new Date(p.dohvaceno))}
-              </span>
-            )}
+            <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Vjetar i vrijeme</h2>
+            {p && <span className="text-[12px] text-tekst-3">Ažurirano {sat(new Date(p.dohvaceno))}</span>}
           </div>
           {p ? (
-            <div className="grid gap-5 md:grid-cols-[auto_1fr]">
-              <div className="flex items-center gap-5">
-                <StrelicaVjetra smjer={p.trenutno.vjetarSmjer} velicina={112} />
-                <div>
-                  <div className="brojke font-display text-[44px] leading-none font-semibold">
-                    {Math.round(p.trenutno.temperatura ?? 0)}°
-                  </div>
-                  <div className="mt-1 text-tekst-2">{opisVremena(p.trenutno.kod)}</div>
-                  <div className="brojke mt-2 text-[15px] font-medium">
-                    Vjetar {smjerVjetra(p.trenutno.vjetarSmjer)} · {Math.round(p.trenutno.vjetarBrzina ?? 0)} km/h
-                  </div>
-                  <div className="brojke text-[12.5px] text-tekst-3">Udari do {Math.round(p.trenutno.udari ?? 0)} km/h</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 self-center">
-                <Mini ikona="tlak" oznaka="Tlak" vrijednost={`${Math.round(p.trenutno.tlak ?? 0)}`} jedinica="hPa" dodatak={trend ? (trend.opis === "raste" ? "↗ raste" : trend.opis === "pada" ? "↘ pada" : "→ stabilan") : undefined} />
-                <Mini ikona="kap" oznaka="Vlaga" vrijednost={`${p.trenutno.vlaga ?? "–"}`} jedinica="%" />
-                <Mini ikona="oblak" oznaka="Naoblaka" vrijednost={`${p.trenutno.oblacnost ?? "–"}`} jedinica="%" />
-              </div>
-              {satno.length > 0 && (
-                <div className="skriven-klizac -mx-5 overflow-x-auto px-5 md:col-span-2">
-                  <div className="flex gap-1.5">
-                    {satno.map((s, i) => (
-                      <motion.div
-                        key={s.vrijeme.getTime()}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + i * 0.03 }}
-                        className={cx(
-                          "flex min-w-[62px] flex-col items-center gap-1 rounded-2xl border px-2 py-2.5",
-                          i === 0 ? "border-naglasak/40 bg-naglasak-meki" : "border-rub bg-povrsina-2",
-                        )}
-                      >
-                        <span className="brojke text-[11.5px] text-tekst-3">{i === 0 ? "Sada" : sat(s.vrijeme)}</span>
-                        <svg width="22" height="22" viewBox="0 0 24 24" style={{ transform: `rotate(${(s.vjetarSmjer + 180) % 360}deg)` }} className="text-naglasak">
-                          <path d="M12 3l5 14-5-3-5 3z" fill="currentColor" />
-                        </svg>
-                        <span className="brojke text-[13px] font-semibold">{Math.round(s.vjetarBrzina)}</span>
-                        <span className="text-[10.5px] text-tekst-3">{smjerVjetra(s.vjetarSmjer)}</span>
-                        <span className="brojke text-[11.5px] text-tekst-2">{Math.round(s.temperatura)}°</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <VjetarKartica p={p} />
           ) : prognoza.greska ? (
             <div className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-4 text-sm text-tekst-2">
               <Ikona ime="upozorenje" className="text-naglasak" />
               Prognoza trenutno nije dostupna. Provjerite internetsku vezu.
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="svjetlucanje h-28 rounded-2xl" />
-              <div className="svjetlucanje h-28 rounded-2xl" />
+            <div className="grid gap-3 md:grid-cols-[168px_1fr]">
+              <div className="svjetlucanje mx-auto size-[168px] rounded-full" />
+              <div className="svjetlucanje h-40 rounded-2xl" />
             </div>
           )}
         </motion.section>
@@ -378,22 +327,6 @@ function BrzaAkcija({ ikona, oznaka, onClick, primarna }: { ikona: ImeIkone; ozn
       <Ikona ime={ikona} velicina={17} className="hidden sm:block" />
       {oznaka}
     </motion.button>
-  );
-}
-
-function Mini({ ikona, oznaka, vrijednost, jedinica, dodatak }: { ikona: ImeIkone; oznaka: string; vrijednost: string; jedinica: string; dodatak?: string }) {
-  return (
-    <div className="rounded-2xl border border-rub bg-povrsina-2 p-3">
-      <div className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-tekst-3 uppercase">
-        <Ikona ime={ikona} velicina={12} />
-        {oznaka}
-      </div>
-      <div className="brojke mt-1 text-[19px] font-semibold">
-        {vrijednost}
-        <span className="ml-0.5 text-[12px] font-normal text-tekst-3">{jedinica}</span>
-      </div>
-      {dodatak && <div className="text-[11.5px] text-tekst-2">{dodatak}</div>}
-    </div>
   );
 }
 

@@ -28,7 +28,7 @@ import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
 import SumskiPutevi from "./SumskiPutevi";
 import type { Baza, Tocka } from "@/lib/types";
-import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
+import { beaufort, smjerVjetra, usePrognoza } from "@/lib/vrijeme";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const MAKS_ZOOM = 21;
@@ -651,7 +651,11 @@ export default function KartaPrikaz() {
               Zona mirisa · {odabraniSat ? (satIndeks === 0 ? "sada" : sat(odabraniSat.vrijeme)) : "…"}
             </div>
             <div className="brojke truncate text-[15px] font-semibold">
-              {vjetarSmjer != null ? `Vjetar iz ${smjerVjetra(vjetarSmjer)} · ${Math.round(vjetarBrzina ?? 0)} km/h` : prognoza.greska ? "Vjetar nedostupan" : "Učitavam vjetar…"}
+              {vjetarSmjer != null
+                ? `Iz ${smjerVjetra(vjetarSmjer)} · ${Math.round(vjetarBrzina ?? 0)} km/h · ${beaufort(vjetarBrzina ?? 0).naziv.toLowerCase()}`
+                : prognoza.greska
+                  ? "Vjetar nedostupan"
+                  : "Učitavam vjetar…"}
             </div>
             {satno.length > 1 && (
               <input
