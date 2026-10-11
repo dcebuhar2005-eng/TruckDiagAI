@@ -2,13 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Ikona from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
-import { Gumb, Naslov, PraznoStanje, Segmenti, cx } from "@/components/ui";
+import { Gumb, Naslov, PraznoStanje, Segmenti } from "@/components/ui";
 import { NACINI_LOVA, bojaVrste, nazivSpola, vrsta as nadiVrstu, SKUPINE } from "@/lib/katalog";
 import { izIso, MJESECI_KRATKO, mnozina, trajanjeIzlaska } from "@/lib/format";
+import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { useBaza } from "@/lib/store";
 import type { Baza, Izlazak, Odstrel } from "@/lib/types";
 import { nazivLovista, sortirajPoDatumu } from "@/lib/upiti";
@@ -293,13 +294,27 @@ function KarticaOdstrela({ o, baza, red }: { o: Odstrel; baza: Baza; red: number
             {o.markica && <span className="font-mono text-[11.5px]">{o.markica}</span>}
           </div>
         </div>
-        {o.fotoId && (
-          <span className={cx("grid size-8 shrink-0 place-items-center self-center rounded-lg bg-povrsina-2 text-tekst-3")} title="Ima fotografiju">
-            <Ikona ime="kamera" velicina={15} />
-          </span>
-        )}
+        {fotografijeOdstrela(o).length > 0 && <Slicica id={fotografijeOdstrela(o)[0]} broj={fotografijeOdstrela(o).length} />}
       </button>
     </motion.li>
   );
 }
 
+
+function Slicica({ id, broj }: { id: string; broj: number }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let ziv = true;
+    dohvatiFoto(id).then((u) => ziv && u && setUrl(u));
+    return () => {
+      ziv = false;
+    };
+  }, [id]);
+  return (
+    <span className="relative size-14 shrink-0 self-center overflow-hidden rounded-xl border border-rub bg-povrsina-2">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {url && <img src={url} alt="" className="size-full object-cover" />}
+      {broj > 1 && <span className="brojke absolute right-0.5 bottom-0.5 rounded bg-black/65 px-1 text-[10px] text-white">{broj}</span>}
+    </span>
+  );
+}

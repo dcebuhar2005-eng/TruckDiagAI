@@ -1,18 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { mjesec, suncevaVremena } from "@/lib/astro";
 import { NACINI_LOVA, TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
 import { danUTjednu, datumDugi, izIso, sat, trajanjeIzlaska } from "@/lib/format";
-import { dohvatiFoto } from "@/lib/foto";
+import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import type { Baza } from "@/lib/types";
 import { centarLovista, nazivLovista } from "@/lib/upiti";
 import { opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona, { type ImeIkone } from "../Ikona";
 import { StrelicaVjetra } from "../Vjetar";
-import { Gumb, Ploca, Znacka, djeteListe, roditeljListe } from "../ui";
+import { Gumb, Ploca, Znacka, cx, djeteListe, roditeljListe } from "../ui";
 import { otvori, zatvori } from "./kontroler";
 
 function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: string; vrijednost: ReactNode }) {
@@ -29,10 +29,18 @@ function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: strin
 
 export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
   const o = baza.odstrel.find((x) => x.id === id);
-  const [foto, setFoto] = useState<string | null>(null);
+  const [fotke, setFotke] = useState<string[]>([]);
+  const [aktivna, setAktivna] = useState(0);
+  const [puniZaslon, setPuniZaslon] = useState<number | null>(null);
+  const kljuc = o ? fotografijeOdstrela(o).join(",") : "";
   useEffect(() => {
-    if (o?.fotoId) dohvatiFoto(o.fotoId).then((f) => f && setFoto(f));
-  }, [o?.fotoId]);
+    if (!kljuc) return;
+    let ziv = true;
+    Promise.all(kljuc.split(",").map((fid) => dohvatiFoto(fid))).then((r) => ziv && setFotke(r.filter((x): x is string => !!x)));
+    return () => {
+      ziv = false;
+    };
+  }, [kljuc]);
   if (!o) return null;
   const izlazak = baza.izlasci.find((i) => i.id === o.izlazakId);
   const boja = bojaVrste(o.vrsta);
@@ -64,9 +72,27 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
         className="relative mb-5 overflow-hidden rounded-3xl border border-rub"
         style={{ background: `linear-gradient(135deg, ${boja}33, transparent 70%)` }}
       >
-        {foto ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={foto} alt={o.vrsta} className="max-h-80 w-full object-cover" />
+        {fotke.length ? (
+          <>
+            <div
+              className="skriven-klizac flex snap-x snap-mandatory overflow-x-auto"
+              onScroll={(e) => setAktivna(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+            >
+              {fotke.map((f, i) => (
+                <button key={i} type="button" onClick={() => setPuniZaslon(i)} className="w-full shrink-0 snap-center" aria-label="Prikaži preko cijelog zaslona">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={f} alt={`${o.vrsta} – fotografija ${i + 1}`} className="h-72 w-full object-cover" />
+                </button>
+              ))}
+            </div>
+            {fotke.length > 1 && (
+              <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+                {fotke.map((_, i) => (
+                  <span key={i} className={cx("h-1.5 rounded-full bg-white transition-all", i === aktivna ? "w-5 opacity-100" : "w-1.5 opacity-60")} />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex h-36 items-center justify-center">
             <div className="grid size-20 place-items-center rounded-full border border-rub-jaki" style={{ color: boja }}>
@@ -117,6 +143,45 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
           <Ikona ime="desno" className="text-tekst-3" />
         </button>
       )}
+      <AnimatePresence>
+        {puniZaslon != null && fotke[puniZaslon] && (
+          <motion.div
+            className="fixed inset-0 z-[2600] flex items-center justify-center bg-black/95"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPuniZaslon(null)}
+          >
+            { }
+            <motion.img
+              key={puniZaslon}
+              src={fotke[puniZaslon]}
+              alt={o.vrsta}
+              className="max-h-full max-w-full object-contain"
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              onDragEnd={(_, i) => {
+                if (i.offset.x < -60 && puniZaslon < fotke.length - 1) setPuniZaslon(puniZaslon + 1);
+                if (i.offset.x > 60 && puniZaslon > 0) setPuniZaslon(puniZaslon - 1);
+              }}
+            />
+            <button
+              className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 grid size-11 place-items-center rounded-full bg-white/15 text-white"
+              aria-label="Zatvori"
+            >
+              <Ikona ime="x" />
+            </button>
+            {fotke.length > 1 && (
+              <div className="brojke absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] text-[14px] text-white/80">
+                {puniZaslon + 1} / {fotke.length}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Ploca>
   );
 }

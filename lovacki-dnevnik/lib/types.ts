@@ -103,7 +103,9 @@ export interface Odstrel {
   oruzje?: string;
   kalibar?: string;
   markica?: string;
+  /** Stari zapis s jednom fotografijom – novi zapisi koriste `fotoIds`. */
   fotoId?: string;
+  fotoIds?: string[];
   napomena?: string;
   createdAt: number;
 }

@@ -63,3 +63,8 @@ export function smanjiSliku(datoteka: File, maks = 1400): Promise<string> {
     img.src = url;
   });
 }
+
+/** Sve fotografije odstrela (podržava i stare zapise s jednom fotografijom). */
+export function fotografijeOdstrela(o: { fotoId?: string; fotoIds?: string[] }) {
+  return o.fotoIds ?? (o.fotoId ? [o.fotoId] : []);
+}

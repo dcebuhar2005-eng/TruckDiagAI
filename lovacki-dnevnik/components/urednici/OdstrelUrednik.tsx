@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DOBNI_RAZREDI, nazivSpola, vrsta as nadiVrstu } from "@/lib/katalog";
 import { datumKratki, isoDatum, isoVrijeme } from "@/lib/format";
-import { dohvatiFoto, obrisiFoto, smanjiSliku, spremiFoto } from "@/lib/foto";
+import { dohvatiFoto, fotografijeOdstrela, obrisiFoto, spremiFoto } from "@/lib/foto";
+import Fotografije, { type Slika } from "./Fotografije";
 import { db, noviId } from "@/lib/store";
 import type { Baza, Odstrel, Spol } from "@/lib/types";
 import Ikona from "../Ikona";
@@ -56,16 +57,26 @@ export default function OdstrelUrednik({
   const [lok, setLok] = useState<{ lat: number; lng: number } | undefined>(
     p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : undefined,
   );
-  const [foto, setFoto] = useState<string | null>(null);
-  const [fotoPromijenjena, setFotoPromijenjena] = useState(false);
+  const pocetneFoto = fotografijeOdstrela(p);
+  const [slike, setSlike] = useState<Slika[]>([]);
+  const [slikeUcitane, setSlikeUcitane] = useState(pocetneFoto.length === 0);
   const [trazim, setTrazim] = useState(false);
-  const datoteka = useRef<HTMLInputElement>(null);
   const potvrda = usePotvrda();
   const postaviV = <K extends keyof typeof v>(k: K, x: (typeof v)[K]) => setV((s) => ({ ...s, [k]: x }));
 
+  const kljucFoto = pocetneFoto.join(",");
   useEffect(() => {
-    if (p.fotoId) dohvatiFoto(p.fotoId).then((f) => f && setFoto(f));
-  }, [p.fotoId]);
+    if (!kljucFoto) return;
+    let ziv = true;
+    Promise.all(kljucFoto.split(",").map(async (id) => ({ id, url: await dohvatiFoto(id) }))).then((r) => {
+      if (!ziv) return;
+      setSlike(r.flatMap((x) => (x.url ? [{ id: x.id, url: x.url }] : [])));
+      setSlikeUcitane(true);
+    });
+    return () => {
+      ziv = false;
+    };
+  }, [kljucFoto]);
 
   const krupna = nadiVrstu(v.vrsta)?.skupina === "krupna";
   const izlasciDana = baza.izlasci.filter((i) => i.datum === v.datum);
@@ -85,28 +96,24 @@ export default function OdstrelUrednik({
     );
   };
 
-  const odaberiFoto = async (f?: File) => {
-    if (!f) return;
-    try {
-      setFoto(await smanjiSliku(f));
-      setFotoPromijenjena(true);
-    } catch {
-      obavijest("Fotografija se ne može učitati", "greska");
-    }
-  };
-
   const spremi = async () => {
-    let fotoId = p.fotoId;
-    if (fotoPromijenjena) {
-      if (fotoId) await obrisiFoto(fotoId).catch(() => {});
-      fotoId = undefined;
-      if (foto) {
-        fotoId = noviId();
+    // Obriši uklonjene, spremi nove fotografije; redoslijed određuje naslovnu.
+    let fotoIds: string[] = pocetneFoto;
+    if (slikeUcitane) {
+      const zadrzane = new Set(slike.filter((x) => x.id).map((x) => x.id!));
+      await Promise.all(pocetneFoto.filter((id) => !zadrzane.has(id)).map((id) => obrisiFoto(id).catch(() => {})));
+      fotoIds = [];
+      for (const sl of slike) {
+        if (sl.id) {
+          fotoIds.push(sl.id);
+          continue;
+        }
+        const id = noviId();
         try {
-          await spremiFoto(fotoId, foto);
+          await spremiFoto(id, sl.url);
+          fotoIds.push(id);
         } catch {
-          fotoId = undefined;
-          obavijest("Fotografija nije spremljena", "greska");
+          obavijest("Neka fotografija nije spremljena", "greska");
         }
       }
     }
@@ -128,7 +135,8 @@ export default function OdstrelUrednik({
       napomena: tekst(v.napomena),
       lat: lok?.lat,
       lng: lok?.lng,
-      fotoId,
+      fotoId: undefined,
+      fotoIds,
     };
     if (postojeci) {
       db.uredi("odstrel", postojeci.id, podaci);
@@ -161,6 +169,10 @@ export default function OdstrelUrednik({
           <PodnozjeObrasca onSpremi={spremi} onOdustani={zatvori} onObrisi={postojeci ? obrisi : undefined} />
         }
       >
+        <Odjeljak naslov="Fotografije">
+          <Fotografije slike={slike} promjena={setSlike} />
+        </Odjeljak>
+
         <Odjeljak naslov="Divljač">
           <Polje oznaka="Vrsta">
             <OdabirVrste vrijednost={v.vrsta} promjena={(x) => postaviV("vrsta", x)} />
@@ -272,51 +284,7 @@ export default function OdstrelUrednik({
           </Red>
         </Odjeljak>
 
-        <Odjeljak naslov="Fotografija i bilješka">
-          <input ref={datoteka} type="file" accept="image/*" hidden onChange={(e) => odaberiFoto(e.target.files?.[0])} />
-          <AnimatePresence mode="wait">
-            {foto ? (
-              <motion.div
-                key="foto"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                className="group relative overflow-hidden rounded-2xl border border-rub"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={foto} alt="Fotografija odstrela" className="max-h-72 w-full object-cover" />
-                <div className="absolute right-2 bottom-2 flex gap-2">
-                  <Gumb velicina="sm" ikona="kamera" onClick={() => datoteka.current?.click()} className="bg-black/60 text-white backdrop-blur border-white/10">
-                    Zamijeni
-                  </Gumb>
-                  <Gumb
-                    velicina="sm"
-                    vrsta="opasni"
-                    ikona="smece"
-                    onClick={() => {
-                      setFoto(null);
-                      setFotoPromijenjena(true);
-                    }}
-                    className="backdrop-blur"
-                  />
-                </div>
-              </motion.div>
-            ) : (
-              <motion.button
-                key="prazno"
-                type="button"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => datoteka.current?.click()}
-                className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-rub-jaki text-tekst-3 transition-colors hover:border-naglasak hover:text-naglasak"
-              >
-                <Ikona ime="kamera" velicina={26} />
-                <span className="text-sm">Dodaj fotografiju</span>
-              </motion.button>
-            )}
-          </AnimatePresence>
+        <Odjeljak naslov="Bilješka">
           <Polje oznaka="Napomena">
             <textarea className="unos min-h-20" value={v.napomena} onChange={(e) => postaviV("napomena", e.target.value)} placeholder="Pogodak, reakcija, potraga…" />
           </Polje>
