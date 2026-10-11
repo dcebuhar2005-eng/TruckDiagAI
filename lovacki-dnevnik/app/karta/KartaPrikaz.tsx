@@ -176,10 +176,19 @@ function stozac(lat: number, lng: number, smjerIz: number, duljina = 350, kut = 
   return tocke;
 }
 
-function Dogadaji({ onKlik, onPomak }: { onKlik: (ll: L.LatLng) => void; onPomak: (c: L.LatLng) => void }) {
+function Dogadaji({
+  onKlik,
+  onPomak,
+  onPovlacenje,
+}: {
+  onKlik: (ll: L.LatLng) => void;
+  onPomak: (c: L.LatLng) => void;
+  onPovlacenje: () => void;
+}) {
   useMapEvents({
     click: (e) => onKlik(e.latlng),
     moveend: (e) => onPomak(e.target.getCenter()),
+    dragstart: onPovlacenje,
   });
   return null;
 }
@@ -190,6 +199,37 @@ function Upravljac({ cilj }: { cilj: { lat: number; lng: number; zoom?: number; 
     if (cilj) map.flyTo([cilj.lat, cilj.lng], cilj.zoom ?? Math.max(map.getZoom(), 15), { duration: 1.1 });
   }, [cilj, map]);
   return null;
+}
+
+type MojaPozicija = { lat: number; lng: number; tocnost: number; smjer: number | null };
+
+/** Dok je praćenje uključeno, karta glatko slijedi korisnika. */
+function Pracenje({ moja, pratim }: { moja: MojaPozicija | null; pratim: boolean }) {
+  const map = useMap();
+  const prvi = useRef(true);
+  useEffect(() => {
+    if (!moja || !pratim) return;
+    if (prvi.current) {
+      prvi.current = false;
+      map.flyTo([moja.lat, moja.lng], Math.max(map.getZoom(), 17), { duration: 1 });
+    } else {
+      map.panTo([moja.lat, moja.lng], { animate: true, duration: 0.6 });
+    }
+  }, [moja, pratim, map]);
+  return null;
+}
+
+function ikonaMoje(smjer: number | null) {
+  const strelica =
+    smjer != null
+      ? `<svg width="44" height="44" viewBox="0 0 44 44" style="position:absolute;inset:0;transform:rotate(${smjer}deg)"><path d="M22 2 L29 14 L15 14 Z" fill="#4ea1ff" opacity=".9"/></svg>`
+      : "";
+  return L.divIcon({
+    className: "",
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    html: `<div style="position:relative;width:44px;height:44px">${strelica}<div style="position:absolute;left:13px;top:13px;width:18px;height:18px;border-radius:999px;background:#4ea1ff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(78,161,255,.25),0 2px 6px rgba(0,0,0,.5)"></div></div>`,
+  });
 }
 
 function GraniceNaPocetku({ baza }: { baza: Baza }) {
@@ -232,7 +272,16 @@ export default function KartaPrikaz() {
   const [crtez, setCrtez] = useState<[number, number][]>([]);
   const [lovisteZaGranicu, setLovisteZaGranicu] = useState<string | undefined>();
   const [cilj, setCilj] = useState<{ lat: number; lng: number; zoom?: number; k: number } | null>(null);
-  const [moja, setMoja] = useState<{ lat: number; lng: number; tocnost: number } | null>(null);
+  const [moja, setMoja] = useState<MojaPozicija | null>(null);
+  const [pratim, setPratim] = useState(false);
+  const pracenjeId = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (pracenjeId.current != null) navigator.geolocation.clearWatch(pracenjeId.current);
+    },
+    [],
+  );
   const [centar, setCentar] = useState<{ lat: number; lng: number } | null>(null);
   const [satIndeks, setSatIndeks] = useState(0);
 
@@ -314,14 +363,29 @@ export default function KartaPrikaz() {
 
   const gps = () => {
     if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const m = { lat: p.coords.latitude, lng: p.coords.longitude, tocnost: p.coords.accuracy };
-        setMoja(m);
-        setCilj({ ...m, zoom: 16, k: Date.now() });
+    setPratim(true);
+    if (moja) setCilj({ lat: moja.lat, lng: moja.lng, zoom: 17, k: Date.now() });
+    if (pracenjeId.current != null) return;
+    pracenjeId.current = navigator.geolocation.watchPosition(
+      (p) =>
+        setMoja({
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+          tocnost: p.coords.accuracy,
+          smjer: p.coords.heading != null && !Number.isNaN(p.coords.heading) && (p.coords.speed ?? 0) > 0.4 ? p.coords.heading : null,
+        }),
+      (e) => {
+        obavijest(
+          e.code === e.PERMISSION_DENIED ? "Pristup lokaciji je odbijen – dopustite ga u postavkama" : "Lokacija nije dostupna",
+          "greska",
+        );
+        if (e.code === e.PERMISSION_DENIED && pracenjeId.current != null) {
+          navigator.geolocation.clearWatch(pracenjeId.current);
+          pracenjeId.current = null;
+          setPratim(false);
+        }
       },
-      () => obavijest("Lokacija nije dostupna", "greska"),
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 },
     );
   };
 
@@ -351,7 +415,8 @@ export default function KartaPrikaz() {
             setPodloga("hibrid");
           }}
         />
-        <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} />
+        <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} />
+        <Pracenje moja={moja} pratim={pratim} />
         <Upravljac cilj={cilj} />
         <GraniceNaPocetku baza={baza} />
 
@@ -445,8 +510,8 @@ export default function KartaPrikaz() {
 
         {moja && (
           <>
-            <Circle center={[moja.lat, moja.lng]} radius={moja.tocnost} pathOptions={{ color: "#4ea1ff", weight: 1, fillOpacity: 0.1 }} />
-            <CircleMarker center={[moja.lat, moja.lng]} radius={7} pathOptions={{ color: "#fff", weight: 3, fillColor: "#4ea1ff", fillOpacity: 1 }} />
+            <Circle center={[moja.lat, moja.lng]} radius={moja.tocnost} interactive={false} pathOptions={{ color: "#4ea1ff", weight: 1, fillOpacity: 0.1 }} />
+            <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer)} interactive={false} zIndexOffset={2000} />
           </>
         )}
 
@@ -511,7 +576,7 @@ export default function KartaPrikaz() {
 
         <div className="pointer-events-auto ml-auto flex flex-col gap-2">
           <KartaGumb ikona="slojevi" oznaka="Slojevi" aktivan={izbornik} onClick={() => setIzbornik((s) => !s)} />
-          <KartaGumb ikona="gps" oznaka="Moja lokacija" onClick={gps} />
+          <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
         </div>
       </div>
 
