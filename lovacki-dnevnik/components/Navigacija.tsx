@@ -1,18 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Ikona, { type ImeIkone } from "./Ikona";
-import { cx, opruga } from "./ui";
+import { Ploca, cx, opruga } from "./ui";
+import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
 import { useBaza } from "@/lib/store";
 
 export const RUTE: { href: string; oznaka: string; ikona: ImeIkone; mobilno: boolean }[] = [
   { href: "/", oznaka: "Pregled", ikona: "pregled", mobilno: true },
   { href: "/dnevnik", oznaka: "Dnevnik", ikona: "dnevnik", mobilno: true },
   { href: "/karta", oznaka: "Karta", ikona: "karta", mobilno: true },
-  { href: "/lovista", oznaka: "Lovišta", ikona: "loviste", mobilno: true },
-  { href: "/dozvole", oznaka: "Dozvole", ikona: "dozvola", mobilno: true },
+  { href: "/lovci", oznaka: "Lovci", ikona: "korisnik", mobilno: true },
+  { href: "/lovista", oznaka: "Lovišta", ikona: "loviste", mobilno: false },
+  { href: "/dozvole", oznaka: "Dozvole", ikona: "dozvola", mobilno: false },
   { href: "/statistika", oznaka: "Statistika", ikona: "statistika", mobilno: false },
   { href: "/postavke", oznaka: "Postavke", ikona: "postavke", mobilno: false },
 ];
@@ -31,6 +34,20 @@ export default function Navigacija() {
   const baza = useBaza();
   const akt = indeks(put);
   const ime = baza?.postavke.ime;
+  const drustvo = useDrustvo();
+  const [vise, setVise] = useState(false);
+  const zahtjevi = drustvo.prijateljstva.filter((p) => p.dolazni && p.status === "ceka").length;
+  const opasnost = lovciUBlizini(drustvo).length > 0;
+  const znacka = (href: string) =>
+    href === "/lovci" && (opasnost || zahtjevi > 0) ? (
+      <span
+        className={cx(
+          "absolute -top-1 -right-1.5 size-2.5 rounded-full ring-2 ring-povrsina",
+          opasnost ? "bg-opasnost" : "bg-naglasak",
+        )}
+      />
+    ) : null;
+  const viseAktivno = !RUTE[akt].mobilno;
 
   return (
     <>
@@ -73,7 +90,10 @@ export default function Navigacija() {
                     className="absolute top-2 bottom-2 -left-4 w-[3px] rounded-r-full bg-naglasak"
                   />
                 )}
-                <Ikona ime={r.ikona} velicina={19} className={cx("relative", a && "text-naglasak")} />
+                <span className="relative">
+                  <Ikona ime={r.ikona} velicina={19} className={cx(a && "text-naglasak")} />
+                  {znacka(r.href)}
+                </span>
                 <span className="relative">{r.oznaka}</span>
               </Link>
             );
@@ -118,6 +138,7 @@ export default function Navigacija() {
                   className={cx("relative", a ? "text-naglasak" : "text-tekst-3")}
                 >
                   <Ikona ime={r.ikona} velicina={21} debljina={a ? 2 : 1.7} />
+                  {znacka(r.href)}
                 </motion.span>
                 <span
                   className={cx(
@@ -130,8 +151,45 @@ export default function Navigacija() {
               </Link>
             );
           })}
+          <button
+            onClick={() => setVise(true)}
+            className="relative flex flex-1 flex-col items-center gap-0.5 rounded-[20px] py-2"
+          >
+            {viseAktivno && (
+              <motion.span layoutId="nav-dolje" transition={opruga} className="absolute inset-0 rounded-[20px] bg-naglasak-meki" />
+            )}
+            <span className={cx("relative", viseAktivno ? "text-naglasak" : "text-tekst-3")}>
+              <Ikona ime="vise" velicina={21} debljina={2.4} />
+            </span>
+            <span className={cx("relative text-[10.5px] font-medium tracking-wide", viseAktivno ? "text-tekst" : "text-tekst-3")}>
+              Više
+            </span>
+          </button>
         </div>
       </nav>
+
+      <Ploca otvorena={vise} zatvori={() => setVise(false)} naslov="Više" sirina={420}>
+        <div className="grid grid-cols-2 gap-2.5 pb-2">
+          {RUTE.filter((r) => !r.mobilno).map((r) => {
+            const a = RUTE.indexOf(r) === akt;
+            return (
+              <Link
+                key={r.href}
+                href={r.href}
+                transitionTypes={smjer(put, r.href)}
+                onClick={() => setVise(false)}
+                className={cx(
+                  "flex flex-col gap-3 rounded-2xl border p-4 transition-colors",
+                  a ? "border-naglasak bg-naglasak-meki" : "border-rub bg-povrsina-2 hover:border-rub-jaki",
+                )}
+              >
+                <Ikona ime={r.ikona} velicina={22} className="text-naglasak" />
+                <span className="font-medium">{r.oznaka}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </Ploca>
     </>
   );
 }

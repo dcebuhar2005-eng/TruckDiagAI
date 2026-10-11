@@ -10,9 +10,10 @@ Evidencija izlazaka, odstrela, lovišta i dozvola – na hrvatskom. Zasebna Next
 - **Lovišta** – kartice s obrisom granice, točke, povijest izlazaka i odstrela po lovištu.
 - **Dozvole** – lovačka iskaznica, dozvole za lov, oružni list, osiguranje; rokovi valjanosti i iskorištenost kvota.
 - **Statistika** – po lovnim godinama: mjeseci, vrste, doba dana, ruža vjetrova, uspješnost po načinu lova, trofeji; izvoz u CSV i ispis.
+- **Lovci** – prijatelji (pretraga po imenu ili @korisničkom imenu, zahtjevi) i „U lovu sam”: dijeljenje lokacije s prijateljima na ograničeno vrijeme, prikaz na karti s krugom od 300 m i upozorenje kad je prijatelj bliže od 600 m.
 - **Postavke** – profil, zadana lokacija, tamna/svijetla tema, izvoz/uvoz sigurnosne kopije (JSON s fotografijama).
 
-Podaci se čuvaju isključivo na uređaju (localStorage, fotografije u IndexedDB-u).
+Dnevnik se čuva isključivo na uređaju (localStorage, fotografije u IndexedDB-u). Za prijatelje se na poslužitelj (Supabase) šalju samo profil, prijateljstva i lokacija dok je korisnik sam dijeli.
 
 ## Pokretanje
 
@@ -23,3 +24,15 @@ npm run dev
 ```
 
 Za Vercel postavite **Root Directory** na `lovacki-dnevnik`.
+
+## Postavljanje prijatelja (Supabase)
+
+1. U Supabase projektu otvorite **SQL Editor**, zalijepite sadržaj `supabase/lov_shema.sql` i kliknite **Run**. Skripta se smije pokrenuti više puta.
+2. Na Vercelu u projektu ove aplikacije dodajte varijable okoline (Production i Preview):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+3. Ponovno objavite (Redeploy).
+4. Ako je u Supabaseu uključena potvrda e-maila, dodajte adresu aplikacije u **Authentication → URL Configuration → Redirect URLs** (npr. `https://hunt-jade.vercel.app/**`).
+
+Pristup podacima štite pravila (RLS): lokaciju vide samo prihvaćeni prijatelji i samo dok dijeljenje nije isteklo.
+Web-aplikacija osvježava lokaciju dok je otvorena; nakon zatvaranja prijatelji vide zadnju poznatu poziciju s vremenom.

@@ -11,7 +11,8 @@ import { StrelicaVjetra } from "@/components/Vjetar";
 import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { lovnaGodina, mjesec, mjesecevaVremena, solunar, suncevaVremena } from "@/lib/astro";
 import { bojaVrste, nazivSpola, NACINI_LOVA } from "@/lib/katalog";
-import { datumDugi, datumKratki, danUTjednu, mnozina, sat, trajanje, trajanjeIzlaska } from "@/lib/format";
+import { datumDugi, datumKratki, danUTjednu, metri, mnozina, sat, trajanje, trajanjeIzlaska } from "@/lib/format";
+import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
 import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza } from "@/lib/types";
 import { nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
@@ -83,25 +84,7 @@ export default function Pregled() {
 
   return (
     <div>
-      {/* Brzi pristup na mobitelu (na računalu su u bočnoj traci) */}
-      <div className="mb-4 flex justify-end gap-2 lg:hidden">
-        <Link
-          href="/statistika"
-          transitionTypes={["naprijed"]}
-          aria-label="Statistika"
-          className="grid size-10 place-items-center rounded-xl border border-rub bg-povrsina-2 text-tekst-2 hover:text-tekst"
-        >
-          <Ikona ime="statistika" velicina={18} />
-        </Link>
-        <Link
-          href="/postavke"
-          transitionTypes={["naprijed"]}
-          aria-label="Postavke"
-          className="grid size-10 place-items-center rounded-xl border border-rub bg-povrsina-2 text-tekst-2 hover:text-tekst"
-        >
-          <Ikona ime="postavke" velicina={18} />
-        </Link>
-      </div>
+      <UpozorenjeLovaca />
 
       {jePrimjer(baza) && (
         <motion.div
@@ -228,10 +211,15 @@ export default function Pregled() {
               <div className="font-medium">{astro.m.naziv}</div>
               <div className="brojke text-[13px] text-tekst-2">Osvijetljenost {Math.round(astro.m.osvjetljenje * 100)} %</div>
               <div className="brojke text-[12.5px] text-tekst-3">
-                ↑ {sat(astro.mv.izlazak)} · ↓ {sat(astro.mv.zalazak)}
+                Izlazi {sat(astro.mv.izlazak)} · zalazi {sat(astro.mv.zalazak)}
               </div>
             </div>
           </div>
+          {astro.m.osvjetljenje < 0.06 && (
+            <p className="mt-3 text-[12.5px] text-tekst-3">
+              Mlađak: Mjesec izlazi i zalazi blizu Sunca, pa se danju ne vidi, a noć je potpuno tamna.
+            </p>
+          )}
           <div className="mt-5 flex items-center justify-between rounded-2xl bg-povrsina-2 p-3.5">
             <div>
               <div className="text-[11.5px] font-medium tracking-wide text-tekst-3 uppercase">Solunarna ocjena</div>
@@ -461,4 +449,31 @@ function Plocica({
 /** Primjeri iz uvoda – zastavica ili prepoznatljivo izmišljeno lovište. */
 function jePrimjer(b: Baza) {
   return !!b.postavke.primjer || b.lovista.some((l) => l.naziv === "Bukovac" && l.broj === "VII/118");
+}
+
+function UpozorenjeLovaca() {
+  const d = useDrustvo();
+  const blizu = lovciUBlizini(d);
+  const uLovu = d.lokacije.length;
+  if (!blizu.length && !uLovu && !d.dijelim) return null;
+  return (
+    <Link href="/lovci" transitionTypes={["naprijed"]} className="mb-5 block">
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cx(
+          "flex items-center gap-3 rounded-2xl border p-3.5",
+          blizu.length ? "border-opasnost/50 bg-opasnost-meka" : "border-mahovina/40 bg-mahovina-meka",
+        )}
+      >
+        <Ikona ime={blizu.length ? "upozorenje" : "korisnik"} className={blizu.length ? "text-opasnost" : "text-mahovina"} />
+        <span className="flex-1 text-[14px]">
+          {blizu.length
+            ? `Lovac u blizini: ${blizu.map((l) => `${l.profil.ime} (${metri(l.udaljenost)})`).join(", ")}`
+            : `${d.dijelim ? "Dijelite lokaciju. " : ""}${uLovu ? `U lovu: ${d.lokacije.map((l) => l.profil.ime).join(", ")}` : ""}`}
+        </span>
+        <Ikona ime="desno" velicina={16} className="text-tekst-3" />
+      </motion.div>
+    </Link>
+  );
 }
