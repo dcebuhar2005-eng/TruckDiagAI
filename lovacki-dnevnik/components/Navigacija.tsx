@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useId } from "react";
 import Ikona, { type ImeIkone } from "./Ikona";
 import { cx, opruga } from "./ui";
 import { useBaza } from "@/lib/store";
@@ -138,30 +137,15 @@ export default function Navigacija() {
 }
 
 export function Znak({ velicina = 40 }: { velicina?: number }) {
-  // Jedinstveni id: isti gradijent u skrivenom elementu (display:none) ne bi se iscrtao.
-  const id = useId();
   return (
-    <svg width={velicina} height={velicina} viewBox="0 0 64 64" aria-hidden>
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f0b75a" />
-          <stop offset="1" stopColor="#b9781a" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="16" fill="#142016" />
-      <path
-        d="M22 14c-1 6 1 10 5 13M42 14c1 6-1 10-5 13M18 20c2 2 5 3 8 3M46 20c-2 2-5 3-8 3"
-        stroke={`url(#${id})`}
-        strokeWidth="3"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M24 30c0-3 3-5 8-5s8 2 8 5c0 6-3 12-8 18-5-6-8-12-8-18z"
-        fill={`url(#${id})`}
-      />
-      <circle cx="28.5" cy="32" r="1.6" fill="#142016" />
-      <circle cx="35.5" cy="32" r="1.6" fill="#142016" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/icon.svg"
+      alt=""
+      width={velicina}
+      height={velicina}
+      className="shrink-0"
+      style={{ borderRadius: velicina * 0.24 }}
+    />
   );
 }
