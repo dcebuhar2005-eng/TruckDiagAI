@@ -1,6 +1,6 @@
 # Izvori, licence i plan za rast
 
-Ovaj dokument navodi sve vanjske izvore koje Lovački dnevnik koristi, uvjete pod kojima ih smije
+Ovaj dokument navodi sve vanjske izvore koje Huntora koristi, uvjete pod kojima ih smije
 koristiti i što treba promijeniti ako aplikacija jednog dana postane komercijalna ili je počne
 koristiti mnogo ljudi. Isti popis korisnici vide u aplikaciji: **Postavke → Izvori i licence**
 (`lib/izvori.ts`).
