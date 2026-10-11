@@ -547,6 +547,7 @@ export function usePotvrda() {
     naslov: string;
     opis: string;
     potvrdi: () => void;
+    gumb?: { oznaka: string; ikona: ImeIkone; vrsta: VrstaGumba };
   } | null>(null);
   const element = (
     <Ploca
@@ -560,15 +561,15 @@ export function usePotvrda() {
             Odustani
           </Gumb>
           <Gumb
-            vrsta="opasni"
-            ikona="smece"
+            vrsta={stanje?.gumb?.vrsta ?? "opasni"}
+            ikona={stanje?.gumb?.ikona ?? "smece"}
             className="flex-1"
             onClick={() => {
               stanje?.potvrdi();
               setStanje(null);
             }}
           >
-            Obriši
+            {stanje?.gumb?.oznaka ?? "Obriši"}
           </Gumb>
         </div>
       }
@@ -577,8 +578,8 @@ export function usePotvrda() {
     </Ploca>
   );
   return {
-    pitaj: (naslov: string, opis: string, potvrdi: () => void) =>
-      setStanje({ naslov, opis, potvrdi }),
+    pitaj: (naslov: string, opis: string, potvrdi: () => void, gumb?: { oznaka: string; ikona: ImeIkone; vrsta: VrstaGumba }) =>
+      setStanje({ naslov, opis, potvrdi, gumb }),
     element,
   };
 }

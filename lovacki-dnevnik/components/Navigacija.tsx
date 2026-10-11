@@ -1,12 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Ikona, { type ImeIkone } from "./Ikona";
 import { Ploca, cx, opruga } from "./ui";
 import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
+import { aktivniLov } from "@/lib/lov";
 import { useBaza } from "@/lib/store";
 
 export const RUTE: { href: string; oznaka: string; ikona: ImeIkone; mobilno: boolean }[] = [
@@ -23,6 +24,7 @@ export const RUTE: { href: string; oznaka: string; ikona: ImeIkone; mobilno: boo
 function indeks(put: string) {
   // Podstranice postavki (npr. Izvori i licence) pripadaju Postavkama.
   if (put.startsWith("/izvori")) put = "/postavke";
+  if (put.startsWith("/lov") && !put.startsWith("/lovi")) put = "/";
   const i = RUTE.findIndex((r) => (r.href === "/" ? put === "/" : put.startsWith(r.href)));
   return i < 0 ? 0 : i;
 }
@@ -65,6 +67,9 @@ export default function Navigacija() {
             <div className="mt-1 text-[11.5px] tracking-wide text-tekst-3">Evidencija lova</div>
           </div>
         </Link>
+        <div className="relative mb-4 h-11 empty:hidden">
+          <OznakaLova put={put} bocno />
+        </div>
         <nav className="flex flex-col gap-1">
           {RUTE.map((r, i) => {
             const a = i === akt;
@@ -117,6 +122,7 @@ export default function Navigacija() {
         style={{ viewTransitionName: "navigacija" }}
         className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] lg:hidden"
       >
+        <OznakaLova put={put} />
         <div className="mx-auto flex max-w-md items-stretch justify-between rounded-[26px] border border-rub-jaki bg-povrsina/85 p-1.5 shadow-jaka backdrop-blur-2xl">
           {RUTE.filter((r) => r.mobilno).map((r) => {
             const a = RUTE.indexOf(r) === akt;
@@ -207,5 +213,54 @@ export function Znak({ velicina = 40 }: { velicina?: number }) {
       className="shrink-0"
       style={{ borderRadius: velicina * 0.24 }}
     />
+  );
+}
+
+/** Pulsirajuća oznaka „U lovu” s proteklim vremenom – vodi na stranicu lova. */
+function OznakaLova({ put, bocno }: { put: string; bocno?: boolean }) {
+  const baza = useBaza();
+  const i = aktivniLov(baza);
+  const [sad, setSad] = useState(() => Date.now());
+  useEffect(() => {
+    if (!i) return;
+    const t = setInterval(() => setSad(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, [i]);
+  const vidljiva = !!i && put !== "/lov";
+  let proteklo = "";
+  if (i) {
+    const [h, m] = i.od.split(":").map(Number);
+    const [g, mj, d] = i.datum.split("-").map(Number);
+    const min = Math.max(0, Math.round((sad - new Date(g, mj - 1, d, h, m).getTime()) / 60000));
+    proteklo = min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
+  }
+  return (
+    <AnimatePresence>
+      {vidljiva && (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 10, scale: 0.9 }}
+          transition={opruga}
+          className={bocno ? "absolute inset-0" : "pointer-events-none absolute inset-x-0 -top-11 flex justify-center"}
+        >
+          <Link
+            href="/lov"
+            transitionTypes={["naprijed"]}
+            className={cx(
+              "pointer-events-auto flex items-center gap-2 rounded-full bg-mahovina px-4 py-2 text-[13.5px] font-semibold text-[#0b100c] shadow-jaka",
+              bocno && "h-full w-full justify-center rounded-2xl",
+            )}
+          >
+            <span className="relative flex size-2.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#0b100c] opacity-50" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-[#0b100c]" />
+            </span>
+            U lovu · {proteklo}
+            <Ikona ime="desno" velicina={14} debljina={2.4} />
+          </Link>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

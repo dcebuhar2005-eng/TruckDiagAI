@@ -45,7 +45,7 @@ export function registrirajSW() {
     .register("/sw.js")
     .then((reg) => {
       // Jednom po pokretanju osvježi spremljenu ljusku (nova verzija aplikacije).
-      setTimeout(() => (reg.active ?? navigator.serviceWorker.controller)?.postMessage("osvjezi-ljusku"), 15000);
+      setTimeout(() => (reg?.active ?? navigator.serviceWorker.controller)?.postMessage("osvjezi-ljusku"), 15000);
     })
     .catch(() => {});
 }

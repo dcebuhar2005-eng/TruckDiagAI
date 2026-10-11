@@ -1,10 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { dohvatiFoto, obrisiFoto, spremiFoto } from "@/lib/foto";
+import { duljinaTraga } from "@/lib/lov";
+import Fotografije, { type Slika } from "./Fotografije";
 import { NACINI_LOVA } from "@/lib/katalog";
 import { isoDatum, isoVrijeme } from "@/lib/format";
-import { db } from "@/lib/store";
+import { db, noviId } from "@/lib/store";
 import type { Baza, Izlazak, Opazanje, Tocka2D, VrstaLova, Vrijeme } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
 import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
@@ -62,6 +65,22 @@ export default function IzlazakUrednik({
   const [napomena, setNapomena] = useState(p.napomena ?? "");
   const [ucitavam, setUcitavam] = useState(false);
   const potvrda = usePotvrda();
+  const pocetneFoto = p.fotoIds ?? [];
+  const [slike, setSlike] = useState<Slika[]>([]);
+  const [slikeUcitane, setSlikeUcitane] = useState(pocetneFoto.length === 0);
+  const kljucFoto = pocetneFoto.join(",");
+  useEffect(() => {
+    if (!kljucFoto) return;
+    let ziv = true;
+    Promise.all(kljucFoto.split(",").map(async (fid) => ({ id: fid, url: await dohvatiFoto(fid) }))).then((r) => {
+      if (!ziv) return;
+      setSlike(r.flatMap((x) => (x.url ? [{ id: x.id, url: x.url }] : [])));
+      setSlikeUcitane(true);
+    });
+    return () => {
+      ziv = false;
+    };
+  }, [kljucFoto]);
 
   const tocke = baza.tocke.filter((t) => !lovisteId || t.lovisteId === lovisteId);
 
@@ -80,8 +99,28 @@ export default function IzlazakUrednik({
     }
   };
 
-  const spremi = () => {
+  const spremi = async () => {
+    let fotoIds: string[] = pocetneFoto;
+    if (slikeUcitane) {
+      const zadrzane = new Set(slike.filter((x) => x.id).map((x) => x.id!));
+      await Promise.all(pocetneFoto.filter((fid) => !zadrzane.has(fid)).map((fid) => obrisiFoto(fid).catch(() => {})));
+      fotoIds = [];
+      for (const sl of slike) {
+        if (sl.id) {
+          fotoIds.push(sl.id);
+          continue;
+        }
+        const fid = noviId();
+        try {
+          await spremiFoto(fid, sl.url);
+          fotoIds.push(fid);
+        } catch {
+          obavijest("Neka fotografija nije spremljena", "greska");
+        }
+      }
+    }
     const podaci = {
+      fotoIds: fotoIds.length ? fotoIds : undefined,
       datum,
       od,
       do: tekst(doV),
@@ -121,8 +160,12 @@ export default function IzlazakUrednik({
       <Ploca
         otvorena={otvorena}
         zatvori={zatvori}
-        naslov={postojeci ? "Uredi izlazak" : "Novi izlazak"}
-        podnaslov="Zabilježite uvjete i opažanja"
+        naslov={postojeci?.uTijeku ? "Lov u tijeku" : postojeci ? "Uredi izlazak" : "Novi izlazak"}
+        podnaslov={
+          postojeci?.trag && postojeci.trag.length > 1
+            ? `Snimljen trag: ${(duljinaTraga(postojeci.trag) / 1000).toFixed(1)} km`
+            : "Zabilježite uvjete i opažanja"
+        }
         podnozje={
           <PodnozjeObrasca
             onSpremi={spremi}
@@ -287,6 +330,10 @@ export default function IzlazakUrednik({
             ))}
           </AnimatePresence>
           {!opazanja.length && <p className="text-sm text-tekst-3">Još nema opažanja.</p>}
+        </Odjeljak>
+
+        <Odjeljak naslov="Fotografije">
+          <Fotografije slike={slike} promjena={setSlike} />
         </Odjeljak>
 
         <Odjeljak naslov="Bilješke">

@@ -232,7 +232,13 @@ function KarticaIzlaska({ i, baza, red }: { i: Izlazak; baza: Baza; red: number 
             <span className="flex items-center gap-1">
               <Ikona ime="sat" velicina={13} />
               {i.od}
-              {i.do ? `–${i.do}` : ""}
+              {i.uTijeku ? (
+                <span className="ml-1 rounded-full bg-mahovina px-1.5 py-px text-[11px] font-semibold text-[#0b100c]">u tijeku</span>
+              ) : i.do ? (
+                `–${i.do}`
+              ) : (
+                ""
+              )}
               {min ? ` (${Math.floor(min / 60)}:${String(min % 60).padStart(2, "0")} h)` : ""}
             </span>
             {i.vrijeme?.vjetarSmjer != null && (
