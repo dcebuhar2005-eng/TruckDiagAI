@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: { default: "Lovački dnevnik", template: "%s · Lovački dnevnik" },
   description: "Evidencija izlazaka, odstrela, lovišta i dozvola – s prognozom vjetra i solunarnim kalendarom.",
   applicationName: "Lovački dnevnik",
-  appleWebApp: { capable: true, title: "Lovački dnevnik", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Lovni dnevnik", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
