@@ -41,7 +41,7 @@ interface SlojPodloge {
   wms?: { layers: string; format: string };
 }
 
-const PODLOGE: Record<string, { naziv: string; slojevi: SlojPodloge[] }> = {
+const PODLOGE: Record<string, { naziv: string; slojevi: SlojPodloge[]; rezerve?: SlojPodloge[][] }> = {
   hibrid: {
     naziv: "Hibrid",
     slojevi: [
@@ -80,9 +80,21 @@ const PODLOGE: Record<string, { naziv: string; slojevi: SlojPodloge[] }> = {
     naziv: "Reljef",
     slojevi: [{ url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap, SRTM | © OpenTopoMap (CC-BY-SA)", nativni: 17 }],
   },
-  karta: {
-    naziv: "Karta",
-    slojevi: [{ url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attr: "© OpenStreetMap", nativni: 19 }],
+  tk25: {
+    naziv: "HR TK25",
+    // Službena topografska karta 1:25 000 (DGU) – najviše šumskih cesta i vlaka.
+    slojevi: [
+      { url: "https://geoportal.dgu.hr/services/tk/ows", attr: "© Državna geodetska uprava – TK25", nativni: 17, wms: { layers: "tk:TK25_NOVI", format: "image/png" } },
+    ],
+    rezerve: [
+      [{ url: "https://geoportal.dgu.hr/services/tk/ows", attr: "© Državna geodetska uprava – TK25", nativni: 17, wms: { layers: "tk:TK25", format: "image/png" } }],
+      [{ url: "https://geoportal.dgu.hr/services/tk/wms", attr: "© Državna geodetska uprava – TK25", nativni: 17, wms: { layers: "TK25", format: "image/png" } }],
+    ],
+  },
+  putevi: {
+    naziv: "Putevi",
+    // CyclOSM: OSM karta s jasno razvrstanim šumskim cestama, vlakama i stazama.
+    slojevi: [{ url: "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", attr: "© OpenStreetMap, CyclOSM", nativni: 20 }],
   },
 };
 type Podloga = keyof typeof PODLOGE;
@@ -90,12 +102,13 @@ type Podloga = keyof typeof PODLOGE;
 const KLJUC_PODLOGE = "lovacki-dnevnik:podloga";
 
 /** Iscrtava odabranu podlogu; ako sloj ne učita slike, javlja grešku (npr. DGU servis nedostupan). */
-function SlojeviPodloge({ podloga, onGreska }: { podloga: Podloga; onGreska: () => void }) {
+function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; varijanta: number; onGreska: () => void }) {
   const greske = useRef(0);
   const uspjesi = useRef(0);
+  const slojevi = varijanta === 0 ? PODLOGE[podloga].slojevi : (PODLOGE[podloga].rezerve?.[varijanta - 1] ?? PODLOGE[podloga].slojevi);
   return (
     <>
-      {PODLOGE[podloga].slojevi.map((sl, i) => {
+      {slojevi.map((sl, i) => {
         const zajednicko = {
           attribution: sl.attr,
           maxNativeZoom: sl.nativni,
@@ -112,7 +125,7 @@ function SlojeviPodloge({ podloga, onGreska }: { podloga: Podloga; onGreska: () 
           },
         };
         return sl.wms ? (
-          <WMSTileLayer key={`${podloga}-${i}`} url={sl.url} params={{ layers: sl.wms.layers, format: sl.wms.format, transparent: false, version: "1.3.0" }} {...zajednicko} />
+          <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={{ layers: sl.wms.layers, format: sl.wms.format, transparent: false, version: "1.1.1" }} {...zajednicko} />
         ) : (
           <TileLayer key={`${podloga}-${i}`} url={sl.url} detectRetina={sl.retina} {...zajednicko} />
         );
@@ -266,7 +279,9 @@ export default function KartaPrikaz() {
     } catch {}
     return "hibrid";
   });
+  const [varijanta, setVarijanta] = useState(0);
   const setPodloga = (p: Podloga) => {
+    setVarijanta(0);
     setPodlogaStanje(p);
     try {
       localStorage.setItem(KLJUC_PODLOGE, p);
@@ -416,10 +431,15 @@ export default function KartaPrikaz() {
         attributionControl
       >
         <SlojeviPodloge
-          key={podloga}
+          key={`${podloga}-${varijanta}`}
           podloga={podloga}
+          varijanta={varijanta}
           onGreska={() => {
             if (podloga === "hibrid") return;
+            if (varijanta < (PODLOGE[podloga].rezerve?.length ?? 0)) {
+              setVarijanta(varijanta + 1);
+              return;
+            }
             obavijest(`Podloga „${PODLOGE[podloga].naziv}” trenutno nije dostupna – prikazujem hibrid`, "greska");
             setPodloga("hibrid");
           }}
