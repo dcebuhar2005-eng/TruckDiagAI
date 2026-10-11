@@ -34,6 +34,8 @@ const MAKS_ZOOM = 21;
 
 interface SlojPodloge {
   url: string;
+  /** Pločice od 512 px (npr. Mapbox @2x) – crtaju se s pomakom zooma -1. */
+  velike?: boolean;
   attr: string;
   /** Najveći zoom za koji poslužitelj ima slike; iznad toga se slike uvećavaju. */
   nativni: number;
@@ -41,20 +43,39 @@ interface SlojPodloge {
   wms?: { layers: string; format: string };
 }
 
+const MAPBOX = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
 const PODLOGE: Record<string, { naziv: string; slojevi: SlojPodloge[]; rezerve?: SlojPodloge[][] }> = {
+  ...(MAPBOX
+    ? {
+        pro: {
+          naziv: "Satelit Pro",
+          // Mapbox Satellite: snimke visoke razlučivosti, oštre i na velikom zoomu.
+          slojevi: [
+            {
+              url: `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token=${MAPBOX}`,
+              attr: "© Mapbox © Maxar",
+              nativni: 21,
+              velike: true,
+            },
+            { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "Esri", nativni: 19 },
+          ],
+        },
+      }
+    : {}),
   hibrid: {
     naziv: "Hibrid",
     slojevi: [
       { url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, attr: "Esri, Maxar, Earthstar Geographics", nativni: 19, retina: true },
-      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
-      { url: `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
+      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "Esri", nativni: 19 },
+      { url: `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`, attr: "Esri", nativni: 19 },
     ],
   },
   hd: {
     naziv: "Satelit HD",
     slojevi: [
       { url: "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attr: "Esri World Imagery (Clarity), Maxar", nativni: 19, retina: true },
-      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "", nativni: 19 },
+      { url: `${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`, attr: "Esri", nativni: 19 },
     ],
   },
   satelit: {
@@ -127,7 +148,13 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
         return sl.wms ? (
           <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={{ layers: sl.wms.layers, format: sl.wms.format, transparent: false, version: "1.1.1" }} {...zajednicko} />
         ) : (
-          <TileLayer key={`${podloga}-${i}`} url={sl.url} detectRetina={sl.retina} {...zajednicko} />
+          <TileLayer
+            key={`${podloga}-${i}`}
+            url={sl.url}
+            detectRetina={sl.retina}
+            {...zajednicko}
+            {...(sl.velike ? { tileSize: 512, zoomOffset: -1, maxNativeZoom: sl.nativni + 1 } : {})}
+          />
         );
       })}
     </>

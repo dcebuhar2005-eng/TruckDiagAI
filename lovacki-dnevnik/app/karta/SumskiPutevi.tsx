@@ -122,6 +122,15 @@ export default function SumskiPutevi({ onStanje }: { onStanje?: (s: "malo" | "uc
 
   useMapEvents({ moveend: ucitaj, zoomend: () => setZoom(map.getZoom()) });
 
+  // Podaci OpenStreetMapa (ODbL) zahtijevaju navođenje izvora na karti.
+  useEffect(() => {
+    const tekst = "Putevi © OpenStreetMap suradnici (ODbL)";
+    map.attributionControl?.addAttribution(tekst);
+    return () => {
+      map.attributionControl?.removeAttribution(tekst);
+    };
+  }, [map]);
+
   useEffect(() => {
     ucitaj();
     return () => {
