@@ -8,6 +8,7 @@ import { FazaMjeseca, TrakaDana } from "@/components/Nebo";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import VjetarKartica from "@/components/VjetarKartica";
+import CekeDanas from "@/components/CekeDanas";
 import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { lovnaGodina, mjesec, mjesecevaVremena, solunar, suncevaVremena } from "@/lib/astro";
 import { bojaVrste, nazivSpola, NACINI_LOVA } from "@/lib/katalog";
@@ -199,6 +200,12 @@ export default function Pregled() {
             ))}
           </ul>
         </motion.section>
+
+        {baza.tocke.some((t) => t.tip === "ceka" || t.tip === "zaklon") && (
+          <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">
+            <CekeDanas baza={baza} p={p} />
+          </motion.section>
+        )}
 
         {/* Sunce */}
         <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">

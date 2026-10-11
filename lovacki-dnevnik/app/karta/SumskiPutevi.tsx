@@ -65,7 +65,21 @@ async function dohvatiCeliju(kljuc: string, signal: AbortSignal): Promise<Put[]>
       zadnjaGreska = e;
     }
   }
+  // Bez interneta: koristi i stariji spremljeni zapis (npr. područje spremljeno za rad bez signala).
+  const staro = await procitaj<Put[]>(`putevi:${kljuc}`, Infinity);
+  if (staro) {
+    predmemorija.set(kljuc, staro);
+    return staro;
+  }
   throw zadnjaGreska;
+}
+
+/** Unaprijed dohvaća šumske puteve za područje (karta bez signala). */
+export async function predmemorirajPuteve(g: { j: number; s: number; z: number; i: number }, signal: AbortSignal) {
+  for (const kl of celije(g.j, g.z, g.i, g.s).slice(0, 36)) {
+    if (signal.aborted) return;
+    await dohvatiCeliju(kl, signal).catch(() => {});
+  }
 }
 
 /** Stil kao u navigacijskim kartama: tamni obrub + svijetla linija; isprekidano za lošije vlake. */

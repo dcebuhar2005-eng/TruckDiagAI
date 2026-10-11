@@ -11,6 +11,7 @@ import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
+import OdabirVjetrova from "./OdabirVjetrova";
 import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
 
 const ZUPANIJE = [
@@ -306,11 +307,14 @@ export function TockaUrednik({
   const [lovisteId, setLoviste] = useState<string | undefined>(p?.lovisteId ?? baza.lovista[0]?.id);
   const [lok, setLok] = useState<Tocka2D | undefined>(p?.lat != null && p?.lng != null ? { lat: p.lat, lng: p.lng } : undefined);
   const [napomena, setNapomena] = useState(p?.napomena ?? "");
+  const [vjetrovi, setVjetrovi] = useState<number[]>(p?.vjetrovi ?? []);
   const potvrda = usePotvrda();
+  const zaVjetar = tip === "ceka" || tip === "zaklon";
 
   const spremi = () => {
     const podaci = {
       tip,
+      vjetrovi: zaVjetar && vjetrovi.length ? vjetrovi : undefined,
       naziv: naziv.trim() || TIPOVI_TOCAKA[tip].naziv,
       lovisteId,
       lat: lok!.lat,
@@ -397,6 +401,11 @@ export function TockaUrednik({
             <textarea className="unos min-h-20" value={napomena} onChange={(e) => setNapomena(e.target.value)} placeholder="Smjer pogleda, stanje, pristup…" />
           </Polje>
         </Odjeljak>
+        {zaVjetar && (
+          <Odjeljak naslov="Dobar vjetar">
+            <OdabirVjetrova vrijednost={vjetrovi} promjena={setVjetrovi} />
+          </Odjeljak>
+        )}
       </Ploca>
       {potvrda.element}
     </>

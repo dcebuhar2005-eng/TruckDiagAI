@@ -27,6 +27,16 @@ import {
   zaustaviDijeljenje,
   type Profil,
 } from "@/lib/drustvo";
+import {
+  GRANICE_M,
+  type PostavkeBlizine,
+  dozvolaObavijesti,
+  oglasiAlarm,
+  postavkeBlizine,
+  pripremiZvuk,
+  spremiPostavkeBlizine,
+  zatraziObavijesti,
+} from "@/lib/blizina";
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 
@@ -435,6 +445,7 @@ function UloviSam({ brojPrijatelja }: { brojPrijatelja: number }) {
             Završi lov
           </Gumb>
         </div>
+        <PostavkeAlarma />
         <Napomena zaslon={zaslon} setZaslon={setZaslon} />
       </div>
     );
@@ -460,7 +471,61 @@ function UloviSam({ brojPrijatelja }: { brojPrijatelja: number }) {
         </Gumb>
       </div>
       {!brojPrijatelja && <p className="mt-2 text-[13px] text-tekst-3">Najprije dodajte barem jednog prijatelja.</p>}
+      <PostavkeAlarma />
       <Napomena zaslon={zaslon} setZaslon={setZaslon} />
+    </div>
+  );
+}
+
+function PostavkeAlarma() {
+  const [p, setP] = useState(postavkeBlizine);
+  const [dozvola, setDozvola] = useState(dozvolaObavijesti);
+  const promijeni = (x: Partial<PostavkeBlizine>) => {
+    spremiPostavkeBlizine(x);
+    setP((s) => ({ ...s, ...x }));
+  };
+  return (
+    <div className="relative mt-4 grid gap-3 border-t border-rub pt-4">
+      <div className="flex items-center gap-2">
+        <Ikona ime="upozorenje" velicina={17} className="text-opasnost" />
+        <span className="font-medium">Alarm kad je lovac blizu</span>
+      </div>
+      <Segmenti
+        vrijednost={String(p.granica)}
+        promjena={(v) => promijeni({ granica: Number(v) })}
+        opcije={GRANICE_M.map((g) => ({ vrijednost: String(g), oznaka: g < 1000 ? `${g} m` : "1 km" }))}
+      />
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" className="size-5 accent-[var(--naglasak)]" checked={p.zvuk} onChange={(e) => promijeni({ zvuk: e.target.checked })} />
+          Zvuk
+        </label>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" className="size-5 accent-[var(--naglasak)]" checked={p.vibracija} onChange={(e) => promijeni({ vibracija: e.target.checked })} />
+          Vibracija
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Gumb
+          velicina="sm"
+          ikona="upozorenje"
+          onClick={() => {
+            pripremiZvuk();
+            oglasiAlarm("Probni lovac", Math.round(p.granica * 0.7), false);
+          }}
+        >
+          Isprobaj alarm
+        </Gumb>
+        {dozvola === "default" && (
+          <Gumb velicina="sm" onClick={() => zatraziObavijesti().then((d) => setDozvola(d))}>
+            Dopusti obavijesti
+          </Gumb>
+        )}
+      </div>
+      <p className="text-[12.5px] text-tekst-3">
+        Alarm radi dok ste u lovu (dijelite lokaciju): oglasi se kad prijatelj uđe u odabranu udaljenost, i ponovno ako
+        priđe bliže od 200 m.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
+      </p>
     </div>
   );
 }

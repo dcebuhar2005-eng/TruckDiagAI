@@ -24,7 +24,8 @@ export const IZVORI: Skupina[] = [
         naziv: "Esri World Imagery, Clarity, World Topo i referentni slojevi",
         za: "Podloge Hibrid, Satelit, Satelit HD i Topo",
         licenca: "Esri uvjeti korištenja; snimke © Esri, Maxar, Earthstar Geographics",
-        uvjeti: "Navođenje izvora na karti. Bez ključa – prihvatljivo za osobnu, nekomercijalnu i umjerenu upotrebu.",
+        uvjeti:
+          "Navođenje izvora na karti. Bez ključa – prihvatljivo za osobnu, nekomercijalnu i umjerenu upotrebu. Karta bez signala sprema najviše 5 000 pločica po području.",
         kadNaraste: "Besplatni ArcGIS Location Platform ključ (do 2 milijuna pločica mjesečno), iznad toga plaćeno.",
         poveznica: "https://www.esri.com/en-us/legal/terms/full-master-agreement",
       },
