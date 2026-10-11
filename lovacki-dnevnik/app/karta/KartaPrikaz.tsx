@@ -32,7 +32,7 @@ import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, Tocka } from "@/lib/types";
 import { beaufort, smjerVjetra, usePrognoza, type SatnaPrognoza } from "@/lib/vrijeme";
-import { OCJENE, imaVjetrove, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
+import { OCJENE, imaVjetrove, zaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const MAKS_ZOOM = 21;
@@ -214,6 +214,16 @@ const ikonaVrha = L.divIcon({
   iconAnchor: [7, 7],
   html: `<div style="width:14px;height:14px;border-radius:99px;background:#fff;border:3px solid #e8a947;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`,
 });
+
+function uPoligonu([y, x]: [number, number], p: [number, number][]) {
+  let unutra = false;
+  for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+    const [yi, xi] = p[i];
+    const [yj, xj] = p[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) unutra = !unutra;
+  }
+  return unutra;
+}
 
 /** Stožac mirisa: od točke niz vjetar, duljine `duljina` m i širine ±`kut`°. */
 function stozac(lat: number, lng: number, smjerIz: number, duljina = 350, kut = 22): [number, number][] {
@@ -462,6 +472,25 @@ export default function KartaPrikaz() {
     }
   };
 
+  /** Brzo spremanje mjesta na kojem stojite s tronošcem (GPS). */
+  const zasjedaOvdje = () => {
+    const otvoriNa = (lat: number, lng: number) => {
+      const loviste = baza.lovista.find((l) => l.granica && l.granica.length > 2 && uPoligonu([lat, lng], l.granica));
+      otvori({ tip: "tocka", pocetno: { tip: "zasjeda", lat, lng, lovisteId: loviste?.id } });
+    };
+    if (moja) return otvoriNa(moja.lat, moja.lng);
+    if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
+    obavijest("Tražim vašu lokaciju…", "info");
+    navigator.geolocation.getCurrentPosition(
+      (p) => otvoriNa(p.coords.latitude, p.coords.longitude),
+      () => {
+        obavijest("Lokacija nije dostupna – odaberite mjesto na karti", "greska");
+        otvori({ tip: "tocka", pocetno: { tip: "zasjeda" } });
+      },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  };
+
   const pokreniNacin = (n: Nacin) => {
     setOdabir(null);
     setCrtez([]);
@@ -519,7 +548,7 @@ export default function KartaPrikaz() {
   const odabranaTocka = odabir?.tip === "tocka" ? baza.tocke.find((t) => t.id === odabir.id) : undefined;
   const odabraniOdstrel = odabir?.tip === "odstrel" ? baza.odstrel.find((o) => o.id === odabir.id) : undefined;
   const odabranoLoviste = odabir?.tip === "loviste" ? baza.lovista.find((l) => l.id === odabir.id) : undefined;
-  const ceke = baza.tocke.filter((t) => t.tip === "ceka" || t.tip === "zaklon");
+  const ceke = baza.tocke.filter((t) => zaVjetar(t.tip));
   const zaMiris = odabranaTocka ? [odabranaTocka] : ceke;
 
   return (
@@ -902,7 +931,7 @@ export default function KartaPrikaz() {
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>
                   {odabranaTocka.napomena && <p className="mt-1 line-clamp-2 text-[13px] text-white/75">{odabranaTocka.napomena}</p>}
-                  {(odabranaTocka.tip === "ceka" || odabranaTocka.tip === "zaklon") && (
+                  {zaVjetar(odabranaTocka.tip) && (
                     <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />
                   )}
                   <div className="mt-1 text-[12px] text-white/50">
@@ -1034,6 +1063,7 @@ export default function KartaPrikaz() {
           className="pointer-events-auto flex gap-1 rounded-2xl border border-white/10 bg-[#0d130e]/85 p-1.5 text-white shadow-jaka backdrop-blur-xl"
         >
           <Alat ikona="lokacija" oznaka="Točka" aktivan={nacin === "tocka"} onClick={() => pokreniNacin("tocka")} />
+          <Alat ikona="nisan" oznaka="Zasjeda" onClick={zasjedaOvdje} />
           <Alat ikona="poligon" oznaka="Granica" aktivan={nacin === "granica"} onClick={() => pokreniNacin("granica")} />
           <Alat ikona="ravnalo" oznaka="Mjeri" aktivan={nacin === "mjerenje"} onClick={() => pokreniNacin("mjerenje")} />
           <Alat

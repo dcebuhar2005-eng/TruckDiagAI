@@ -121,3 +121,21 @@ create policy "lov_kopije_unos" on storage.objects for insert to authenticated
 drop policy if exists "lov_kopije_brisanje" on storage.objects;
 create policy "lov_kopije_brisanje" on storage.objects for delete to authenticated
   using (bucket_id = 'lov-kopije' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Dnevnik svakog korisnika (sinkronizacija između uređaja). Vidi ga samo vlasnik.
+create table if not exists public.lov_dnevnici (
+  korisnik uuid primary key default auth.uid() references auth.users (id) on delete cascade,
+  podaci jsonb not null,
+  azurirano timestamptz not null default now()
+);
+alter table public.lov_dnevnici enable row level security;
+drop policy if exists "lov_dnevnici_citanje" on public.lov_dnevnici;
+create policy "lov_dnevnici_citanje" on public.lov_dnevnici for select to authenticated using (korisnik = (select auth.uid()));
+drop policy if exists "lov_dnevnici_unos" on public.lov_dnevnici;
+create policy "lov_dnevnici_unos" on public.lov_dnevnici for insert to authenticated with check (korisnik = (select auth.uid()));
+drop policy if exists "lov_dnevnici_izmjena" on public.lov_dnevnici;
+create policy "lov_dnevnici_izmjena" on public.lov_dnevnici for update to authenticated using (korisnik = (select auth.uid())) with check (korisnik = (select auth.uid()));
+drop policy if exists "lov_dnevnici_brisanje" on public.lov_dnevnici;
+create policy "lov_dnevnici_brisanje" on public.lov_dnevnici for delete to authenticated using (korisnik = (select auth.uid()));
+revoke all on public.lov_dnevnici from anon;
+grant select, insert, update, delete on public.lov_dnevnici to authenticated;

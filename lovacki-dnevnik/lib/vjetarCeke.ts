@@ -1,4 +1,4 @@
-import type { Tocka } from "./types";
+import type { TipTocke, Tocka } from "./types";
 import { razlikaSmjera, type SatnaPrognoza } from "./vrijeme";
 
 /** Osam strana svijeta odakle vjetar puše (meteorološki smjer). */
@@ -22,6 +22,9 @@ export const OCJENE: Record<OcjenaVjetra, { naziv: string; boja: string }> = {
   nestalan: { naziv: "Nestalan vjetar", boja: "#b8a46a" },
   nepoznato: { naziv: "Nije određeno", boja: "#e8a947" },
 };
+
+/** Točke na kojima se čeka divljač – za njih se računa vjetar (čeka, zaklon, zasjeda s tronošcem). */
+export const zaVjetar = (tip: TipTocke) => tip === "ceka" || tip === "zaklon" || tip === "zasjeda";
 
 /** Ima li točka zadane dobre vjetrove. */
 export const imaVjetrove = (t: Tocka) => Boolean(t.vjetrovi?.length);

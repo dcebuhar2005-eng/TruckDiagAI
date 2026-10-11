@@ -27,6 +27,7 @@ export type TipTocke =
   | "kaljuziste"
   | "pojiliste"
   | "zaklon"
+  | "zasjeda"
   | "parking"
   | "ostalo";
 

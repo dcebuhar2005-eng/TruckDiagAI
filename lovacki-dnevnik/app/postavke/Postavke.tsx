@@ -7,7 +7,8 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { konfigurirano, useDrustvo } from "@/lib/drustvo";
-import { datumDugi } from "@/lib/format";
+import { odjaviSe, useSinkronizacija } from "@/lib/sinkronizacija";
+import { datumDugi, sat } from "@/lib/format";
 import { RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
 import { demoBaza } from "@/lib/demo";
 import { spremiFoto, sveFotografije } from "@/lib/foto";
@@ -88,6 +89,8 @@ function Obrazac({ baza }: { baza: Baza }) {
       <Naslov natpis="Aplikacija" naslov="Postavke" opis="Profil, lokacija, izgled i upravljanje podacima." />
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-2">
+        {konfigurirano && <Racun />}
+
         <Sekcija ikona="korisnik" naslov="Profil lovca">
           <div className="grid gap-3.5">
             <Polje oznaka="Ime i prezime">
@@ -138,7 +141,7 @@ function Obrazac({ baza }: { baza: Baza }) {
           <p className="mt-3 text-[13px] text-tekst-3">Tamna tema štedi bateriju i ne zasljepljuje na čeki u sumrak.</p>
         </Sekcija>
 
-        <Sekcija ikona="stit" naslov="Podaci i sigurnosna kopija" opis="Svi podaci čuvaju se isključivo na ovom uređaju.">
+        <Sekcija ikona="stit" naslov="Podaci i sigurnosna kopija" opis={konfigurirano ? "Dnevnik je spremljen na uređaju i u vašem privatnom računu." : "Svi podaci čuvaju se isključivo na ovom uređaju."}>
           <div className="grid grid-cols-2 gap-2">
             <Gumb ikona="preuzmi" onClick={izvezi}>
               Izvezi kopiju
@@ -209,6 +212,48 @@ function Obrazac({ baza }: { baza: Baza }) {
       </motion.div>
       {potvrda.element}
     </div>
+  );
+}
+
+function Racun() {
+  const d = useDrustvo();
+  const s = useSinkronizacija();
+  const [radim, setRadim] = useState(false);
+  const email = d.sesija?.user.email;
+  const status = typeof navigator !== "undefined" && !navigator.onLine
+    ? { boja: "bg-naglasak", tekst: s.neposlano ? "Bez interneta – izmjene će se poslati kad se spojite" : "Bez interneta" }
+    : s.salje
+      ? { boja: "bg-naglasak", tekst: "Spremam u oblak…" }
+      : s.greska
+        ? { boja: "bg-opasnost", tekst: "Spremanje u oblak trenutno ne uspijeva" }
+        : { boja: "bg-mahovina", tekst: s.zadnje ? `Spremljeno u oblak u ${sat(new Date(s.zadnje))}` : "Spremljeno" };
+  return (
+    <Sekcija ikona="stit" naslov="Račun" opis="Dnevnik vidite samo vi, i to samo kad ste prijavljeni.">
+      <div className="grid gap-3">
+        <div className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
+          <div className="grid size-10 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+            <Ikona ime="korisnik" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium">{email}</div>
+            <div className="flex items-center gap-1.5 text-[12.5px] text-tekst-2">
+              <span className={cx("size-2 rounded-full", status.boja)} /> {status.tekst}
+            </div>
+          </div>
+        </div>
+        <Gumb
+          disabled={radim}
+          onClick={() => {
+            setRadim(true);
+            odjaviSe()
+              .then(() => obavijest("Odjavljeni ste – dnevnik je skriven dok se ponovno ne prijavite", "info"))
+              .finally(() => setRadim(false));
+          }}
+        >
+          {radim ? "Odjavljujem…" : "Odjava"}
+        </Gumb>
+      </div>
+    </Sekcija>
   );
 }
 
