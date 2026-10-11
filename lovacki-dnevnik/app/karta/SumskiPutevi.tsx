@@ -124,7 +124,7 @@ export default function SumskiPutevi({ onStanje }: { onStanje?: (s: "malo" | "uc
 
   // Podaci OpenStreetMapa (ODbL) zahtijevaju navođenje izvora na karti.
   useEffect(() => {
-    const tekst = "Putevi © OpenStreetMap suradnici (ODbL)";
+    const tekst = "Putevi © OpenStreetMap (ODbL)";
     map.attributionControl?.addAttribution(tekst);
     return () => {
       map.attributionControl?.removeAttribution(tekst);

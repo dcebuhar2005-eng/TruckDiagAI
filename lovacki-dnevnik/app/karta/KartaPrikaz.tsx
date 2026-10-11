@@ -25,6 +25,7 @@ import { TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
+import Legenda from "./Legenda";
 import SumskiPutevi from "./SumskiPutevi";
 import type { Baza, Tocka } from "@/lib/types";
 import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
@@ -318,6 +319,23 @@ export default function KartaPrikaz() {
   const [stanjePuteva, setStanjePuteva] = useState<"malo" | "ucitava" | "ok" | "greska">("ok");
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
+  const [legenda, setLegendaStanje] = useState(false);
+  const [savjetLegende, setSavjetLegende] = useState(() => {
+    try {
+      return !localStorage.getItem("lovacki-dnevnik:legenda-vidjena");
+    } catch {
+      return false;
+    }
+  });
+  const setLegenda = (f: boolean | ((s: boolean) => boolean)) => {
+    setLegendaStanje(f);
+    if (savjetLegende) {
+      setSavjetLegende(false);
+      try {
+        localStorage.setItem("lovacki-dnevnik:legenda-vidjena", "1");
+      } catch {}
+    }
+  };
   const [nacin, setNacin] = useState<Nacin>("pregled");
   const [odabir, setOdabir] = useState<Odabir>(null);
   const [crtez, setCrtez] = useState<[number, number][]>([]);
@@ -650,8 +668,25 @@ export default function KartaPrikaz() {
         </motion.div>
 
         <div className="pointer-events-auto ml-auto flex flex-col gap-2">
-          <KartaGumb ikona="slojevi" oznaka="Slojevi" aktivan={izbornik} onClick={() => setIzbornik((s) => !s)} />
+          <KartaGumb
+            ikona="slojevi"
+            oznaka="Slojevi"
+            aktivan={izbornik}
+            onClick={() => {
+              setLegenda(false);
+              setIzbornik((s) => !s);
+            }}
+          />
           <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
+          <KartaGumb
+            ikona="legenda"
+            oznaka="Legenda"
+            aktivan={legenda}
+            onClick={() => {
+              setIzbornik(false);
+              setLegenda((s) => !s);
+            }}
+          />
         </div>
       </div>
 
@@ -700,8 +735,47 @@ export default function KartaPrikaz() {
         )}
       </AnimatePresence>
 
+      {/* Jednokratni savjet za legendu */}
+      <AnimatePresence>
+        {savjetLegende && !legenda && !izbornik && slojevi.putevi && stanjePuteva === "ok" && (
+          <motion.button
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ delay: 0.6, ...opruga }}
+            onClick={() => setLegenda(true)}
+            className="absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+8.85rem)] right-[4.6rem] z-[500] flex items-center gap-1.5 rounded-full bg-[#e8a947] px-3 py-1.5 text-[12.5px] font-semibold whitespace-nowrap text-[#17130a] shadow-jaka md:top-[9.6rem] md:right-[5.6rem]"
+          >
+            Što znače linije?
+            <Ikona ime="desno" velicina={14} debljina={2.4} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Legenda */}
+      <AnimatePresence>
+        {legenda && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -6 }}
+            transition={opruga}
+            style={{ transformOrigin: "top right" }}
+            className="absolute top-[max(4.5rem,calc(env(safe-area-inset-top)+4rem))] right-3 z-[600] w-72 rounded-2xl border border-white/10 bg-[#0d130e]/92 p-3.5 text-white shadow-jaka backdrop-blur-xl md:top-20 md:right-5"
+          >
+            <div className="mb-2 flex items-center">
+              <span className="flex-1 font-semibold">Legenda</span>
+              <button onClick={() => setLegenda(false)} className="p-1 text-white/50 hover:text-white" aria-label="Zatvori legendu">
+                <Ikona ime="x" velicina={16} />
+              </button>
+            </div>
+            <Legenda />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Donja ploča: alati / odabir / crtanje */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[500] flex flex-col items-center gap-2 p-3 pb-[calc(env(safe-area-inset-bottom)+6.2rem)] md:p-5 lg:pb-5">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[500] flex flex-col items-center gap-2 p-3 pb-[calc(env(safe-area-inset-bottom)+8.4rem)] md:p-5 lg:pb-5">
         <AnimatePresence mode="popLayout">
           {nacin === "pregled" && odabranaTocka && (
             <Panel key={`t-${odabranaTocka.id}`}>
