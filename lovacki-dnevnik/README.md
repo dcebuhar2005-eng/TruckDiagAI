@@ -37,3 +37,9 @@ Za Vercel postavite **Root Directory** na `lovacki-dnevnik`.
 
 Pristup podacima štite pravila (RLS): lokaciju vide samo prihvaćeni prijatelji i samo dok dijeljenje nije isteklo.
 Web-aplikacija osvježava lokaciju dok je otvorena; nakon zatvaranja prijatelji vide zadnju poznatu poziciju s vremenom.
+
+## Izvori i licence
+
+Svi vanjski izvori (karte, vrijeme, OpenStreetMap, Supabase, Vercel), njihovi uvjeti i plan za slučaj
+rasta ili komercijalne upotrebe opisani su u [IZVORI.md](IZVORI.md). Korisnici isti popis vide u
+aplikaciji pod **Postavke → Izvori i licence**.
