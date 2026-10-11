@@ -138,8 +138,15 @@ export async function pokreniSinkronizaciju(id: string | null) {
     const m = meta(id);
     if (red) {
       const oblak = Date.parse(red.azurirano);
-      // Zadnja izmjena pobjeđuje: novija verzija iz oblaka (npr. s drugog mobitela) zamjenjuje lokalnu.
-      if (!db.imaLokalno() || oblak > m.lokalno) {
+      if (db.imaLokalno() && m.poslano === 0) {
+        // Prvo usklađivanje ovog uređaja (npr. Safari i aplikacija na početnom zaslonu imaju odvojene
+        // podatke): nikad ne prepisuj – spoji lokalne i podatke iz oblaka pa pošalji rezultat.
+        const spojeno = spoji(db.dohvati(), red.podaci);
+        db.zamijeni(spojeno, true);
+        spremiMetu(id, { lokalno: Date.now(), poslano: oblak });
+        await isprazni();
+      } else if (!db.imaLokalno() || oblak > m.lokalno) {
+        // Zadnja izmjena pobjeđuje: novija verzija iz oblaka (npr. s drugog mobitela) zamjenjuje lokalnu.
         db.zamijeni(red.podaci, true);
         spremiMetu(id, { lokalno: oblak, poslano: oblak });
       } else if (m.lokalno > m.poslano || oblak < m.lokalno) {
@@ -156,6 +163,22 @@ export async function pokreniSinkronizaciju(id: string | null) {
   } finally {
     if (korisnik === id) postavi({ spremno: true });
   }
+}
+
+const KOLEKCIJE = ["lovista", "tocke", "izlasci", "odstrel", "dozvole"] as const;
+const brojZapisa = (b: Baza) => KOLEKCIJE.reduce((n, k) => n + (b[k]?.length ?? 0), 0);
+const prazanIliPrimjer = (b: Baza) => brojZapisa(b) === 0 || Boolean(b.postavke?.primjer);
+
+/** Spaja dva dnevnika bez gubitka zapisa (unija po id-u); primjeri i prazni dnevnici se ne miješaju. */
+export function spoji(lokalno: Baza, oblak: Baza): Baza {
+  if (prazanIliPrimjer(lokalno) && !prazanIliPrimjer(oblak)) return oblak;
+  if (prazanIliPrimjer(oblak) && !prazanIliPrimjer(lokalno)) return lokalno;
+  const rez = { ...oblak, postavke: oblak.postavke?.dovrsenUvod ? oblak.postavke : lokalno.postavke } as Baza;
+  for (const k of KOLEKCIJE) {
+    const ids = new Set((oblak[k] ?? []).map((x) => x.id));
+    (rez as unknown as Record<string, unknown[]>)[k] = [...(oblak[k] ?? []), ...(lokalno[k] ?? []).filter((x) => !ids.has(x.id))];
+  }
+  return rez;
 }
 
 /** Odjava: najprije pošalji neposlane izmjene, zatim odjavi. Dnevnik se skriva dok se netko ne prijavi. */
