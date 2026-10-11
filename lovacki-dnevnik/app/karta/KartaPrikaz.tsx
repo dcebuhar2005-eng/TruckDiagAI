@@ -22,7 +22,7 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
@@ -170,7 +170,12 @@ type Nacin = "pregled" | "tocka" | "granica" | "mjerenje";
 type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { tip: "loviste"; id: string } | null;
 
 function ikonaTocke(t: Tocka, odabrana: boolean) {
-  const info = TIPOVI_TOCAKA[t.tip];
+  const info = { ...TIPOVI_TOCAKA[t.tip] };
+  // Prijelaz s jednom vrstom divljači nosi njezino slovo (J = jelenska, S = svinje…).
+  if (t.tip === "prijelaz" && t.divljac?.length === 1) {
+    const d = DIVLJAC_PRIJELAZA.find((x) => x.k === t.divljac![0]);
+    if (d) info.slovo = d.slovo;
+  }
   return L.divIcon({
     className: "",
     iconSize: [34, 42],
@@ -367,7 +372,7 @@ export default function KartaPrikaz() {
       const p = localStorage.getItem(KLJUC_PODLOGE);
       if (p && p in PODLOGE) return p;
     } catch {}
-    return "hibrid";
+    return MAPBOX ? "pro" : "hibrid";
   });
   const [varijanta, setVarijanta] = useState(0);
   const setPodloga = (p: Podloga) => {
@@ -948,6 +953,9 @@ export default function KartaPrikaz() {
                     {TIPOVI_TOCAKA[odabranaTocka.tip].naziv}
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>
+                  {odabranaTocka.tip === "prijelaz" && (
+                    <p className="mt-1 text-[13px] text-[#d6b25e]">Prelazi: {opisPrijelaza(odabranaTocka.divljac)}</p>
+                  )}
                   {odabranaTocka.napomena && <p className="mt-1 line-clamp-2 text-[13px] text-white/75">{odabranaTocka.napomena}</p>}
                   {zaVjetar(odabranaTocka.tip) && (
                     <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />

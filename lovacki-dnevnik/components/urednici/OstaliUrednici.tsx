@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { BOJE_LOVISTA, TIPOVI_DOZVOLA, TIPOVI_TOCAKA } from "@/lib/katalog";
+import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, TIPOVI_DOZVOLA, TIPOVI_TOCAKA } from "@/lib/katalog";
 import { povrsinaHa } from "@/lib/format";
 import { db } from "@/lib/store";
 import type { Baza, Kvota, Loviste, Spol, Tocka, Tocka2D, TipDozvole, TipTocke } from "@/lib/types";
@@ -309,6 +309,7 @@ export function TockaUrednik({
   const [lok, setLok] = useState<Tocka2D | undefined>(p?.lat != null && p?.lng != null ? { lat: p.lat, lng: p.lng } : undefined);
   const [napomena, setNapomena] = useState(p?.napomena ?? "");
   const [vjetrovi, setVjetrovi] = useState<number[]>(p?.vjetrovi ?? []);
+  const [divljac, setDivljac] = useState<string[]>(p?.divljac ?? []);
   const potvrda = usePotvrda();
   const imaVjetar = zaVjetar(tip);
 
@@ -316,7 +317,12 @@ export function TockaUrednik({
     const podaci = {
       tip,
       vjetrovi: imaVjetar && vjetrovi.length ? vjetrovi : undefined,
-      naziv: naziv.trim() || TIPOVI_TOCAKA[tip].naziv,
+      divljac: tip === "prijelaz" && divljac.length ? divljac : undefined,
+      naziv:
+        naziv.trim() ||
+        (tip === "prijelaz" && divljac.length
+          ? `Prijelaz – ${DIVLJAC_PRIJELAZA.filter((d) => divljac.includes(d.k)).map((d) => d.naziv.toLowerCase()).join(", ")}`
+          : TIPOVI_TOCAKA[tip].naziv),
       lovisteId,
       lat: lok!.lat,
       lng: lok!.lng,
@@ -381,6 +387,42 @@ export function TockaUrednik({
               );
             })}
           </div>
+          <AnimatePresence initial={false}>
+            {tip === "prijelaz" && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Koja divljač prelazi?</div>
+                <div className="flex flex-wrap gap-2">
+                  {DIVLJAC_PRIJELAZA.map((d) => {
+                    const on = divljac.includes(d.k);
+                    return (
+                      <motion.button
+                        key={d.k}
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        aria-pressed={on}
+                        onClick={() => setDivljac(on ? divljac.filter((x) => x !== d.k) : [...divljac, d.k])}
+                        className={cx(
+                          "flex items-center gap-2 rounded-full border px-3.5 py-2 text-[14px] transition-colors",
+                          on ? "border-naglasak bg-naglasak-meki font-medium" : "border-rub bg-povrsina-2 text-tekst-2",
+                        )}
+                      >
+                        <span className="grid size-5 place-items-center rounded-full text-[9.5px] font-bold text-black/75" style={{ background: d.boja }}>
+                          {on ? "✓" : d.slovo}
+                        </span>
+                        {d.naziv}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[12.5px] text-tekst-3">Možete odabrati više vrsta i promijeniti ih kasnije.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {tip === "zasjeda" && (
             <p className="mt-3 rounded-xl bg-povrsina-2 p-3 text-[13px] text-tekst-2">
               Zasjeda je mjesto na kojem čekate na tlu – sa štapom ili tronošcem. Označite dobre vjetrove pa ćete na karti i
