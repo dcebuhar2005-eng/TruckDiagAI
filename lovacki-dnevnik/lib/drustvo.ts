@@ -12,12 +12,14 @@ const KLJUC = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export const konfigurirano = Boolean(URL_ && KLJUC);
 
+const KLJUC_PRIJAVE = "lovacki-dnevnik:prijava";
+const KLJUC_ISTEKLA = "lovacki-dnevnik:prijava-istekla";
 let klijent: SupabaseClient | null = null;
 export function sb(): SupabaseClient {
   if (!konfigurirano) throw new Error("Prijatelji nisu konfigurirani");
   if (!klijent) {
     klijent = createClient(URL_!, KLJUC!, {
-      auth: { persistSession: true, autoRefreshToken: true, storageKey: "lovacki-dnevnik:prijava" },
+      auth: { persistSession: true, autoRefreshToken: true, storageKey: KLJUC_PRIJAVE },
     });
   }
   return klijent;
@@ -62,6 +64,8 @@ interface Stanje {
   dijelim: { do: number } | null;
   pozicija: MojaPozicija | null;
   greskaLokacije: string | null;
+  /** Prijava je poništena jer aplikacija nije otvarana više od 2 mjeseca. */
+  prijavaIstekla: boolean;
 }
 
 let stanje: Stanje = {
@@ -73,6 +77,7 @@ let stanje: Stanje = {
   dijelim: null,
   pozicija: null,
   greskaLokacije: null,
+  prijavaIstekla: false,
 };
 const slusaci = new Set<() => void>();
 function postavi(izmjene: Partial<Stanje>) {
@@ -107,6 +112,11 @@ export async function registracija(email: string, lozinka: string) {
 export async function prijava(email: string, lozinka: string) {
   const { error } = await sb().auth.signInWithPassword({ email, password: lozinka });
   if (error) throw prevedi(error.message);
+  zabiljeziAktivnost();
+  try {
+    localStorage.removeItem(KLJUC_ISTEKLA);
+  } catch {}
+  postavi({ prijavaIstekla: false });
 }
 
 export async function odjava() {
@@ -343,6 +353,24 @@ export function osvjeziPoziciju() {
 
 /* ---------------- Pokretanje (jednom, iz ljuske aplikacije) ---------------- */
 
+const KLJUC_AKTIVNOSTI = "lovacki-dnevnik:zadnja-aktivnost";
+/** Nakon ovoliko dana bez otvaranja aplikacije korisnik se mora ponovno prijaviti. */
+export const ISTEK_PRIJAVE_DANA = 60;
+
+function zabiljeziAktivnost() {
+  try {
+    localStorage.setItem(KLJUC_AKTIVNOSTI, String(Date.now()));
+  } catch {}
+}
+
+function zadnjaAktivnost() {
+  try {
+    return Number(localStorage.getItem(KLJUC_AKTIVNOSTI)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 let pokrenuto = false;
 export function pokreniDrustvo() {
   if (pokrenuto || !konfigurirano) {
@@ -350,8 +378,24 @@ export function pokreniDrustvo() {
     return;
   }
   pokrenuto = true;
+  // Predugo neaktivni korisnici moraju se ponovno prijaviti: spremljena prijava briše se
+  // prije pokretanja Supabase klijenta, pa se stari račun ni na trenutak ne učita.
+  const zadnja = zadnjaAktivnost();
+  if (zadnja && Date.now() - zadnja > ISTEK_PRIJAVE_DANA * 86400000) {
+    try {
+      if (localStorage.getItem(KLJUC_PRIJAVE)) {
+        localStorage.removeItem(KLJUC_PRIJAVE);
+        localStorage.removeItem(KLJUC_DIJELJENJA);
+        localStorage.setItem(KLJUC_ISTEKLA, "1");
+      }
+    } catch {}
+  }
+  try {
+    if (localStorage.getItem(KLJUC_ISTEKLA)) postavi({ prijavaIstekla: true });
+  } catch {}
   const k = sb();
   k.auth.getSession().then(({ data }) => {
+    zabiljeziAktivnost();
     postavi({ sesija: data.session, spremno: true });
     if (data.session) {
       osvjezi();
@@ -379,6 +423,7 @@ export function pokreniDrustvo() {
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
+    zabiljeziAktivnost();
     if (stanje.sesija) osvjezi();
     if (stanje.dijelim) {
       pokreniPracenje();
