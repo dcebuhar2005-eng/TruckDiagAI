@@ -198,7 +198,7 @@ export function Znak({ velicina = 40 }: { velicina?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/icon.svg"
+      src="/icons/icon-192.png"
       alt=""
       width={velicina}
       height={velicina}
