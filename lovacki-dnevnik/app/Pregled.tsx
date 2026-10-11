@@ -8,11 +8,12 @@ import { FazaMjeseca, TrakaDana } from "@/components/Nebo";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import { StrelicaVjetra } from "@/components/Vjetar";
-import { Brojac, Znacka, cx, djeteListe, roditeljListe } from "@/components/ui";
+import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { lovnaGodina, mjesec, mjesecevaVremena, solunar, suncevaVremena } from "@/lib/astro";
 import { bojaVrste, nazivSpola, NACINI_LOVA } from "@/lib/katalog";
 import { datumDugi, datumKratki, danUTjednu, mnozina, sat, trajanje, trajanjeIzlaska } from "@/lib/format";
-import { useBaza } from "@/lib/store";
+import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
+import type { Baza } from "@/lib/types";
 import { nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
 import { opisVremena, smjerVjetra, trendTlaka, usePrognoza } from "@/lib/vrijeme";
 
@@ -28,6 +29,7 @@ export default function Pregled() {
   const lok = baza?.postavke.lokacija;
   const prognoza = usePrognoza(lok?.lat, lok?.lng);
 
+  const potvrda = usePotvrda();
   const danas = useMemo(() => new Date(), []);
   const astro = useMemo(() => {
     if (!lok) return null;
@@ -61,8 +63,67 @@ export default function Pregled() {
     .sort((a, b) => (b.datum + b.vr).localeCompare(a.datum + a.vr))
     .slice(0, 6);
 
+  const obrisiPrimjere = () =>
+    potvrda.pitaj(
+      "Obrisati primjere?",
+      "Svi podaci u dnevniku (primjeri lovišta, izlazaka, odstrela i dozvola) bit će obrisani. Vaše ime i tema ostaju.",
+      () => {
+        db.zamijeni({
+          ...praznaBaza(),
+          postavke: {
+            ...ZADANE_POSTAVKE,
+            ime: baza.postavke.ime,
+            tema: baza.postavke.tema,
+            dovrsenUvod: true,
+          },
+        });
+        obavijest("Primjeri su obrisani – dnevnik je prazan");
+      },
+    );
+
   return (
     <div>
+      {/* Brzi pristup na mobitelu (na računalu su u bočnoj traci) */}
+      <div className="mb-4 flex justify-end gap-2 lg:hidden">
+        <Link
+          href="/statistika"
+          transitionTypes={["naprijed"]}
+          aria-label="Statistika"
+          className="grid size-10 place-items-center rounded-xl border border-rub bg-povrsina-2 text-tekst-2 hover:text-tekst"
+        >
+          <Ikona ime="statistika" velicina={18} />
+        </Link>
+        <Link
+          href="/postavke"
+          transitionTypes={["naprijed"]}
+          aria-label="Postavke"
+          className="grid size-10 place-items-center rounded-xl border border-rub bg-povrsina-2 text-tekst-2 hover:text-tekst"
+        >
+          <Ikona ime="postavke" velicina={18} />
+        </Link>
+      </div>
+
+      {jePrimjer(baza) && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 flex flex-col gap-3 rounded-2xl border border-naglasak/40 bg-naglasak-meki p-4 sm:flex-row sm:items-center"
+        >
+          <div className="flex flex-1 items-start gap-3">
+            <Ikona ime="slojevi" className="mt-0.5 shrink-0 text-naglasak" />
+            <div>
+              <div className="font-medium">Gledate primjere podataka</div>
+              <div className="text-[13.5px] text-tekst-2">
+                Lovište Bukovac, izlasci i odstrel su izmišljeni. Kad ste spremni, obrišite ih i počnite s vlastitim dnevnikom.
+              </div>
+            </div>
+          </div>
+          <Gumb vrsta="primarni" ikona="smece" onClick={obrisiPrimjere} className="shrink-0">
+            Obriši primjere
+          </Gumb>
+        </motion.div>
+      )}
+
       {/* Zaglavlje */}
       <motion.header
         initial={{ opacity: 0, y: 10 }}
@@ -305,6 +366,7 @@ export default function Pregled() {
           )}
         </motion.section>
       </motion.div>
+      {potvrda.element}
     </div>
   );
 }
@@ -394,4 +456,9 @@ function Plocica({
       </motion.div>
     </Link>
   );
+}
+
+/** Primjeri iz uvoda – zastavica ili prepoznatljivo izmišljeno lovište. */
+function jePrimjer(b: Baza) {
+  return !!b.postavke.primjer || b.lovista.some((l) => l.naziv === "Bukovac" && l.broj === "VII/118");
 }

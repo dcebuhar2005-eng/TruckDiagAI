@@ -73,6 +73,7 @@ export function demoBaza(ime: string): Baza {
       lokacija: centar,
       lokacijaNaziv: "Lovište Bukovac",
       dovrsenUvod: true,
+      primjer: true,
     },
   };
 }
