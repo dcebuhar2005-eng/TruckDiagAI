@@ -13,6 +13,7 @@ import Navigacija from "./Navigacija";
 import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
+import { zabiljeziVerziju } from "@/lib/verzija";
 import NovaVerzija from "./NovaVerzija";
 import PitanjeMisljenja from "./PitanjeMisljenja";
 import { Obavijesti, obavijest } from "./ui";
@@ -33,7 +34,10 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!konfigurirano || !drustvo.spremno) return;
     pokreniSinkronizaciju(prijavljen ?? null);
-    if (prijavljen) automatskaKopija();
+    if (prijavljen) {
+      automatskaKopija();
+      zabiljeziVerziju(prijavljen);
+    }
   }, [prijavljen, drustvo.spremno]);
 
   // Prazan dnevnik nakon prijave (npr. nova ikona, novi mobitel): sam vrati zadnju kopiju s podacima.

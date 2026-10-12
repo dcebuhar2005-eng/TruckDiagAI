@@ -230,3 +230,33 @@ begin
 end $$;
 revoke all on function public.lov_admin_misljenja() from public, anon;
 grant execute on function public.lov_admin_misljenja() to authenticated;
+
+-- Koju verziju aplikacije i s koje adrese korisnik koristi (bilježi se pri pokretanju; vidi samo administrator).
+create table if not exists public.lov_verzije (
+  korisnik uuid primary key default auth.uid() references auth.users (id) on delete cascade,
+  verzija text not null check (char_length(verzija) <= 40),
+  adresa text check (char_length(adresa) <= 120),
+  uredaj text check (char_length(uredaj) <= 60),
+  azurirano timestamptz not null default now()
+);
+alter table public.lov_verzije enable row level security;
+create policy "lov_verzije_citanje" on public.lov_verzije for select to authenticated using (korisnik = (select auth.uid()));
+create policy "lov_verzije_unos" on public.lov_verzije for insert to authenticated with check (korisnik = (select auth.uid()));
+create policy "lov_verzije_izmjena" on public.lov_verzije for update to authenticated using (korisnik = (select auth.uid())) with check (korisnik = (select auth.uid()));
+revoke all on public.lov_verzije from anon;
+revoke all on public.lov_verzije from authenticated;
+grant select, insert, update on public.lov_verzije to authenticated;
+
+create or replace function public.lov_admin_verzije()
+returns table (email text, verzija text, adresa text, uredaj text, azurirano timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query
+    select u.email::text, v.verzija, v.adresa, v.uredaj, v.azurirano
+    from public.lov_verzije v join auth.users u on u.id = v.korisnik;
+end $$;
+revoke all on function public.lov_admin_verzije() from public, anon;
+grant execute on function public.lov_admin_verzije() to authenticated;

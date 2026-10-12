@@ -29,3 +29,22 @@ export function osvjeziAplikaciju() {
     .catch(() => {})
     .finally(() => window.location.reload());
 }
+
+function opisUredaja() {
+  const ua = navigator.userAgent;
+  const sustav = /iPhone|iPod/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad" : /Android/.test(ua) ? "Android" : "Računalo";
+  const ikona =
+    window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone;
+  return `${sustav} · ${ikona ? "ikona" : "preglednik"}`;
+}
+
+/** Bilježi koju verziju i s koje adrese korisnik koristi (vidi samo administrator). Nikad ne baca grešku. */
+export async function zabiljeziVerziju(korisnik: string) {
+  if (!MOJA_VERZIJA || !navigator.onLine) return;
+  try {
+    const { sb } = await import("./drustvo");
+    await sb()
+      .from("lov_verzije")
+      .upsert({ korisnik, verzija: MOJA_VERZIJA.slice(0, 40), adresa: location.host.slice(0, 120), uredaj: opisUredaja(), azurirano: new Date().toISOString() });
+  } catch {}
+}
