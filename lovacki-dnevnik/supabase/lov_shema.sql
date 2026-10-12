@@ -179,3 +179,9 @@ create policy "lov_foto_citanje" on storage.objects for select to authenticated
 drop policy if exists "lov_foto_unos" on storage.objects;
 create policy "lov_foto_unos" on storage.objects for insert to authenticated
   with check (bucket_id = 'lov-fotografije' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- Administracija: statistika samo za administratore (popis u privatnoj shemi, dodaje se ručno).
+create table if not exists lov_privatno.admini (korisnik uuid primary key references auth.users (id) on delete cascade);
+-- insert into lov_privatno.admini (korisnik) values ('<uuid administratora>');
+-- Funkcije public.lov_je_admin() i public.lov_admin_statistika() (security definer, provjeravaju lov_privatno.admini)
+-- primijenjene su migracijom „lov_admin”; vraćaju samo brojke, ne sadržaj dnevnika.

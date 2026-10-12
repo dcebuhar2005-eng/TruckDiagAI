@@ -23,7 +23,7 @@ export const RUTE: { href: string; oznaka: string; ikona: ImeIkone; mobilno: boo
 
 function indeks(put: string) {
   // Podstranice postavki (npr. Izvori i licence) pripadaju Postavkama.
-  if (put.startsWith("/izvori")) put = "/postavke";
+  if (put.startsWith("/izvori") || put.startsWith("/admin")) put = "/postavke";
   if (put.startsWith("/lov") && !put.startsWith("/lovi")) put = "/";
   const i = RUTE.findIndex((r) => (r.href === "/" ? put === "/" : put.startsWith(r.href)));
   return i < 0 ? 0 : i;
