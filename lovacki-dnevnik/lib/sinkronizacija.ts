@@ -24,9 +24,11 @@ interface Stanje {
   neposlano: boolean;
   zadnje: number | null;
   greska: string | null;
+  /** Korisnik već ima dnevnik u oblaku (nije novi korisnik – uvod se ne prikazuje). */
+  imaOblak: boolean;
 }
 
-let stanje: Stanje = { spremno: false, salje: false, neposlano: false, zadnje: null, greska: null };
+let stanje: Stanje = { spremno: false, salje: false, neposlano: false, zadnje: null, greska: null, imaOblak: false };
 const slusaci = new Set<() => void>();
 const postavi = (i: Partial<Stanje>) => {
   stanje = { ...stanje, ...i };
@@ -95,6 +97,7 @@ async function posalji() {
       .upsert({ korisnik: id, podaci: lokalno, azurirano: new Date(m.lokalno).toISOString() });
     if (error) throw error;
     oblakStvaran = !prazanIliPrimjer(lokalno);
+    postavi({ imaOblak: true });
     dopustenoBrisanje = false;
     spremiMetu(id, { poslano: m.lokalno });
     postavi({ zadnje: Date.now(), greska: null });
@@ -145,6 +148,7 @@ export async function pokreniSinkronizaciju(id: string | null) {
   korisnik = id;
   oblakStvaran = false;
   dopustenoBrisanje = false;
+  postavi({ imaOblak: false });
   if (!id) {
     postavi({ spremno: false, neposlano: false });
     return;
@@ -163,6 +167,7 @@ export async function pokreniSinkronizaciju(id: string | null) {
     if (red) {
       const oblak = Date.parse(red.azurirano);
       oblakStvaran = !prazanIliPrimjer(red.podaci);
+      postavi({ imaOblak: true });
       if (db.imaLokalno() && m.poslano === 0) {
         // Prvo usklađivanje ovog uređaja (npr. Safari i aplikacija na početnom zaslonu imaju odvojene
         // podatke): nikad ne prepisuj – spoji lokalne i podatke iz oblaka pa pošalji rezultat.

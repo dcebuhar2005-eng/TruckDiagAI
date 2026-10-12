@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { demoBaza } from "@/lib/demo";
-import { db } from "@/lib/store";
+import { db, oznaciUvodGotov } from "@/lib/store";
 import Ikona, { type ImeIkone } from "./Ikona";
 import { OdabirNaKarti } from "./lokacija/PoljeLokacije";
 import { Znak } from "./Navigacija";
@@ -47,6 +47,7 @@ export default function Uvod() {
   };
 
   const zavrsi = (primjer: boolean) => {
+    oznaciUvodGotov();
     if (primjer) {
       db.zamijeni(demoBaza(ime.trim()));
       if (lokacija) db.postavke({ lokacija, lokacijaNaziv: "Područje lova" });
