@@ -139,3 +139,43 @@ drop policy if exists "lov_dnevnici_brisanje" on public.lov_dnevnici;
 create policy "lov_dnevnici_brisanje" on public.lov_dnevnici for delete to authenticated using (korisnik = (select auth.uid()));
 revoke all on public.lov_dnevnici from anon;
 grant select, insert, update, delete on public.lov_dnevnici to authenticated;
+
+-- Povijest verzija dnevnika (zaštita od slučajnog prepisivanja): najviše jedna verzija u 10 minuta.
+create table if not exists public.lov_dnevnici_povijest (
+  id bigint generated always as identity primary key,
+  korisnik uuid not null references auth.users (id) on delete cascade,
+  podaci jsonb not null,
+  azurirano timestamptz not null,
+  spremljeno timestamptz not null default now()
+);
+create index if not exists lov_dnevnici_povijest_korisnik on public.lov_dnevnici_povijest (korisnik, spremljeno desc);
+alter table public.lov_dnevnici_povijest enable row level security;
+drop policy if exists "lov_povijest_citanje" on public.lov_dnevnici_povijest;
+create policy "lov_povijest_citanje" on public.lov_dnevnici_povijest for select to authenticated using (korisnik = (select auth.uid()));
+grant select on public.lov_dnevnici_povijest to authenticated;
+
+create or replace function lov_privatno.sacuvaj_verziju() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not exists (
+    select 1 from public.lov_dnevnici_povijest p
+    where p.korisnik = old.korisnik and p.spremljeno > now() - interval '10 minutes'
+  ) then
+    insert into public.lov_dnevnici_povijest (korisnik, podaci, azurirano) values (old.korisnik, old.podaci, old.azurirano);
+  end if;
+  return new;
+end $$;
+drop trigger if exists lov_dnevnici_verzija on public.lov_dnevnici;
+create trigger lov_dnevnici_verzija before update on public.lov_dnevnici
+  for each row when (old.podaci is distinct from new.podaci) execute function lov_privatno.sacuvaj_verziju();
+
+-- Fotografije u oblaku (privatno, mapa po korisniku; brisanje iz aplikacije ne briše kopiju u oblaku).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('lov-fotografije', 'lov-fotografije', false, 10485760, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do nothing;
+drop policy if exists "lov_foto_citanje" on storage.objects;
+create policy "lov_foto_citanje" on storage.objects for select to authenticated
+  using (bucket_id = 'lov-fotografije' and (storage.foldername(name))[1] = (select auth.uid())::text);
+drop policy if exists "lov_foto_unos" on storage.objects;
+create policy "lov_foto_unos" on storage.objects for insert to authenticated
+  with check (bucket_id = 'lov-fotografije' and (storage.foldername(name))[1] = (select auth.uid())::text);
