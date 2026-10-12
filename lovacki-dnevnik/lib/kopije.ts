@@ -14,8 +14,8 @@ const SPREMNIK = "lov-kopije";
 const DAN = 86400000;
 /** Nova automatska kopija svaki dan (fotografije su zasebno u oblaku). */
 export const RAZMAK_DANA = 1;
-/** Kopije starije od ovoga brišu se (najnovije tri ostaju uvijek). */
-export const CUVANJE_DANA = 30;
+/** Čuvaju se samo najnovije kopije s podacima; starije i prazne brišu se nakon svakog spremanja. */
+export const BROJ_KOPIJA = 2;
 
 export interface Kopija {
   naziv: string;
@@ -98,12 +98,10 @@ export async function napraviKopiju(sFotografijama = true) {
       .upload(naziv, new Blob([sadrzaj], { type: "application/json" }), { contentType: "application/json", upsert: false });
     if (error) throw new Error(error.message.includes("exceeded") ? "Kopija je prevelika (više od 50 MB)" : error.message);
 
-    // Brisanje kopija starijih od mjesec dana (nova kopija uvijek ostaje).
+    // Ostaju samo dvije najnovije kopije s podacima (nova je uvijek među njima); prazne se brišu.
     const sve = await ucitajPopis();
-    const stare = sve
-      .slice(3)
-      .filter((k) => k.naziv !== naziv && Date.now() - k.datum > CUVANJE_DANA * DAN)
-      .map((k) => k.naziv);
+    const zadrzi = new Set([naziv, ...sve.filter((k) => k.naziv !== naziv && k.velicina >= PRAZNA_KOPIJA_B).slice(0, BROJ_KOPIJA - 1).map((k) => k.naziv)]);
+    const stare = sve.filter((k) => !zadrzi.has(k.naziv)).map((k) => k.naziv);
     if (stare.length) {
       await sb().storage.from(SPREMNIK).remove(stare);
       await ucitajPopis();
