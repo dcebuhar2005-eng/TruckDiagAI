@@ -14,6 +14,7 @@ import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
 import NovaVerzija from "./NovaVerzija";
+import PitanjeMisljenja from "./PitanjeMisljenja";
 import { Obavijesti, obavijest } from "./ui";
 
 export default function Ljuska({ children }: { children: ReactNode }) {
@@ -93,6 +94,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <Obavijesti />
       <AlarmBlizine />
       <NovaVerzija />
+      <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
     </>
   );
 }

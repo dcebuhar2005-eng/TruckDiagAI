@@ -195,3 +195,38 @@ create table if not exists lov_privatno.admini (korisnik uuid primary key refere
 -- insert into lov_privatno.admini (korisnik) values ('<uuid administratora>');
 -- Funkcije public.lov_je_admin() i public.lov_admin_statistika() (security definer, provjeravaju lov_privatno.admini)
 -- primijenjene su migracijom „lov_admin”; vraćaju samo brojke, ne sadržaj dnevnika.
+
+-- Mišljenja korisnika (pitanje u aplikaciji nakon sat vremena korištenja).
+-- Korisnik smije samo upisati svoj odgovor; čita ih samo administrator preko lov_admin_misljenja().
+create table if not exists public.lov_misljenja (
+  id bigint generated always as identity primary key,
+  korisnik uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  ocjena smallint not null check (ocjena in (-1, 1)),
+  tekst text check (char_length(tekst) <= 2000),
+  verzija text check (char_length(verzija) <= 40),
+  stvoreno timestamptz not null default now()
+);
+create index if not exists lov_misljenja_stvoreno on public.lov_misljenja (stvoreno desc);
+alter table public.lov_misljenja enable row level security;
+create policy "lov_misljenja_unos" on public.lov_misljenja for insert to authenticated with check (korisnik = (select auth.uid()));
+revoke all on public.lov_misljenja from anon;
+revoke all on public.lov_misljenja from authenticated;
+grant insert (ocjena, tekst, verzija) on public.lov_misljenja to authenticated;
+
+create or replace function public.lov_admin_misljenja()
+returns table (id bigint, ocjena smallint, tekst text, verzija text, stvoreno timestamptz, email text, ime text, korisnicko_ime text)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query
+    select m.id, m.ocjena, m.tekst, m.verzija, m.stvoreno, u.email::text, p.ime, p.korisnicko_ime
+    from public.lov_misljenja m
+    join auth.users u on u.id = m.korisnik
+    left join public.lov_profili p on p.id = m.korisnik
+    order by m.stvoreno desc
+    limit 500;
+end $$;
+revoke all on function public.lov_admin_misljenja() from public, anon;
+grant execute on function public.lov_admin_misljenja() to authenticated;
