@@ -4,7 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect, useState, type ReactNode } from "react";
 import { konfigurirano, pokreniDrustvo, useDrustvo } from "@/lib/drustvo";
 import { pokreniSinkronizaciju, useSinkronizacija } from "@/lib/sinkronizacija";
-import { automatskaKopija } from "@/lib/kopije";
+import { automatskaKopija, vratiAkoJePrazno } from "@/lib/kopije";
 import { registrirajSW } from "@/lib/offline";
 import { aktivniLov, uskladiPracenje } from "@/lib/lov";
 import { oznaciUvodGotov, useBaza, uvodGotov } from "@/lib/store";
@@ -13,7 +13,7 @@ import Navigacija from "./Navigacija";
 import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
-import { Obavijesti } from "./ui";
+import { Obavijesti, obavijest } from "./ui";
 
 export default function Ljuska({ children }: { children: ReactNode }) {
   const baza = useBaza();
@@ -33,6 +33,15 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     pokreniSinkronizaciju(prijavljen ?? null);
     if (prijavljen) automatskaKopija();
   }, [prijavljen, drustvo.spremno]);
+
+  // Prazan dnevnik nakon prijave (npr. nova ikona, novi mobitel): sam vrati zadnju kopiju s podacima.
+  const sinkroniziran = sinkronizacija.spremno;
+  useEffect(() => {
+    if (!konfigurirano || !prijavljen || !sinkroniziran) return;
+    vratiAkoJePrazno().then((r) => {
+      if (r) obavijest(`Vraćeno iz sigurnosne kopije: ${r.odstrel} odstrela, ${r.izlasci} izlazaka`);
+    });
+  }, [prijavljen, sinkroniziran]);
   // GPS trag dok je lov u tijeku.
   const lovId = aktivniLov(baza)?.id ?? null;
   useEffect(() => {

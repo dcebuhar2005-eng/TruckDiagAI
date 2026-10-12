@@ -9,7 +9,7 @@ import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, roditeljListe
 import { konfigurirano, sb, useDrustvo } from "@/lib/drustvo";
 import { dopustiBrisanjeUOblaku, odjaviSe, useSinkronizacija } from "@/lib/sinkronizacija";
 import { datumDugi, sat } from "@/lib/format";
-import { CUVANJE_DANA, RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
+import { CUVANJE_DANA, PRAZNA_KOPIJA_B, RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
 import { demoBaza } from "@/lib/demo";
 import { spremiFoto, sveFotografije } from "@/lib/foto";
 import { db, praznaBaza, useBaza } from "@/lib/store";
@@ -354,12 +354,17 @@ function AutomatskaKopija() {
           {k.kopije.map((kop) => (
             <div key={kop.naziv} className="flex items-center gap-3 rounded-xl border border-rub px-3.5 py-2.5 text-[14px]">
               <span className="flex-1">
-                {datumDugi(new Date(kop.datum))}
-                <span className="brojke ml-2 text-[12.5px] text-tekst-3">{(kop.velicina / 1024).toLocaleString("hr-HR", { maximumFractionDigits: 0 })} KB</span>
+                {datumDugi(new Date(kop.datum))} <span className="brojke text-tekst-2">u {sat(new Date(kop.datum))}</span>
+                {kop.velicina < PRAZNA_KOPIJA_B ? (
+                  <span className="ml-2 rounded-md bg-povrsina-3 px-1.5 py-0.5 text-[11.5px] text-tekst-3">prazna</span>
+                ) : (
+                  <span className="brojke ml-2 text-[12.5px] text-tekst-3">{(kop.velicina / 1024).toLocaleString("hr-HR", { maximumFractionDigits: 0 })} KB</span>
+                )}
               </span>
               <Gumb
                 velicina="sm"
                 vrsta="tihi"
+                disabled={kop.velicina < PRAZNA_KOPIJA_B}
                 onClick={() =>
                   potvrda.pitaj(
                     "Vratiti ovu kopiju?",
