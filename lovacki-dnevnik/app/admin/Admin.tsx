@@ -7,7 +7,7 @@ import { Kostur } from "@/components/Kostur";
 import { Brojac, Gumb, Naslov, cx, djeteListe, roditeljListe } from "@/components/ui";
 import { konfigurirano, sb, useDrustvo } from "@/lib/drustvo";
 import { datumKratki, mnozina, sat } from "@/lib/format";
-import { imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
+import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 
 interface Korisnik {
   email: string;
@@ -32,6 +32,16 @@ interface Misljenje {
   ime: string | null;
   korisnicko_ime: string | null;
 }
+
+interface VerzijaKorisnika {
+  email: string;
+  verzija: string;
+  adresa: string | null;
+  uredaj: string | null;
+  azurirano: string;
+}
+
+const PRAVA_ADRESA = "hunt-jade.vercel.app";
 
 interface Statistika {
   korisnika: number;
@@ -60,15 +70,20 @@ export default function Admin() {
   const d = useDrustvo();
   const [s, setS] = useState<Statistika | null>(null);
   const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
+  const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
   const [osvjezeno, setOsvjezeno] = useState<Date | null>(null);
   const prijavljen = d.sesija?.user.id;
 
-  const ucitajMisljenja = () =>
+  const ucitajMisljenja = () => {
     sb()
       .rpc("lov_admin_misljenja")
       .then(({ data, error }) => !error && setMisljenja((data ?? []) as Misljenje[]));
+    sb()
+      .rpc("lov_admin_verzije")
+      .then(({ data, error }) => !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
+  };
 
   // „Osvježi” najprije provjeri je li objavljena nova verzija aplikacije; ako jest, učita je.
   const osvjezi = () => {
@@ -108,6 +123,9 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_misljenja")
       .then(({ data, error }) => ziv && !error && setMisljenja((data ?? []) as Misljenje[]));
+    sb()
+      .rpc("lov_admin_verzije")
+      .then(({ data, error }) => ziv && !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
     return () => {
       ziv = false;
     };
@@ -232,6 +250,7 @@ export default function Admin() {
                           {k.email}
                           {k.drustvo ? ` · ${k.drustvo}` : ""}
                         </div>
+                        <OznakaVerzije v={verzije.get(k.email)} />
                       </td>
                       <td className="brojke px-3 py-2.5 text-tekst-2">{datumKratki(new Date(k.registriran))}</td>
                       <td className="brojke px-3 py-2.5 text-tekst-2">{zadnje ? kadJe(zadnje) : "–"}</td>
@@ -245,10 +264,28 @@ export default function Admin() {
             </table>
           </div>
           <p className="p-5 pt-3 text-[12px] text-tekst-3">
-            Vidite samo brojke. Sadržaj dnevnika (izlasci, odstrel, lovišta, fotografije) ostaje privatan svakom korisniku.
+            Verzija: „najnovija” znači da korisnik ima istu verziju kao vi sada; „–” znači da aplikaciju još nije otvorio
+            otkad se verzija bilježi. Vidite samo brojke. Sadržaj dnevnika (izlasci, odstrel, lovišta, fotografije) ostaje privatan svakom korisniku.
           </p>
         </motion.section>
       </motion.div>
+    </div>
+  );
+}
+
+function OznakaVerzije({ v }: { v?: VerzijaKorisnika }) {
+  if (!v) return <div className="mt-1 text-[12px] text-tekst-3">Verzija: –</div>;
+  const najnovija = v.verzija === MOJA_VERZIJA;
+  const staraAdresa = v.adresa && v.adresa !== PRAVA_ADRESA;
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] leading-tight">
+      <span className={cx("rounded-full px-2 py-0.5 font-medium", najnovija ? "bg-mahovina/15 text-mahovina" : "bg-naglasak-meki text-naglasak")}>
+        {najnovija ? "najnovija" : `stara · ${v.verzija.slice(0, 7)}`}
+      </span>
+      <span className="text-tekst-3">
+        {v.uredaj ?? ""}
+        {staraAdresa ? <span className="text-opasnost"> · stara adresa</span> : null}
+      </span>
     </div>
   );
 }
