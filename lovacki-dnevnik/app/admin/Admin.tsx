@@ -21,6 +21,17 @@ interface Korisnik {
   fotografija: number;
 }
 
+interface Misljenje {
+  id: number;
+  ocjena: 1 | -1;
+  tekst: string | null;
+  verzija: string | null;
+  stvoreno: string;
+  email: string;
+  ime: string | null;
+  korisnicko_ime: string | null;
+}
+
 interface Statistika {
   korisnika: number;
   racuna_u_projektu: number;
@@ -47,13 +58,20 @@ interface Statistika {
 export default function Admin() {
   const d = useDrustvo();
   const [s, setS] = useState<Statistika | null>(null);
+  const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
   const [osvjezeno, setOsvjezeno] = useState<Date | null>(null);
   const prijavljen = d.sesija?.user.id;
 
+  const ucitajMisljenja = () =>
+    sb()
+      .rpc("lov_admin_misljenja")
+      .then(({ data, error }) => !error && setMisljenja((data ?? []) as Misljenje[]));
+
   const ucitaj = () => {
     setUcitavam(true);
+    ucitajMisljenja();
     sb()
       .rpc("lov_admin_statistika")
       .then(({ data, error }) => {
@@ -80,6 +98,9 @@ export default function Admin() {
           setOsvjezeno(new Date());
         }
       });
+    sb()
+      .rpc("lov_admin_misljenja")
+      .then(({ data, error }) => ziv && !error && setMisljenja((data ?? []) as Misljenje[]));
     return () => {
       ziv = false;
     };
@@ -143,6 +164,40 @@ export default function Admin() {
           <Plocica ikona="kamera" oznaka="Fotografija u oblaku" vrijednost={s.fotografija} dodatak={`${s.foto_mb.toLocaleString("hr-HR")} MB`} />
           <Plocica ikona="stit" oznaka="Sigurnosnih kopija" vrijednost={s.kopija} dodatak={`${s.kopije_mb.toLocaleString("hr-HR")} MB · limit pohrane 1 GB`} />
         </motion.section>
+
+        {misljenja && (
+          <motion.section variants={djeteListe} className="kartica p-5">
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Mišljenja korisnika ({misljenja.length})</h2>
+              <span className="brojke text-[13px] text-tekst-2">
+                👍 {misljenja.filter((m) => m.ocjena === 1).length} · 👎 {misljenja.filter((m) => m.ocjena === -1).length}
+              </span>
+            </div>
+            {misljenja.length === 0 ? (
+              <p className="text-[13.5px] text-tekst-3">Još nema odgovora. Pitanje se korisniku prikaže nakon sat vremena korištenja aplikacije.</p>
+            ) : (
+              <ul className="grid gap-2">
+                {misljenja.map((m) => (
+                  <li key={m.id} className="rounded-xl border border-rub bg-povrsina-2 p-3">
+                    <div className="flex items-baseline justify-between gap-2 text-[12.5px] text-tekst-3">
+                      <span className="truncate">
+                        <span className="text-[15px]">{m.ocjena === 1 ? "👍" : "👎"}</span>{" "}
+                        <span className="font-medium text-tekst">{m.ime ?? m.email}</span>
+                        {m.korisnicko_ime ? ` · @${m.korisnicko_ime}` : ""} · {m.email}
+                      </span>
+                      <span className="brojke shrink-0">{kadJe(m.stvoreno)}</span>
+                    </div>
+                    {m.tekst ? (
+                      <p className="mt-1.5 text-[14.5px] whitespace-pre-wrap">{m.tekst}</p>
+                    ) : (
+                      <p className="mt-1 text-[13px] text-tekst-3 italic">Bez komentara</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.section>
+        )}
 
         <motion.section variants={djeteListe} className="kartica overflow-hidden">
           <h2 className="p-5 pb-3 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Korisnici ({s.popis.length})</h2>
