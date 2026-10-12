@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
-import { konfigurirano, useDrustvo } from "@/lib/drustvo";
+import { konfigurirano, sb, useDrustvo } from "@/lib/drustvo";
 import { dopustiBrisanjeUOblaku, odjaviSe, useSinkronizacija } from "@/lib/sinkronizacija";
 import { datumDugi, sat } from "@/lib/format";
 import { CUVANJE_DANA, RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
@@ -220,6 +220,18 @@ function Racun() {
   const d = useDrustvo();
   const s = useSinkronizacija();
   const [radim, setRadim] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const uid = d.sesija?.user.id;
+  useEffect(() => {
+    if (!uid) return;
+    let ziv = true;
+    sb()
+      .rpc("lov_je_admin")
+      .then(({ data }) => ziv && setAdmin(data === true));
+    return () => {
+      ziv = false;
+    };
+  }, [uid]);
   const email = d.sesija?.user.email;
   const status = typeof navigator !== "undefined" && !navigator.onLine
     ? { boja: "bg-naglasak", tekst: s.neposlano ? "Bez interneta – izmjene će se poslati kad se spojite" : "Bez interneta" }
@@ -253,6 +265,13 @@ function Racun() {
         >
           {radim ? "Odjavljujem…" : "Odjava"}
         </Gumb>
+        {admin && (
+          <Link href="/admin" transitionTypes={["naprijed"]}>
+            <Gumb ikona="statistika" className="w-full">
+              Administracija
+            </Gumb>
+          </Link>
+        )}
       </div>
     </Sekcija>
   );
