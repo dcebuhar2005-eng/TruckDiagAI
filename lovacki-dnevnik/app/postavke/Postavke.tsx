@@ -7,9 +7,9 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { konfigurirano, useDrustvo } from "@/lib/drustvo";
-import { odjaviSe, useSinkronizacija } from "@/lib/sinkronizacija";
+import { dopustiBrisanjeUOblaku, odjaviSe, useSinkronizacija } from "@/lib/sinkronizacija";
 import { datumDugi, sat } from "@/lib/format";
-import { RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
+import { CUVANJE_DANA, RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
 import { demoBaza } from "@/lib/demo";
 import { spremiFoto, sveFotografije } from "@/lib/foto";
 import { db, praznaBaza, useBaza } from "@/lib/store";
@@ -167,6 +167,7 @@ function Obrazac({ baza }: { baza: Baza }) {
               ikona="smece"
               onClick={() =>
                 potvrda.pitaj("Obrisati sve podatke?", "Svi izlasci, odstrel, lovišta, točke i dozvole bit će trajno obrisani s ovog uređaja.", () => {
+                  dopustiBrisanjeUOblaku();
                   db.zamijeni({ ...praznaBaza(), postavke: { ...p, dovrsenUvod: true } });
                   obavijest("Svi podaci su obrisani", "info");
                 })
@@ -291,7 +292,7 @@ function AutomatskaKopija() {
     <Sekcija
       ikona="ucitaj"
       naslov="Automatska sigurnosna kopija"
-      opis={`Jednom mjesečno dnevnik se sprema na vaš privatni račun. Kopije starije od ${RAZMAK_DANA} dana brišu se same.`}
+      opis={`Svaki dan dnevnik se dodatno sprema na vaš privatni račun (fotografije su u oblaku zasebno). Kopije starije od ${CUVANJE_DANA} dana brišu se same.`}
     >
       {!konfigurirano || !prijavljen ? (
         <div className="rounded-2xl bg-povrsina-2 p-4 text-[14px] text-tekst-2">

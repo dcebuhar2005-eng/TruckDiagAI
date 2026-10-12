@@ -6,6 +6,7 @@
 
 import { useSyncExternalStore } from "react";
 import { odjava, sb } from "./drustvo";
+import { uskladiFotografije, posaljiRed } from "./foto";
 import { db, naPromjenu, trenutniVlasnik } from "./store";
 import type { Baza } from "./types";
 
@@ -62,6 +63,16 @@ function spremiMetu(id: string, m: Partial<Meta>) {
 }
 
 let korisnik: string | null = null;
+/** Oblak sadrži prave podatke (ne prazan dnevnik ni primjere). */
+let oblakStvaran = false;
+/** Korisnik je izričito obrisao sve podatke – smije se poslati prazan dnevnik. */
+let dopustenoBrisanje = false;
+
+/** Poziva se samo iz „Obriši sve podatke”: dopušta da se prazan dnevnik pošalje u oblak. */
+export function dopustiBrisanjeUOblaku() {
+  dopustenoBrisanje = true;
+}
+
 let odgoda: ReturnType<typeof setTimeout> | null = null;
 let slanje: Promise<void> | null = null;
 
@@ -71,12 +82,20 @@ async function posalji() {
   const m = meta(id);
   if (m.lokalno <= m.poslano) return;
   if (!navigator.onLine) return;
+  const lokalno = db.dohvati();
+  // Zaštita: prazan dnevnik ili primjeri nikad ne prepisuju prave podatke u oblaku.
+  if (oblakStvaran && prazanIliPrimjer(lokalno) && !dopustenoBrisanje) {
+    postavi({ greska: "Prazan dnevnik nije poslan u oblak – vaši podaci u oblaku su sačuvani." });
+    return;
+  }
   postavi({ salje: true });
   try {
     const { error } = await sb()
       .from("lov_dnevnici")
-      .upsert({ korisnik: id, podaci: db.dohvati(), azurirano: new Date(m.lokalno).toISOString() });
+      .upsert({ korisnik: id, podaci: lokalno, azurirano: new Date(m.lokalno).toISOString() });
     if (error) throw error;
+    oblakStvaran = !prazanIliPrimjer(lokalno);
+    dopustenoBrisanje = false;
     spremiMetu(id, { poslano: m.lokalno });
     postavi({ zadnje: Date.now(), greska: null });
   } catch (e) {
@@ -112,7 +131,10 @@ function prijaviSlusace() {
     spremiMetu(korisnik, { lokalno: Date.now() });
     zakaziSlanje();
   });
-  window.addEventListener("online", () => zakaziSlanje());
+  window.addEventListener("online", () => {
+    zakaziSlanje();
+    posaljiRed().catch(() => {});
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") isprazni().catch(() => {});
   });
@@ -121,6 +143,8 @@ function prijaviSlusace() {
 /** Poziva se nakon prijave (i pri svakom pokretanju dok je korisnik prijavljen). */
 export async function pokreniSinkronizaciju(id: string | null) {
   korisnik = id;
+  oblakStvaran = false;
+  dopustenoBrisanje = false;
   if (!id) {
     postavi({ spremno: false, neposlano: false });
     return;
@@ -138,6 +162,7 @@ export async function pokreniSinkronizaciju(id: string | null) {
     const m = meta(id);
     if (red) {
       const oblak = Date.parse(red.azurirano);
+      oblakStvaran = !prazanIliPrimjer(red.podaci);
       if (db.imaLokalno() && m.poslano === 0) {
         // Prvo usklađivanje ovog uređaja (npr. Safari i aplikacija na početnom zaslonu imaju odvojene
         // podatke): nikad ne prepisuj – spoji lokalne i podatke iz oblaka pa pošalji rezultat.
@@ -145,7 +170,7 @@ export async function pokreniSinkronizaciju(id: string | null) {
         db.zamijeni(spojeno, true);
         spremiMetu(id, { lokalno: Date.now(), poslano: oblak });
         await isprazni();
-      } else if (!db.imaLokalno() || oblak > m.lokalno) {
+      } else if (!db.imaLokalno() || oblak > m.lokalno || (prazanIliPrimjer(db.dohvati()) && oblakStvaran)) {
         // Zadnja izmjena pobjeđuje: novija verzija iz oblaka (npr. s drugog mobitela) zamjenjuje lokalnu.
         db.zamijeni(red.podaci, true);
         spremiMetu(id, { lokalno: oblak, poslano: oblak });
@@ -163,6 +188,8 @@ export async function pokreniSinkronizaciju(id: string | null) {
   } finally {
     if (korisnik === id) postavi({ spremno: true });
   }
+  // Fotografije koje još nisu u oblaku šalju se u pozadini.
+  uskladiFotografije().catch(() => {});
 }
 
 const KOLEKCIJE = ["lovista", "tocke", "izlasci", "odstrel", "dozvole"] as const;

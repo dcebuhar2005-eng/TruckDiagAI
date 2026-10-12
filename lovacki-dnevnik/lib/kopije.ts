@@ -11,7 +11,10 @@ import type { Baza } from "./types";
 
 const SPREMNIK = "lov-kopije";
 const DAN = 86400000;
-export const RAZMAK_DANA = 30;
+/** Nova automatska kopija svaki dan (fotografije su zasebno u oblaku). */
+export const RAZMAK_DANA = 1;
+/** Kopije starije od ovoga brišu se (najnovije tri ostaju uvijek). */
+export const CUVANJE_DANA = 30;
 
 export interface Kopija {
   naziv: string;
@@ -67,14 +70,14 @@ export async function ucitajPopis(): Promise<Kopija[]> {
   return kopije;
 }
 
-export async function napraviKopiju() {
+export async function napraviKopiju(sFotografijama = true) {
   const id = await korisnik();
   if (!id) throw new Error("Prijavite se za sigurnosnu kopiju");
   postavi({ radim: true, greska: null });
   try {
     let fotografije: Record<string, string> = {};
     try {
-      fotografije = await sveFotografije();
+      if (sFotografijama) fotografije = await sveFotografije();
     } catch {
       // Bez fotografija ako IndexedDB nije dostupan.
     }
@@ -87,7 +90,10 @@ export async function napraviKopiju() {
 
     // Brisanje kopija starijih od mjesec dana (nova kopija uvijek ostaje).
     const sve = await ucitajPopis();
-    const stare = sve.filter((k) => k.naziv !== naziv && Date.now() - k.datum > RAZMAK_DANA * DAN).map((k) => k.naziv);
+    const stare = sve
+      .slice(3)
+      .filter((k) => k.naziv !== naziv && Date.now() - k.datum > CUVANJE_DANA * DAN)
+      .map((k) => k.naziv);
     if (stare.length) {
       await sb().storage.from(SPREMNIK).remove(stare);
       await ucitajPopis();
@@ -110,7 +116,7 @@ export async function automatskaKopija() {
     const zadnja = kopije[0]?.datum ?? 0;
     const b = db.dohvati();
     const imaPodataka = b.izlasci.length + b.odstrel.length + b.lovista.length + b.dozvole.length + b.tocke.length > 0;
-    if (imaPodataka && !b.postavke.primjer && Date.now() - zadnja >= RAZMAK_DANA * DAN) await napraviKopiju();
+    if (imaPodataka && !b.postavke.primjer && Date.now() - zadnja >= RAZMAK_DANA * DAN) await napraviKopiju(false);
   } catch {
     provjereno = false; // pokušaj ponovno pri sljedećem otvaranju
   }
