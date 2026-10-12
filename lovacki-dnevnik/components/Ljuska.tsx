@@ -13,6 +13,7 @@ import Navigacija from "./Navigacija";
 import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
+import NovaVerzija from "./NovaVerzija";
 import { Obavijesti, obavijest } from "./ui";
 
 export default function Ljuska({ children }: { children: ReactNode }) {
@@ -91,6 +92,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <Urednici />
       <Obavijesti />
       <AlarmBlizine />
+      <NovaVerzija />
     </>
   );
 }

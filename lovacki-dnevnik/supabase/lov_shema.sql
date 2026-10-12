@@ -140,15 +140,19 @@ create policy "lov_dnevnici_brisanje" on public.lov_dnevnici for delete to authe
 revoke all on public.lov_dnevnici from anon;
 grant select, insert, update, delete on public.lov_dnevnici to authenticated;
 
--- Povijest verzija dnevnika (zaštita od slučajnog prepisivanja): najviše jedna verzija u 10 minuta.
+-- Povijest verzija dnevnika (zaštita od slučajnog prepisivanja): najviše jedna verzija u 10 minuta,
+-- a čuva se posljednjih 20 po korisniku (kružni spremnik: redni broj % 20 određuje mjesto).
 create table if not exists public.lov_dnevnici_povijest (
   id bigint generated always as identity primary key,
   korisnik uuid not null references auth.users (id) on delete cascade,
   podaci jsonb not null,
   azurirano timestamptz not null,
-  spremljeno timestamptz not null default now()
+  spremljeno timestamptz not null default now(),
+  redni bigint not null default 1,
+  slot int not null default 1
 );
 create index if not exists lov_dnevnici_povijest_korisnik on public.lov_dnevnici_povijest (korisnik, spremljeno desc);
+create unique index if not exists lov_dnevnici_povijest_slot on public.lov_dnevnici_povijest (korisnik, slot);
 alter table public.lov_dnevnici_povijest enable row level security;
 drop policy if exists "lov_povijest_citanje" on public.lov_dnevnici_povijest;
 create policy "lov_povijest_citanje" on public.lov_dnevnici_povijest for select to authenticated using (korisnik = (select auth.uid()));
@@ -156,13 +160,19 @@ grant select on public.lov_dnevnici_povijest to authenticated;
 
 create or replace function lov_privatno.sacuvaj_verziju() returns trigger
 language plpgsql security definer set search_path = '' as $$
+declare sljedeci bigint;
 begin
-  if not exists (
+  if exists (
     select 1 from public.lov_dnevnici_povijest p
     where p.korisnik = old.korisnik and p.spremljeno > now() - interval '10 minutes'
   ) then
-    insert into public.lov_dnevnici_povijest (korisnik, podaci, azurirano) values (old.korisnik, old.podaci, old.azurirano);
+    return new;
   end if;
+  select coalesce(max(p.redni), 0) + 1 into sljedeci from public.lov_dnevnici_povijest p where p.korisnik = old.korisnik;
+  insert into public.lov_dnevnici_povijest as p (korisnik, podaci, azurirano, spremljeno, redni, slot)
+  values (old.korisnik, old.podaci, old.azurirano, now(), sljedeci, (sljedeci % 20)::int)
+  on conflict (korisnik, slot) do update
+    set podaci = excluded.podaci, azurirano = excluded.azurirano, spremljeno = excluded.spremljeno, redni = excluded.redni;
   return new;
 end $$;
 drop trigger if exists lov_dnevnici_verzija on public.lov_dnevnici;

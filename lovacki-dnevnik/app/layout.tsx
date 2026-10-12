@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   description: "Evidencija izlazaka, odstrela, lovišta i dozvola – s prognozom vjetra i solunarnim kalendarom.",
   applicationName: "CroLovac",
   appleWebApp: { capable: true, title: "CroLovac", statusBarStyle: "black-translucent" },
+  other: { "crolovac-verzija": process.env.NEXT_PUBLIC_VERZIJA ?? "" },
 };
 
 export const viewport: Viewport = {
