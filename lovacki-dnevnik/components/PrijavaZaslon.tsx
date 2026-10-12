@@ -28,7 +28,7 @@ export default function PrijavaZaslon() {
           <Znak velicina={72} />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="mb-6 text-center">
-          <h1 className="font-display text-[32px] leading-tight font-semibold">Huntora</h1>
+          <h1 className="font-display text-[32px] leading-tight font-semibold">CroLovac</h1>
           <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[14.5px] text-tekst-2">
             <Ikona ime="stit" velicina={16} className="text-naglasak" /> Vaš dnevnik je privatan – prijavite se
           </p>

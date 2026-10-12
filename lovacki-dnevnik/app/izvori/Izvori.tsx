@@ -11,7 +11,7 @@ export default function Izvori() {
       <Naslov
         natpis="O aplikaciji"
         naslov="Izvori i licence"
-        opis="Karte, podaci i servisi koje Huntora koristi, uz uvjete korištenja. Aplikacija ih koristi umjereno: prognoza se sprema 15 minuta, a šumski putevi 14 dana."
+        opis="Karte, podaci i servisi koje CroLovac koristi, uz uvjete korištenja. Aplikacija ih koristi umjereno: prognoza se sprema 15 minuta, a šumski putevi 14 dana."
       />
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-6">
         {IZVORI.map((s) => (

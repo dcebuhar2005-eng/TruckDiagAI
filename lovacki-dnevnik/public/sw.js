@@ -1,4 +1,4 @@
-/* Huntora – service worker: rad bez signala.
+/* CroLovac – service worker: rad bez signala.
  *
  * - Ljuska aplikacije (stranice i /_next/static) sprema se pa se aplikacija otvara i bez interneta.
  * - Pločice karte: najprije iz spremljenih (offline) područja, zatim iz predmemorije
