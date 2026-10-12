@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from "react";
 import { sb } from "./drustvo";
 import { spremiFoto, sveFotografije } from "./foto";
+import { spoji } from "./sinkronizacija";
 import { db } from "./store";
 import type { Baza } from "./types";
 
@@ -129,6 +130,8 @@ export async function vratiKopiju(naziv: string) {
   if (!Array.isArray(j.izlasci) || !Array.isArray(j.odstrel)) throw new Error("Kopija nije valjana");
   const { fotografije, ...podaci } = j;
   for (const [fid, url] of Object.entries(fotografije ?? {})) await spremiFoto(fid, url);
-  db.zamijeni({ ...podaci, postavke: { ...podaci.postavke, dovrsenUvod: true } });
+  // Spajanje, ne zamjena: unosi dodani nakon kopije ostaju sačuvani.
+  const kopija = { ...podaci, postavke: { ...podaci.postavke, dovrsenUvod: true } } as Baza;
+  db.zamijeni(spoji(db.dohvati(), kopija));
   return { izlasci: j.izlasci.length, odstrel: j.odstrel.length };
 }

@@ -344,11 +344,12 @@ function AutomatskaKopija() {
                 onClick={() =>
                   potvrda.pitaj(
                     "Vratiti ovu kopiju?",
-                    "Sadašnji podaci na ovom uređaju bit će zamijenjeni podacima iz kopije.",
+                    "Zapisi iz kopije dodat će se vašem dnevniku. Ništa što ste upisali nakon kopije neće se obrisati.",
                     () =>
                       vratiKopiju(kop.naziv)
                         .then((r) => obavijest(`Vraćeno: ${r.izlasci} izlazaka, ${r.odstrel} odstrela`))
                         .catch((e) => obavijest(e.message, "greska")),
+                    { oznaka: "Vrati", ikona: "ucitaj", vrsta: "primarni" },
                   )
                 }
               >
