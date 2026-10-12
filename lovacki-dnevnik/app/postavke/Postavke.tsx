@@ -9,7 +9,7 @@ import { Gumb, Naslov, Polje, Segmenti, cx, djeteListe, obavijest, roditeljListe
 import { konfigurirano, sb, useDrustvo } from "@/lib/drustvo";
 import { dopustiBrisanjeUOblaku, odjaviSe, useSinkronizacija } from "@/lib/sinkronizacija";
 import { datumDugi, sat } from "@/lib/format";
-import { CUVANJE_DANA, PRAZNA_KOPIJA_B, RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
+import { BROJ_KOPIJA, PRAZNA_KOPIJA_B, RAZMAK_DANA, napraviKopiju, ucitajPopis, useKopije, vratiKopiju } from "@/lib/kopije";
 import { demoBaza } from "@/lib/demo";
 import { spremiFoto, sveFotografije } from "@/lib/foto";
 import { db, praznaBaza, useBaza } from "@/lib/store";
@@ -311,7 +311,7 @@ function AutomatskaKopija() {
     <Sekcija
       ikona="ucitaj"
       naslov="Automatska sigurnosna kopija"
-      opis={`Svaki dan dnevnik se dodatno sprema na vaš privatni račun (fotografije su u oblaku zasebno). Kopije starije od ${CUVANJE_DANA} dana brišu se same.`}
+      opis={`Svaki dan dnevnik se dodatno sprema na vaš privatni račun (fotografije su u oblaku zasebno). Čuvaju se samo ${BROJ_KOPIJA} najnovije kopije, starije se brišu same.`}
     >
       {!konfigurirano || !prijavljen ? (
         <div className="rounded-2xl bg-povrsina-2 p-4 text-[14px] text-tekst-2">
