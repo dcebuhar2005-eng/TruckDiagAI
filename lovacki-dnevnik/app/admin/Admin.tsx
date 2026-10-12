@@ -42,6 +42,8 @@ interface VerzijaKorisnika {
 }
 
 const PRAVA_ADRESA = "hunt-jade.vercel.app";
+/** Broj korisnika po stranici u popisu. */
+const PO_STRANICI = 10;
 
 interface Statistika {
   korisnika: number;
@@ -70,6 +72,7 @@ export default function Admin() {
   const d = useDrustvo();
   const [s, setS] = useState<Statistika | null>(null);
   const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
+  const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
@@ -148,6 +151,10 @@ export default function Admin() {
       </div>
     );
   if (!s) return <Kostur />;
+
+  const brojStranica = Math.max(1, Math.ceil(s.popis.length / PO_STRANICI));
+  const trenutna = Math.min(stranica, brojStranica - 1);
+  const naStranici = s.popis.slice(trenutna * PO_STRANICI, (trenutna + 1) * PO_STRANICI);
 
   return (
     <div>
@@ -239,7 +246,7 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody>
-                {s.popis.map((k) => {
+                {naStranici.map((k) => {
                   const zadnje = [k.zadnja_prijava, k.zadnja_izmjena].filter(Boolean).sort().pop();
                   return (
                     <tr key={k.email} className="border-b border-rub last:border-0 hover:bg-povrsina-2">
@@ -263,6 +270,23 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
+          {brojStranica > 1 && (
+            <div className="flex items-center justify-between gap-3 border-t border-rub px-5 py-3">
+              <Gumb velicina="sm" ikona="lijevo" onClick={() => setStranica(trenutna - 1)} disabled={trenutna === 0}>
+                Prethodna
+              </Gumb>
+              <span className="brojke text-center text-[13px] leading-tight whitespace-nowrap text-tekst-2">
+                Stranica {trenutna + 1} / {brojStranica}
+                <span className="block text-[11.5px] text-tekst-3">
+                  {trenutna * PO_STRANICI + 1}–{Math.min((trenutna + 1) * PO_STRANICI, s.popis.length)} od {s.popis.length}
+                </span>
+              </span>
+              <Gumb velicina="sm" onClick={() => setStranica(trenutna + 1)} disabled={trenutna >= brojStranica - 1}>
+                Sljedeća
+                <Ikona ime="desno" velicina={16} />
+              </Gumb>
+            </div>
+          )}
           <p className="p-5 pt-3 text-[12px] text-tekst-3">
             Verzija: „najnovija” znači da korisnik ima istu verziju kao vi sada; „–” znači da aplikaciju još nije otvorio
             otkad se verzija bilježi. Vidite samo brojke. Sadržaj dnevnika (izlasci, odstrel, lovišta, fotografije) ostaje privatan svakom korisniku.
