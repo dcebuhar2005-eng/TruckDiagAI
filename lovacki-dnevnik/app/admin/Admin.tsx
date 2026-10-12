@@ -7,6 +7,7 @@ import { Kostur } from "@/components/Kostur";
 import { Brojac, Gumb, Naslov, cx, djeteListe, roditeljListe } from "@/components/ui";
 import { konfigurirano, sb, useDrustvo } from "@/lib/drustvo";
 import { datumKratki, mnozina, sat } from "@/lib/format";
+import { imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 
 interface Korisnik {
   email: string;
@@ -68,6 +69,12 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_misljenja")
       .then(({ data, error }) => !error && setMisljenja((data ?? []) as Misljenje[]));
+
+  // „Osvježi” najprije provjeri je li objavljena nova verzija aplikacije; ako jest, učita je.
+  const osvjezi = () => {
+    setUcitavam(true);
+    imaNovuVerziju().then((nova) => (nova ? osvjeziAplikaciju() : ucitaj()));
+  };
 
   const ucitaj = () => {
     setUcitavam(true);
@@ -131,7 +138,7 @@ export default function Admin() {
         naslov="Administracija"
         opis={osvjezeno ? `Stanje u ${sat(osvjezeno)}` : undefined}
         akcija={
-          <Gumb velicina="sm" ikona="ucitaj" onClick={ucitaj} disabled={ucitavam}>
+          <Gumb velicina="sm" ikona="ucitaj" onClick={osvjezi} disabled={ucitavam}>
             {ucitavam ? "Učitavam…" : "Osvježi"}
           </Gumb>
         }
