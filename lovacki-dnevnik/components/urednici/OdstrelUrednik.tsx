@@ -128,7 +128,7 @@ export default function OdstrelUrednik({
       obavijest("Odstrel je ažuriran");
     } else {
       db.dodaj("odstrel", podaci);
-      obavijest(`Lovu blagoslov! ${v.vrsta} je upisan.`);
+      obavijest(`Dobra kob! ${v.vrsta} je upisan.`);
     }
     zatvori();
   };

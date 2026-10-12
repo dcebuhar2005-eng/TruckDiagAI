@@ -103,7 +103,7 @@ function Pokretanje({ baza }: { baza: Baza }) {
     kreniULov({ lovisteId, tockaId: t?.id, nacin, lat: poz?.lat, lng: poz?.lng });
     if (mozeDijeliti && dijeli && !d.dijelim) pokreniDijeljenje(240).catch(() => {});
     navigator.vibrate?.(60);
-    obavijest("Lovu blagoslov! Lov je započeo.");
+    obavijest("Dobra kob! Lov je započeo.");
   };
 
   return (
