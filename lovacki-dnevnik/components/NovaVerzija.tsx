@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Ikona from "./Ikona";
+import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 import { opruga } from "./ui";
 
 /**
@@ -11,33 +12,17 @@ import { opruga } from "./ui";
  * provjerava je li objavljena nova verzija i osvježi se.
  */
 
-const MOJA = process.env.NEXT_PUBLIC_VERZIJA ?? "";
 const RAZMAK_MS = 60_000;
 /** Nakon ovoliko vremena u pozadini aplikacija se osvježi sama (ako nije otvoren obrazac). */
 const DUGO_U_POZADINI_MS = 5 * 60_000;
 
-async function objavljenaVerzija(): Promise<string | null> {
-  const r = await fetch(`/?provjera=${Date.now()}`, { cache: "no-store", credentials: "same-origin" });
-  if (!r.ok) return null;
-  const m = (await r.text()).match(/name="crolovac-verzija"\s+content="([^"]*)"/);
-  return m?.[1] || null;
-}
-
 const otvorenObrazac = () => Boolean(document.querySelector(".fixed.inset-0.z-\\[2000\\]"));
-
-function osvjezi() {
-  navigator.serviceWorker
-    ?.getRegistration()
-    .then((reg) => reg?.update())
-    .catch(() => {})
-    .finally(() => window.location.reload());
-}
 
 export default function NovaVerzija() {
   const [nova, setNova] = useState(false);
 
   useEffect(() => {
-    if (!MOJA || process.env.NODE_ENV !== "production") return;
+    if (!MOJA_VERZIJA || process.env.NODE_ENV !== "production") return;
     let zadnja = 0;
     let skriveno = 0;
     let ziv = true;
@@ -45,12 +30,9 @@ export default function NovaVerzija() {
     const provjeri = async (nakonPozadine: number) => {
       if (!navigator.onLine || Date.now() - zadnja < RAZMAK_MS) return;
       zadnja = Date.now();
-      try {
-        const v = await objavljenaVerzija();
-        if (!ziv || !v || v === MOJA) return;
-        if (nakonPozadine >= DUGO_U_POZADINI_MS && !otvorenObrazac()) osvjezi();
-        else setNova(true);
-      } catch {}
+      if (!(await imaNovuVerziju()) || !ziv) return;
+      if (nakonPozadine >= DUGO_U_POZADINI_MS && !otvorenObrazac()) osvjeziAplikaciju();
+      else setNova(true);
     };
 
     const vidljivost = () => {
@@ -88,7 +70,7 @@ export default function NovaVerzija() {
               <div className="text-tekst-2">Vaši podaci ostaju sačuvani.</div>
             </div>
             <button
-              onClick={osvjezi}
+              onClick={osvjeziAplikaciju}
               className="shrink-0 rounded-xl bg-naglasak px-3.5 py-2 text-[13.5px] font-semibold text-[#0b100c]"
             >
               Osvježi

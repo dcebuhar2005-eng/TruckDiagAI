@@ -15,6 +15,7 @@ import { spremiFoto, sveFotografije } from "@/lib/foto";
 import { db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza, Tocka2D, Postavke as TPostavke } from "@/lib/types";
 import PoljeLokacije from "@/components/lokacija/PoljeLokacije";
+import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 
 export default function Postavke() {
   const baza = useBaza();
@@ -139,6 +140,7 @@ function Obrazac({ baza }: { baza: Baza }) {
             ]}
           />
           <p className="mt-3 text-[13px] text-tekst-3">Tamna tema štedi bateriju i ne zasljepljuje na čeki u sumrak.</p>
+          <ProvjeraVerzije />
         </Sekcija>
 
         <Sekcija ikona="stit" naslov="Podaci i sigurnosna kopija" opis={konfigurirano ? "Dnevnik je spremljen na uređaju i u vašem privatnom računu." : "Svi podaci čuvaju se isključivo na ovom uređaju."}>
@@ -274,6 +276,33 @@ function Racun() {
         )}
       </div>
     </Sekcija>
+  );
+}
+
+function ProvjeraVerzije() {
+  const [radim, setRadim] = useState(false);
+  const provjeri = () => {
+    if (!navigator.onLine) return obavijest("Za provjeru nove verzije potreban je internet", "info");
+    setRadim(true);
+    imaNovuVerziju().then((nova) => {
+      if (nova) {
+        obavijest("Učitavam novu verziju…", "info");
+        osvjeziAplikaciju();
+      } else {
+        setRadim(false);
+        obavijest("Imate najnoviju verziju CroLovca");
+      }
+    });
+  };
+  return (
+    <div className="mt-4 flex items-center justify-between gap-3 border-t border-rub pt-4">
+      <div className="text-[13px] text-tekst-3">
+        Verzija <span className="brojke">{MOJA_VERZIJA.slice(0, 7) || "–"}</span>
+      </div>
+      <Gumb velicina="sm" ikona="preuzmi" onClick={provjeri} disabled={radim}>
+        {radim ? "Provjeravam…" : "Provjeri nove verzije"}
+      </Gumb>
+    </div>
   );
 }
 
