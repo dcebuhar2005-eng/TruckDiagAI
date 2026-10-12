@@ -195,3 +195,18 @@ export const db = {
     }
   },
 };
+
+/** Uvod (dobrodošlica, ime, lokacija) prikazuje se samo prvi put na uređaju. */
+const KLJUC_UVODA = "lovacki-dnevnik:uvod-gotov";
+export function uvodGotov() {
+  try {
+    return localStorage.getItem(KLJUC_UVODA) === "1";
+  } catch {
+    return false;
+  }
+}
+export function oznaciUvodGotov() {
+  try {
+    localStorage.setItem(KLJUC_UVODA, "1");
+  } catch {}
+}
