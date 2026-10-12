@@ -71,9 +71,18 @@ export async function ucitajPopis(): Promise<Kopija[]> {
   return kopije;
 }
 
+const brojZapisa = (b: Baza) =>
+  (b.izlasci?.length ?? 0) + (b.odstrel?.length ?? 0) + (b.lovista?.length ?? 0) + (b.dozvole?.length ?? 0) + (b.tocke?.length ?? 0);
+
+/** Kopija manja od ovoga ne sadrži zapise (prazan dnevnik). */
+export const PRAZNA_KOPIJA_B = 1024;
+
 export async function napraviKopiju(sFotografijama = true) {
   const id = await korisnik();
   if (!id) throw new Error("Prijavite se za sigurnosnu kopiju");
+  const trenutno = db.dohvati();
+  // Prazan dnevnik ili primjeri nikad se ne spremaju kao kopija (ne smiju zasjeniti pravu kopiju).
+  if (!brojZapisa(trenutno) || trenutno.postavke.primjer) throw new Error("Dnevnik je prazan – nema što spremiti");
   postavi({ radim: true, greska: null });
   try {
     let fotografije: Record<string, string> = {};
@@ -121,6 +130,32 @@ export async function automatskaKopija() {
   } catch {
     provjereno = false; // pokušaj ponovno pri sljedećem otvaranju
   }
+}
+
+/**
+ * Ako je dnevnik prazan, vraća najnoviju kopiju koja ima zapise (preskače prazne).
+ * Poziva se automatski nakon prijave – korisnik ne mora tražiti kopiju u postavkama.
+ */
+let automatskiVraceno = false;
+export async function vratiAkoJePrazno() {
+  if (automatskiVraceno) return null;
+  const b = db.dohvati();
+  if (brojZapisa(b) && !b.postavke.primjer) return null;
+  automatskiVraceno = true;
+  try {
+    const kopije = await ucitajPopis();
+    for (const k of kopije) {
+      if (k.velicina < PRAZNA_KOPIJA_B) continue;
+      const { data, error } = await sb().storage.from(SPREMNIK).download(k.naziv);
+      if (error || !data) continue;
+      const j = JSON.parse(await data.text()) as Baza;
+      if (!brojZapisa(j) || j.postavke?.primjer) continue;
+      return { ...(await vratiKopiju(k.naziv)), datum: k.datum };
+    }
+  } catch {
+    automatskiVraceno = false;
+  }
+  return null;
 }
 
 export async function vratiKopiju(naziv: string) {
