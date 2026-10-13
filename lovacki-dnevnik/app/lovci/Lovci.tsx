@@ -33,6 +33,7 @@ import {
   pripremiZvuk,
   spremiPostavkeBlizine,
   zatraziObavijesti,
+  vibracijaPodrzana,
 } from "@/lib/blizina";
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { useBaza } from "@/lib/store";
@@ -424,6 +425,12 @@ function PostavkeAlarma() {
           </Gumb>
         )}
       </div>
+      {p.vibracija && !p.zvuk && !vibracijaPodrzana() && (
+        <p className="rounded-xl border border-naglasak/30 bg-naglasak-meki px-3 py-2 text-[12.5px] text-tekst-2">
+          Ovaj mobitel ne dopušta vibraciju iz aplikacije (iPhone). Alarm će se prikazati na zaslonu – uključite zvuk ako
+          želite i zvučni signal.
+        </p>
+      )}
       <p className="text-[12.5px] text-tekst-3">
         Alarm radi dok ste u lovu (dijelite lokaciju): oglasi se kad prijatelj uđe u odabranu udaljenost, i ponovno ako
         priđe bliže od 200 m.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
