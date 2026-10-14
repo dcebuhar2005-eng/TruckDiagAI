@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CroLovac</string>
+    <string name="title_activity_main">CroLovac</string>
+    <string name="package_name">com.crolovac.app</string>
+    <string name="custom_url_scheme">com.crolovac.app</string>
+    <string name="capacitor_background_geolocation_notification_channel_name">Lov u tijeku</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_crolovac</string>
+    <string name="capacitor_background_geolocation_notification_color">#D8C28A</string>
+</resources>

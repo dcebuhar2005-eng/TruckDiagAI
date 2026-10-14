@@ -212,6 +212,23 @@ function Obrazac({ baza }: { baza: Baza }) {
             <Ikona ime="desno" className="text-tekst-3" />
           </Link>
         </motion.div>
+
+        <motion.div variants={djeteListe} className="lg:col-span-2">
+          <Link
+            href="/privatnost"
+            transitionTypes={["naprijed"]}
+            className="kartica flex items-center gap-3 p-4 transition-colors hover:border-rub-jaki"
+          >
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+              <Ikona ime="oko" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-display text-[17px] font-semibold">Pravila privatnosti</div>
+              <div className="text-[13px] text-tekst-3">Koji se podaci koriste, gdje se čuvaju i brisanje računa</div>
+            </div>
+            <Ikona ime="desno" className="text-tekst-3" />
+          </Link>
+        </motion.div>
       </motion.div>
       {potvrda.element}
     </div>

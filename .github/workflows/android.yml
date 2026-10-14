@@ -1,0 +1,58 @@
+# Izrada Android aplikacije CroLovac (Capacitor ljuska oko hunt-jade.vercel.app).
+# Rezultat je nepotpisani .aab u artefaktima; potpisuje se ključem za upload prije slanja na Google Play.
+name: Android (CroLovac)
+
+on:
+  push:
+    branches: [claude/hunting-journal-app-y29d6q]
+    paths:
+      - lovacki-dnevnik/android/**
+      - lovacki-dnevnik/capacitor.config.json
+      - lovacki-dnevnik/android-ljuska/**
+      - lovacki-dnevnik/package.json
+      - .github/workflows/android.yml
+  workflow_dispatch:
+
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: lovacki-dnevnik
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: lovacki-dnevnik/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Izrada .aab
+        working-directory: lovacki-dnevnik/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease \
+            -PcrolovacVersionCode=${{ github.run_number }} \
+            -PcrolovacVersionName=1.0.${{ github.run_number }}
+          mkdir -p ../../izlaz
+          cp app/build/outputs/bundle/release/app-release.aab ../../izlaz/crolovac-${{ github.run_number }}-nepotpisano.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crolovac-${{ github.run_number }}
+          path: izlaz/*.aab
+          retention-days: 30
+      # Kopija u oznaci (tag) android-aab-N, da se može preuzeti i preko gita.
+      - name: Oznaka s .aab
+        working-directory: izlaz
+        run: |
+          git init -q -b aab .
+          git add *.aab
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -q -m "CroLovac .aab ${{ github.run_number }}"
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/tags/android-aab-${{ github.run_number }}

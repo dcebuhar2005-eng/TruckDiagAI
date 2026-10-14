@@ -1,0 +1,19 @@
+{
+  "appId": "com.crolovac.app",
+  "appName": "CroLovac",
+  "webDir": "android-ljuska",
+  "server": {
+    "url": "https://hunt-jade.vercel.app",
+    "androidScheme": "https",
+    "errorPath": "greska.html"
+  },
+  "android": {
+    "useLegacyBridge": true,
+    "backgroundColor": "#0b100c",
+    "appendUserAgent": "CroLovacAndroid"
+  },
+  "plugins": {
+    "SystemBars": { "insetsHandling": "css", "initialViewportFitValueHint": "cover", "style": "DARK" },
+    "LocalNotifications": { "smallIcon": "ic_stat_crolovac", "iconColor": "#d8c28a" }
+  }
+}

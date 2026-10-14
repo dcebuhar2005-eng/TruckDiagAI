@@ -260,3 +260,37 @@ begin
 end $$;
 revoke all on function public.lov_admin_verzije() from public, anon;
 grant execute on function public.lov_admin_verzije() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Prijave za zatvoreno testiranje Android aplikacije na Google Playu.
+-- Korisnik upisuje svoju Gmail adresu; čita ih samo administrator (lov_admin_testeri).
+create table if not exists public.lov_testeri (
+  korisnik uuid primary key default auth.uid() references auth.users (id) on delete cascade,
+  gmail text not null check (char_length(gmail) between 6 and 120 and gmail ~* '^[^@\s]+@(gmail|googlemail)\.com$'),
+  uredaj text check (char_length(uredaj) <= 60),
+  stvoreno timestamptz not null default now()
+);
+alter table public.lov_testeri enable row level security;
+create policy "lov_testeri_citanje" on public.lov_testeri for select to authenticated using (korisnik = (select auth.uid()));
+create policy "lov_testeri_unos" on public.lov_testeri for insert to authenticated with check (korisnik = (select auth.uid()));
+create policy "lov_testeri_izmjena" on public.lov_testeri for update to authenticated using (korisnik = (select auth.uid())) with check (korisnik = (select auth.uid()));
+revoke all on public.lov_testeri from anon;
+revoke all on public.lov_testeri from authenticated;
+grant select, insert, update on public.lov_testeri to authenticated;
+
+create or replace function public.lov_admin_testeri()
+returns table (email text, gmail text, ime text, korisnicko_ime text, uredaj text, stvoreno timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query
+    select u.email::text, t.gmail, p.ime, p.korisnicko_ime, t.uredaj, t.stvoreno
+    from public.lov_testeri t
+    join auth.users u on u.id = t.korisnik
+    left join public.lov_profili p on p.id = t.korisnik
+    order by t.stvoreno;
+end $$;
+revoke all on function public.lov_admin_testeri() from public, anon;
+grant execute on function public.lov_admin_testeri() to authenticated;

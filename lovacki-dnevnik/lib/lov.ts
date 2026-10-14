@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from "react";
 import { isoDatum, isoVrijeme, udaljenostM } from "./format";
 import { spremiFoto } from "./foto";
+import { pratiLokaciju } from "./nativno";
 import { db, noviId } from "./store";
 import type { Baza, Izlazak, Spol, VrstaLova } from "./types";
 import { dohvatiPrognozu } from "./vrijeme";
@@ -36,7 +37,7 @@ export function useLovPozicija() {
   );
 }
 
-let pracenje: number | null = null;
+let zaustaviPracenje: (() => void) | null = null;
 let izlazakId: string | null = null;
 let novi: [number, number][] = [];
 let zadnjeSpremanje = 0;
@@ -60,23 +61,23 @@ function zadnjaTockaTraga(): [number, number] | undefined {
 export function uskladiPracenje(id: string | null) {
   if (id === izlazakId) return;
   spremiTrag();
-  if (pracenje != null) navigator.geolocation.clearWatch(pracenje);
-  pracenje = null;
+  zaustaviPracenje?.();
+  zaustaviPracenje = null;
   izlazakId = id;
-  if (!id || !navigator.geolocation) return;
-  pracenje = navigator.geolocation.watchPosition(
+  if (!id) return;
+  zaustaviPracenje = pratiLokaciju(
     (p) => {
-      pozicija = { lat: p.coords.latitude, lng: p.coords.longitude, tocnost: p.coords.accuracy, t: Date.now() };
+      pozicija = { lat: p.lat, lng: p.lng, tocnost: p.tocnost, t: Date.now() };
       javi();
       // Trag: samo dovoljno točne pozicije, najmanje 20 m od prethodne.
-      if (p.coords.accuracy > 60) return;
+      if (p.tocnost > 60) return;
       const z = zadnjaTockaTraga();
       if (!z || udaljenostM({ lat: z[0], lng: z[1] }, pozicija) >= 20) {
         novi.push([Number(pozicija.lat.toFixed(6)), Number(pozicija.lng.toFixed(6))]);
         if (novi.length >= 10 || Date.now() - zadnjeSpremanje > 60000) spremiTrag();
       }
     },
-    () => {},
+    undefined,
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 },
   );
 }

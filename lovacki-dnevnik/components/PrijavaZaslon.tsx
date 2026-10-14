@@ -135,6 +135,9 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
           Dnevnik je vezan uz vaš račun: vidite ga samo kad ste prijavljeni, i to na svakom mobitelu na kojem se prijavite.
           Nitko drugi – ni prijatelji – ne može vidjeti vaše izlaske, odstrel ni lovišta.
         </p>
+        <a href="/privatnost" className="mt-2 inline-block text-[12.5px] font-medium text-naglasak">
+          Pravila privatnosti
+        </a>
       </motion.form>
     </div>
   );

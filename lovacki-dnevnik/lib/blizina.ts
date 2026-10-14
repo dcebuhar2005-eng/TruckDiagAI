@@ -1,6 +1,7 @@
 "use client";
 
 import { metri } from "./format";
+import { nativnaObavijest, uAplikaciji, vibriraj } from "./nativno";
 
 /**
  * Alarm kad prijatelj u lovu uđe u zadanu udaljenost.
@@ -39,7 +40,7 @@ export function spremiPostavkeBlizine(p: Partial<PostavkeBlizine>) {
 }
 
 /** iPhone (Safari) ne dopušta vibraciju iz web aplikacije. */
-export const vibracijaPodrzana = () => typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+export const vibracijaPodrzana = () => uAplikaciji() || (typeof navigator !== "undefined" && typeof navigator.vibrate === "function");
 
 /* ---------------- Zvuk ---------------- */
 
@@ -84,6 +85,7 @@ export async function zatraziObavijesti() {
 }
 
 async function sistemskaObavijest(naslov: string, tijelo: string) {
+  if (uAplikaciji()) return nativnaObavijest(naslov, tijelo);
   if (dozvolaObavijesti() !== "granted") return;
   const opcije = { body: tijelo, tag: "lovac-blizu", renotify: true, icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", requireInteraction: true } as NotificationOptions;
   try {
@@ -106,7 +108,7 @@ export function oglasiAlarm(ime: string, udaljenost: number, hitno: boolean) {
   const p = postavkeBlizine();
   const naslov = hitno ? "Lovac vrlo blizu!" : "Lovac u blizini";
   const tijelo = `${ime} je ${metri(udaljenost)} od vas. Provjerite smjer pucanja.`;
-  if (p.vibracija) navigator.vibrate?.(hitno ? [400, 120, 400, 120, 400, 120, 800] : [300, 150, 300, 150, 600]);
+  if (p.vibracija) vibriraj(hitno ? [400, 120, 400, 120, 400, 120, 800] : [300, 150, 300, 150, 600]);
   if (p.zvuk) zapistiZvuk(hitno);
   javi(`${naslov}: ${tijelo}`);
   if (document.visibilityState !== "visible") sistemskaObavijest(naslov, tijelo);
