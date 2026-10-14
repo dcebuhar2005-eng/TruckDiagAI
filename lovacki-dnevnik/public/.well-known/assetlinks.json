@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.crolovac.app",
+      "sha256_cert_fingerprints": [
+        "9B:0B:48:EC:72:A0:96:C0:2A:33:8B:68:15:BF:25:98:B5:75:6B:A9:C1:5F:66:7F:A8:AD:DE:9F:2A:01:A4:44"
+      ]
+    }
+  }
+]

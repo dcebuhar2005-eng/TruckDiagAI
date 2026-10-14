@@ -23,6 +23,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- App Links: poveznice za dodavanje prijatelja (QR kod) otvaraju se u aplikaciji. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="hunt-jade.vercel.app" android:pathPrefix="/lovci" />
+            </intent-filter>
+
         </activity>
 
         <provider
