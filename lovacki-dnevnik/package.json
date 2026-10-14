@@ -18,6 +18,7 @@
     "framer-motion": "^12.42.2",
     "leaflet": "^1.9.4",
     "next": "16.2.9",
+    "qrcode-generator": "^2.0.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-leaflet": "^5.0.0"
