@@ -70,6 +70,8 @@ interface Stanje {
   greskaLokacije: string | null;
   /** Prijava je poništena jer aplikacija nije otvarana više od 2 mjeseca. */
   prijavaIstekla: boolean;
+  /** Profil je provjeren na poslužitelju (pa `profil: null` znači da ga stvarno nema). */
+  profilUcitan: boolean;
 }
 
 let stanje: Stanje = {
@@ -82,6 +84,7 @@ let stanje: Stanje = {
   pozicija: null,
   greskaLokacije: null,
   prijavaIstekla: false,
+  profilUcitan: false,
 };
 const slusaci = new Set<() => void>();
 function postavi(izmjene: Partial<Stanje>) {
@@ -129,7 +132,7 @@ export async function odjava() {
   // Bez interneta odjavi barem ovaj uređaj.
   if (error) await sb().auth.signOut({ scope: "local" });
   postaviVlasnika(null);
-  postavi({ sesija: null, profil: null, prijateljstva: [], lokacije: [] });
+  postavi({ sesija: null, profil: null, prijateljstva: [], lokacije: [], profilUcitan: false });
 }
 
 function prevedi(poruka: string) {
@@ -166,15 +169,11 @@ export async function spremiProfil(korisnickoIme: string, ime: string, drustvo?:
   postavi({ profil: data as Profil });
 }
 
+/** Pretraga lovaca na poslužitelju: bez obzira na kvačice (č ć ž š đ), s @ ili bez, više riječi bilo kojim redom. */
 export async function trazi(upit: string): Promise<Profil[]> {
-  const q = upit.trim().toLowerCase().replace(/[%_]/g, "");
+  const q = upit.trim().replace(/^@+/, "");
   if (q.length < 2) return [];
-  const { data, error } = await sb()
-    .from("lov_profili")
-    .select(POLJA_PROFILA)
-    .or(`korisnicko_ime.ilike.${q}%,ime.ilike.%${q}%`)
-    .neq("id", stanje.sesija?.user.id ?? "")
-    .limit(10);
+  const { data, error } = await sb().rpc("lov_trazi_lovce", { upit: q.slice(0, 60) });
   if (error) throw prevedi(error.message);
   return (data ?? []) as Profil[];
 }
@@ -240,7 +239,7 @@ async function osvjeziInterno() {
       azurirano: Date.parse(l.azurirano),
       aktivnoDo: Date.parse(l.aktivno_do),
     }));
-  postavi({ profil: (prof.data as Profil | null) ?? null, prijateljstva, lokacije });
+  postavi({ profil: (prof.data as Profil | null) ?? null, prijateljstva, lokacije, profilUcitan: true });
   provjeriAlarm();
 }
 

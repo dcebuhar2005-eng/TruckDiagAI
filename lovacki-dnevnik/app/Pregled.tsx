@@ -138,6 +138,8 @@ export default function Pregled() {
           <KreniULovKartica baza={baza} />
         </motion.div>
 
+        <BezProfila />
+
         {/* Vjetar i vrijeme */}
         <motion.section variants={djeteListe} className="kartica relative overflow-hidden p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
@@ -450,5 +452,31 @@ function KreniULovKartica({ baza }: { baza: Baza }) {
       </span>
       <Ikona ime="desno" velicina={20} debljina={2.4} className="relative transition-transform group-hover:translate-x-1" />
     </Link>
+  );
+}
+
+/** Korisnik bez profila ne može se pronaći među lovcima – kratki poziv da ga postavi. */
+function BezProfila() {
+  const d = useDrustvo();
+  if (!d.sesija || !d.profilUcitan || d.profil) return null;
+  return (
+    <motion.div variants={djeteListe} className="lg:col-span-3">
+      <Link
+        href="/lovci"
+        transitionTypes={["naprijed"]}
+        className="kartica flex items-center gap-3 border-naglasak/40 p-4 transition-colors hover:border-naglasak"
+      >
+        <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+          <Ikona ime="korisnik" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[17px] font-semibold">Neka vas prijatelji pronađu</div>
+          <div className="text-[13px] text-tekst-2">
+            Postavite korisničko ime u Lovcima – bez njega vas drugi lovci ne mogu dodati ni vidjeti u lovu.
+          </div>
+        </div>
+        <Ikona ime="desno" className="text-tekst-3" />
+      </Link>
+    </motion.div>
   );
 }

@@ -149,6 +149,13 @@ function Glavno() {
   const dolazni = d.prijateljstva.filter((p) => p.status === "ceka" && p.dolazni);
   const odlazni = d.prijateljstva.filter((p) => p.status === "ceka" && !p.dolazni);
   const blizu = lovciUBlizini(d);
+  // Dok lovac nema prijatelja, traženje je prvo na stranici (inače ga ljudi ne nađu ispod postavki alarma).
+  const bezPrijatelja = !prijatelji.length && !odlazni.length && !dolazni.length;
+  const dodaj = (
+    <Sekcija naslov="Dodaj prijatelja" ikona="plus">
+      <Trazilica />
+    </Sekcija>
+  );
 
   return (
     <div>
@@ -171,6 +178,8 @@ function Glavno() {
         <motion.div variants={djeteListe} className="lg:col-span-2">
           <UpozorenjeBlizine blizu={blizu} />
         </motion.div>
+
+        {bezPrijatelja && dodaj}
 
         <motion.section variants={djeteListe} className="lg:col-span-2">
           <UloviSam brojPrijatelja={prijatelji.length} />
@@ -242,9 +251,7 @@ function Glavno() {
           )}
         </Sekcija>
 
-        <Sekcija naslov="Dodaj prijatelja" ikona="plus">
-          <Trazilica />
-        </Sekcija>
+        {!bezPrijatelja && dodaj}
 
         <Sekcija naslov="Prijatelji" ikona="korisnik" broj={prijatelji.length}>
           {prijatelji.length || odlazni.length ? (
@@ -523,9 +530,37 @@ function Trazilica() {
             </motion.div>
           );
         })}
-        {upit.trim().length >= 2 && !trazim && !prikaz.length && <p className="text-[14px] text-tekst-3">Nema lovaca s tim imenom.</p>}
+        {upit.trim().length >= 2 && !trazim && !prikaz.length && (
+          <div className="rounded-2xl bg-povrsina-2 p-3 text-[13.5px] text-tekst-2">
+            <p className="font-medium text-tekst">Nema lovaca s tim imenom.</p>
+            <p className="mt-1">
+              Prijatelj se može pronaći tek kad jednom otvori <b>Lovci</b> u svojoj aplikaciji i spremi korisničko ime. Pošaljite
+              mu poziv:
+            </p>
+            <PozoviPrijatelja />
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function PozoviPrijatelja() {
+  const d = useDrustvo();
+  const ki = d.profil?.korisnicko_ime;
+  const tekst = `Dodaj me u CroLovcu${ki ? ` – moje korisničko ime je @${ki}` : ""}. Otvori aplikaciju, idi na Lovci i spremi svoje korisničko ime da te mogu pronaći: https://hunt-jade.vercel.app/lovci`;
+  const posalji = () => {
+    if (navigator.share) navigator.share({ text: tekst }).catch(() => {});
+    else
+      navigator.clipboard
+        ?.writeText(tekst)
+        .then(() => obavijest("Poruka je kopirana – zalijepite je prijatelju"))
+        .catch(() => {});
+  };
+  return (
+    <Gumb velicina="sm" ikona="plus" className="mt-2" onClick={posalji}>
+      Pošalji poziv
+    </Gumb>
   );
 }
 

@@ -294,3 +294,32 @@ begin
 end $$;
 revoke all on function public.lov_admin_testeri() from public, anon;
 grant execute on function public.lov_admin_testeri() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Pretraga lovaca: bez obzira na velika/mala slova i kvačice (č ć ž š đ), s @ ili bez,
+-- više riječi u bilo kojem redoslijedu (svaka mora odgovarati imenu, korisničkom imenu ili društvu).
+create or replace function public.lov_normaliziraj(t text)
+returns text language sql immutable set search_path = '' as $$
+  select translate(lower(coalesce(t, '')), 'čćžšđ', 'cczsd')
+$$;
+
+create or replace function public.lov_trazi_lovce(upit text)
+returns table (id uuid, korisnicko_ime text, ime text, drustvo text)
+language sql stable security invoker set search_path = '' as $$
+  with rijeci as (
+    select w from unnest(string_to_array(trim(regexp_replace(public.lov_normaliziraj(left(upit, 60)), '[@%_\\,()]+', ' ', 'g')), ' ')) w
+    where length(w) > 0
+  )
+  select p.id, p.korisnicko_ime, p.ime, p.drustvo
+  from public.lov_profili p
+  where p.id <> (select auth.uid())
+    and exists (select 1 from rijeci)
+    and not exists (
+      select 1 from rijeci r
+      where position(r.w in public.lov_normaliziraj(p.ime || ' ' || p.korisnicko_ime || ' ' || coalesce(p.drustvo, ''))) = 0
+    )
+  order by (public.lov_normaliziraj(p.korisnicko_ime) = (select string_agg(w, '') from rijeci)) desc, p.ime
+  limit 15
+$$;
+revoke all on function public.lov_trazi_lovce(text) from public, anon;
+grant execute on function public.lov_trazi_lovce(text) to authenticated;
