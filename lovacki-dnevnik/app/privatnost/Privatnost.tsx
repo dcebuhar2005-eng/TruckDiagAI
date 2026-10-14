@@ -56,11 +56,15 @@ export default function Privatnost() {
               <strong>Mišljenje:</strong> ocjena i tekst ako odgovorite na pitanje o aplikaciji.
             </li>
             <li>
+              <strong>Prijava za testiranje</strong> (samo ako se sami prijavite): Gmail adresa za pristup testiranju na Google
+              Playu i broj mobitela za WhatsApp grupu testera. Koriste se samo za testiranje i brišu se na zahtjev.
+            </li>
+            <li>
               <strong>Tehnički podaci:</strong> verzija aplikacije, vrsta uređaja (npr. „Android · Play aplikacija”) i vrijeme
               zadnjeg korištenja – za otklanjanje grešaka i obavijest o novoj verziji.
             </li>
           </ul>
-          <p>Ne prikupljamo kontakte, poruke, podatke o plaćanju ni oglasni identifikator. Nema oglasa ni praćenja za oglase.</p>
+          <p>Ne prikupljamo kontakte iz imenika, poruke, podatke o plaćanju ni oglasni identifikator. Nema oglasa ni praćenja za oglase.</p>
         </Odjeljak>
 
         <Odjeljak naslov="Lokacija u Android aplikaciji">
