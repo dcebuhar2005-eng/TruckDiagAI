@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { konfigurirano, pokreniDrustvo, useDrustvo } from "@/lib/drustvo";
 import { pokreniSinkronizaciju, useSinkronizacija } from "@/lib/sinkronizacija";
@@ -53,7 +54,9 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   useEffect(() => {
     uskladiPracenje(lovId);
   }, [lovId]);
-  const trebaPrijava = konfigurirano && drustvo.spremno && !drustvo.sesija;
+  // Pravila privatnosti moraju se moći pročitati i bez prijave (poveznica iz Google Playa).
+  const javno = usePathname() === "/privatnost";
+  const trebaPrijava = konfigurirano && drustvo.spremno && !drustvo.sesija && !javno;
   const spremnoZaUvod = !konfigurirano || sinkronizacija.spremno;
   // Uvod samo prvi put: ne za korisnika koji već ima dnevnik u oblaku ni na uređaju gdje je već prošao.
   const [uvodVecProsao] = useState(uvodGotov);
@@ -61,7 +64,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (uvodZavrsen) oznaciUvodGotov();
   }, [uvodZavrsen]);
-  const prikaziUvod = !!baza && spremnoZaUvod && !baza.postavke.dovrsenUvod && !sinkronizacija.imaOblak && !uvodVecProsao;
+  const prikaziUvod = !javno && !!baza && spremnoZaUvod && !baza.postavke.dovrsenUvod && !sinkronizacija.imaOblak && !uvodVecProsao;
 
   useEffect(() => {
     if (!tema) return;
