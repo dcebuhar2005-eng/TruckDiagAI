@@ -33,6 +33,15 @@ interface Misljenje {
   korisnicko_ime: string | null;
 }
 
+interface Tester {
+  email: string;
+  gmail: string;
+  ime: string | null;
+  korisnicko_ime: string | null;
+  uredaj: string | null;
+  stvoreno: string;
+}
+
 interface VerzijaKorisnika {
   email: string;
   verzija: string;
@@ -74,6 +83,8 @@ export default function Admin() {
   const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
   const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
+  const [testeri, setTesteri] = useState<Tester[] | null>(null);
+  const [kopirano, setKopirano] = useState(false);
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
   const [osvjezeno, setOsvjezeno] = useState<Date | null>(null);
@@ -86,6 +97,21 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
+    sb()
+      .rpc("lov_admin_testeri")
+      .then(({ data, error }) => !error && setTesteri((data ?? []) as Tester[]));
+  };
+
+  // Popis Gmail adresa za Play Console (Zatvoreno testiranje → Testeri → popis e-adresa).
+  const kopirajGmailove = () => {
+    if (!testeri?.length) return;
+    navigator.clipboard
+      ?.writeText(testeri.map((t) => t.gmail).join(", "))
+      .then(() => {
+        setKopirano(true);
+        setTimeout(() => setKopirano(false), 2500);
+      })
+      .catch(() => {});
   };
 
   // „Osvježi” najprije provjeri je li objavljena nova verzija aplikacije; ako jest, učita je.
@@ -129,6 +155,9 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => ziv && !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
+    sb()
+      .rpc("lov_admin_testeri")
+      .then(({ data, error }) => ziv && !error && setTesteri((data ?? []) as Tester[]));
     return () => {
       ziv = false;
     };
@@ -196,6 +225,47 @@ export default function Admin() {
           <Plocica ikona="kamera" oznaka="Fotografija u oblaku" vrijednost={s.fotografija} dodatak={`${s.foto_mb.toLocaleString("hr-HR")} MB`} />
           <Plocica ikona="stit" oznaka="Sigurnosnih kopija" vrijednost={s.kopija} dodatak={`${s.kopije_mb.toLocaleString("hr-HR")} MB · limit pohrane 1 GB`} />
         </motion.section>
+
+        {testeri && (
+          <motion.section variants={djeteListe} className="kartica p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">
+                Testeri za Google Play ({testeri.length}
+                <span className="text-tekst-3 normal-case"> / cilj 20</span>)
+              </h2>
+              {testeri.length > 0 && (
+                <Gumb velicina="sm" ikona={kopirano ? "kvacica" : "plus"} onClick={kopirajGmailove}>
+                  {kopirano ? "Kopirano" : "Kopiraj Gmail adrese"}
+                </Gumb>
+              )}
+            </div>
+            {testeri.length === 0 ? (
+              <p className="text-[13.5px] text-tekst-3">
+                Još nema prijava. Poziv „Postani tester” vide korisnici na Androidu (u pregledniku ili s ikone), 20 sekundi nakon
+                otvaranja aplikacije.
+              </p>
+            ) : (
+              <ul className="grid gap-1.5">
+                {testeri.map((t) => (
+                  <li key={t.gmail} className="flex items-baseline justify-between gap-2 rounded-xl border border-rub bg-povrsina-2 px-3 py-2 text-[13.5px]">
+                    <span className="min-w-0 truncate">
+                      <span className="font-medium">{t.gmail}</span>
+                      <span className="text-tekst-3">
+                        {" "}
+                        · {t.ime ?? t.korisnicko_ime ?? t.email}
+                        {t.uredaj ? ` · ${t.uredaj}` : ""}
+                      </span>
+                    </span>
+                    <span className="brojke shrink-0 text-[12.5px] text-tekst-3">{kadJe(t.stvoreno)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-3 text-[12px] text-tekst-3">
+              „Kopiraj Gmail adrese” pa u Play Consoleu: Testiranje → Zatvoreno testiranje → Testeri → Napravi popis e-adresa → zalijepi.
+            </p>
+          </motion.section>
+        )}
 
         {misljenja && (
           <motion.section variants={djeteListe} className="kartica p-5">

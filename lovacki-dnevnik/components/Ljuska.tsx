@@ -17,6 +17,7 @@ import Urednici from "./urednici/Urednici";
 import { zabiljeziVerziju } from "@/lib/verzija";
 import NovaVerzija from "./NovaVerzija";
 import PitanjeMisljenja from "./PitanjeMisljenja";
+import PozivTesterima from "./PozivTesterima";
 import { Obavijesti, obavijest } from "./ui";
 
 export default function Ljuska({ children }: { children: ReactNode }) {
@@ -102,6 +103,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <AlarmBlizine />
       <NovaVerzija />
       <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
+      <PozivTesterima korisnik={prijavljen} email={drustvo.sesija?.user.email} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
     </>
   );
 }
