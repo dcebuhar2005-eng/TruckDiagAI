@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Android ljuska (Capacitor) – generirane datoteke.
+    "android/**",
+    "android-ljuska/**",
   ]),
 ]);
 

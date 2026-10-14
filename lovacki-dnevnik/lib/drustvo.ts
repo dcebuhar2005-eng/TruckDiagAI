@@ -7,6 +7,7 @@ import { createClient, type Session, type SupabaseClient } from "@supabase/supab
 import { useSyncExternalStore } from "react";
 import { ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
 import { udaljenostM } from "./format";
+import { fetchZaSupabase, pratiLokaciju, uAplikaciji } from "./nativno";
 import { postaviVlasnika } from "./store";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,6 +23,7 @@ export function sb(): SupabaseClient {
   if (!klijent) {
     klijent = createClient(URL_!, KLJUC!, {
       auth: { persistSession: true, autoRefreshToken: true, storageKey: KLJUC_PRIJAVE },
+      global: { fetch: fetchZaSupabase },
     });
   }
   return klijent;
@@ -256,7 +258,7 @@ function provjeriAlarm() {
 /* ---------------- Dijeljenje lokacije ---------------- */
 
 const KLJUC_DIJELJENJA = "lovacki-dnevnik:dijelim";
-let pracenje: number | null = null;
+let pracenje: (() => void) | null = null;
 let zadnjeSlanje: { t: number; lat: number; lng: number } | null = null;
 let zakljucavanje: WakeLockSentinel | null = null;
 
@@ -311,20 +313,21 @@ async function posaljiPoziciju(p: MojaPozicija, prisilno = false) {
 }
 
 function pokreniPracenje() {
-  if (pracenje != null || !navigator.geolocation) return;
-  pracenje = navigator.geolocation.watchPosition(
+  if (pracenje != null || (!uAplikaciji() && !navigator.geolocation)) return;
+  pracenje = pratiLokaciju(
     (pos) => {
-      const p = { lat: pos.coords.latitude, lng: pos.coords.longitude, tocnost: pos.coords.accuracy, t: Date.now() };
+      const p = { ...pos, t: Date.now() };
       postavi({ pozicija: p, greskaLokacije: null });
       provjeriAlarm();
       posaljiPoziciju(p).catch(() => {});
     },
-    (e) =>
+    (odbijeno) =>
       postavi({
-        greskaLokacije:
-          e.code === e.PERMISSION_DENIED
-            ? "Pristup lokaciji je odbijen. Dopustite ga u postavkama preglednika."
-            : "Lokacija trenutno nije dostupna.",
+        greskaLokacije: odbijeno
+          ? uAplikaciji()
+            ? "Pristup lokaciji je odbijen. Dopustite ga u postavkama mobitela (Aplikacije → CroLovac → Dopuštenja)."
+            : "Pristup lokaciji je odbijen. Dopustite ga u postavkama preglednika."
+          : "Lokacija trenutno nije dostupna.",
       }),
     { enableHighAccuracy: true, maximumAge: 15000, timeout: 30000 },
   );
@@ -332,7 +335,7 @@ function pokreniPracenje() {
 }
 
 function zaustaviPracenje() {
-  if (pracenje != null) navigator.geolocation.clearWatch(pracenje);
+  pracenje?.();
   pracenje = null;
   otkljucajZaslon();
 }
@@ -469,7 +472,9 @@ export function pokreniDrustvo() {
   setInterval(() => {
     otkucaj++;
     if (stanje.dijelim && Date.now() > stanje.dijelim.do) zaustaviDijeljenje().catch(() => {});
-    if (stanje.sesija && document.visibilityState === "visible" && (stanje.dijelim || otkucaj % 2 === 0)) osvjezi();
+    // U Android aplikaciji se i sa skrivenom aplikacijom osvježava dok dijelim (alarm blizine radi i u džepu).
+    const vidljivo = document.visibilityState === "visible" || (uAplikaciji() && stanje.dijelim);
+    if (stanje.sesija && vidljivo && (stanje.dijelim || otkucaj % 2 === 0)) osvjezi();
   }, 10000);
 
   // Zvuk alarma smije se pripremiti tek nakon dodira korisnika.

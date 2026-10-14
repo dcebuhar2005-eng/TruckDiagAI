@@ -1,5 +1,7 @@
 "use client";
 
+import { uAplikaciji } from "./nativno";
+
 /** Oznaka verzije ugrađena pri izradi (vidi next.config.ts) i provjera objavljene verzije. */
 export const MOJA_VERZIJA = process.env.NEXT_PUBLIC_VERZIJA ?? "";
 
@@ -35,6 +37,7 @@ function opisUredaja() {
   const sustav = /iPhone|iPod/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad" : /Android/.test(ua) ? "Android" : "Računalo";
   const ikona =
     window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone;
+  if (uAplikaciji()) return `${sustav} · Play aplikacija`;
   return `${sustav} · ${ikona ? "ikona" : "preglednik"}`;
 }
 
