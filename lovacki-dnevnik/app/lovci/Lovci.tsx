@@ -6,7 +6,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { ObrazacPrijave } from "@/components/PrijavaZaslon";
-import { Gumb, Naslov, Polje, Segmenti, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
+import QrKod from "@/components/QrKod";
+import { Gumb, Naslov, Ploca, Polje, Segmenti, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
 import {
   drziZaslonUkljucen,
   konfigurirano,
@@ -149,6 +150,7 @@ function Glavno() {
   const dolazni = d.prijateljstva.filter((p) => p.status === "ceka" && p.dolazni);
   const odlazni = d.prijateljstva.filter((p) => p.status === "ceka" && !p.dolazni);
   const blizu = lovciUBlizini(d);
+  const [qr, setQr] = useState(false);
   // Dok lovac nema prijatelja, traženje je prvo na stranici (inače ga ljudi ne nađu ispod postavki alarma).
   const bezPrijatelja = !prijatelji.length && !odlazni.length && !dolazni.length;
   const dodaj = (
@@ -168,11 +170,18 @@ function Glavno() {
           </>
         }
         akcija={
-          <Gumb vrsta="tihi" velicina="sm" onClick={() => odjaviSe().then(() => obavijest("Odjavljeni ste", "info"))}>
-            Odjava
-          </Gumb>
+          <div className="flex gap-2">
+            <Gumb velicina="sm" ikona="korisnik" onClick={() => setQr(true)}>
+              Moj QR kod
+            </Gumb>
+            <Gumb vrsta="tihi" velicina="sm" onClick={() => odjaviSe().then(() => obavijest("Odjavljeni ste", "info"))}>
+              Odjava
+            </Gumb>
+          </div>
         }
       />
+      <MojQr otvorena={qr} zatvori={() => setQr(false)} />
+      <DodajIzPoveznice />
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-2">
         <motion.div variants={djeteListe} className="lg:col-span-2">
@@ -542,6 +551,107 @@ function Trazilica() {
         )}
       </div>
     </div>
+  );
+}
+
+const poveznicaProfila = (ki: string) => `https://hunt-jade.vercel.app/lovci?dodaj=${encodeURIComponent(ki)}`;
+
+/** Moj QR kod: prijatelj ga skenira kamerom mobitela i odmah me dodaje. */
+function MojQr({ otvorena, zatvori }: { otvorena: boolean; zatvori: () => void }) {
+  const d = useDrustvo();
+  const ki = d.profil?.korisnicko_ime ?? "";
+  const veza = poveznicaProfila(ki);
+  const podijeli = () => {
+    const tekst = `Dodaj me za prijatelja u CroLovcu (@${ki}): ${veza}`;
+    if (navigator.share) navigator.share({ text: tekst }).catch(() => {});
+    else navigator.clipboard?.writeText(tekst).then(() => obavijest("Poveznica je kopirana")).catch(() => {});
+  };
+  return (
+    <Ploca otvorena={otvorena} zatvori={zatvori} naslov="Moj QR kod" podnaslov="Neka ga prijatelj skenira kamerom mobitela" sirina={420}>
+      <div className="grid justify-items-center gap-3 pb-2 text-center">
+        <div className="rounded-3xl bg-white p-3 shadow-jaka">
+          <QrKod tekst={veza} velicina={248} />
+        </div>
+        <div>
+          <div className="font-display text-[20px] font-semibold">{d.profil?.ime}</div>
+          <div className="text-[14px] text-naglasak">@{ki}</div>
+        </div>
+        <p className="max-w-xs text-[13.5px] text-tekst-2">
+          Prijatelj otvori kameru na mobitelu, usmjeri je na kod i dodirne poveznicu. CroLovac mu ponudi da vas doda za
+          prijatelja.
+        </p>
+        <Gumb velicina="sm" ikona="plus" onClick={podijeli}>
+          Pošalji poveznicu
+        </Gumb>
+      </div>
+    </Ploca>
+  );
+}
+
+/** Otvaranje /lovci?dodaj=korisnicko_ime (iz QR koda ili poveznice) nudi dodavanje tog lovca. */
+function DodajIzPoveznice() {
+  const d = useDrustvo();
+  const [lovac, setLovac] = useState<Profil | null>(null);
+  const [radim, setRadim] = useState(false);
+
+  useEffect(() => {
+    const ki = new URLSearchParams(window.location.search).get("dodaj")?.trim().toLowerCase().replace(/^@/, "");
+    if (!ki) return;
+    const ocisti = () => window.history.replaceState(null, "", "/lovci");
+    if (ki === d.profil?.korisnicko_ime) {
+      obavijest("To je vaš QR kod – neka ga skenira prijatelj", "info");
+      return ocisti();
+    }
+    trazi(ki)
+      .then((r) => {
+        const p = r.find((x) => x.korisnicko_ime === ki);
+        if (!p) obavijest(`Lovac @${ki} nije pronađen`, "greska");
+        else if (d.prijateljstva.some((x) => x.drugi.id === p.id && x.status === "prihvaceno")) obavijest(`${p.ime} vam je već prijatelj`, "info");
+        else setLovac(p);
+      })
+      .catch(() => obavijest("Provjera nije uspjela – provjerite internet", "greska"))
+      .finally(ocisti);
+    // Samo pri otvaranju stranice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dodaj = () => {
+    if (!lovac) return;
+    setRadim(true);
+    const dolazni = d.prijateljstva.some((x) => x.drugi.id === lovac.id && x.dolazni);
+    posaljiZahtjev(lovac.id)
+      .then(() => obavijest(dolazni ? `${lovac.ime} je sada vaš prijatelj` : `Zahtjev je poslan: ${lovac.ime}`))
+      .catch((e) => obavijest(e.message, "greska"))
+      .finally(() => {
+        setRadim(false);
+        setLovac(null);
+      });
+  };
+
+  return (
+    <Ploca otvorena={Boolean(lovac)} zatvori={() => setLovac(null)} naslov="Dodati za prijatelja?" sirina={420}>
+      {lovac && (
+        <div className="grid justify-items-center gap-3 pb-2 text-center">
+          <Avatar ime={lovac.ime} />
+          <div>
+            <div className="font-display text-[20px] font-semibold">{lovac.ime}</div>
+            <div className="text-[14px] text-tekst-3">
+              @{lovac.korisnicko_ime}
+              {lovac.drustvo ? ` · ${lovac.drustvo}` : ""}
+            </div>
+          </div>
+          <p className="max-w-xs text-[13.5px] text-tekst-2">Kad prihvati zahtjev, vidjet ćete se u lovu i alarm će vas upozoriti kad ste blizu.</p>
+          <div className="flex w-full gap-2">
+            <Gumb vrsta="tihi" className="flex-1" onClick={() => setLovac(null)}>
+              Odustani
+            </Gumb>
+            <Gumb vrsta="primarni" ikona="plus" className="flex-[2]" disabled={radim} onClick={dodaj}>
+              Dodaj prijatelja
+            </Gumb>
+          </div>
+        </div>
+      )}
+    </Ploca>
   );
 }
 
