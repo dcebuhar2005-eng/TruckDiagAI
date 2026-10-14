@@ -18,11 +18,15 @@ export interface PostavkeBlizine {
   vibracija: boolean;
 }
 
-const ZADANO: PostavkeBlizine = { granica: 500, zvuk: true, vibracija: true };
+// Zadano samo vibracija (u lovu zvuk plaši divljač); zvuk se može uključiti u postavkama.
+const ZADANO: PostavkeBlizine = { granica: 500, zvuk: false, vibracija: true };
 
 export function postavkeBlizine(): PostavkeBlizine {
   try {
-    return { ...ZADANO, ...JSON.parse(localStorage.getItem(KLJUC) ?? "{}") };
+    const s = JSON.parse(localStorage.getItem(KLJUC) ?? "{}");
+    // Starije postavke imale su zvuk uključen po zadanom – prebacuju se na samo vibraciju.
+    if (!s.v2) s.zvuk = false;
+    return { ...ZADANO, ...s };
   } catch {
     return ZADANO;
   }
@@ -30,9 +34,12 @@ export function postavkeBlizine(): PostavkeBlizine {
 
 export function spremiPostavkeBlizine(p: Partial<PostavkeBlizine>) {
   try {
-    localStorage.setItem(KLJUC, JSON.stringify({ ...postavkeBlizine(), ...p }));
+    localStorage.setItem(KLJUC, JSON.stringify({ ...postavkeBlizine(), ...p, v2: true }));
   } catch {}
 }
+
+/** iPhone (Safari) ne dopušta vibraciju iz web aplikacije. */
+export const vibracijaPodrzana = () => typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
 
 /* ---------------- Zvuk ---------------- */
 
