@@ -323,3 +323,22 @@ language sql stable security invoker set search_path = '' as $$
 $$;
 revoke all on function public.lov_trazi_lovce(text) from public, anon;
 grant execute on function public.lov_trazi_lovce(text) to authenticated;
+
+-- Broj mobitela testera (za WhatsApp grupu) i admin popis s brojem.
+alter table public.lov_testeri add column if not exists mobitel text check (mobitel is null or mobitel ~ '^\+?[0-9]{8,15}$');
+create or replace function public.lov_admin_testeri_v2()
+returns table (email text, gmail text, mobitel text, ime text, korisnicko_ime text, uredaj text, stvoreno timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query
+    select u.email::text, t.gmail, t.mobitel, p.ime, p.korisnicko_ime, t.uredaj, t.stvoreno
+    from public.lov_testeri t
+    join auth.users u on u.id = t.korisnik
+    left join public.lov_profili p on p.id = t.korisnik
+    order by t.stvoreno;
+end $$;
+revoke all on function public.lov_admin_testeri_v2() from public, anon;
+grant execute on function public.lov_admin_testeri_v2() to authenticated;

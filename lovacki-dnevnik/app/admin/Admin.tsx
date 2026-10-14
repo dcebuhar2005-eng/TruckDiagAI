@@ -36,6 +36,7 @@ interface Misljenje {
 interface Tester {
   email: string;
   gmail: string;
+  mobitel: string | null;
   ime: string | null;
   korisnicko_ime: string | null;
   uredaj: string | null;
@@ -84,7 +85,7 @@ export default function Admin() {
   const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
   const [testeri, setTesteri] = useState<Tester[] | null>(null);
-  const [kopirano, setKopirano] = useState(false);
+  const [kopirano, setKopirano] = useState<"gmail" | "mobitel" | null>(null);
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
   const [osvjezeno, setOsvjezeno] = useState<Date | null>(null);
@@ -98,18 +99,20 @@ export default function Admin() {
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
     sb()
-      .rpc("lov_admin_testeri")
+      .rpc("lov_admin_testeri_v2")
       .then(({ data, error }) => !error && setTesteri((data ?? []) as Tester[]));
   };
 
   // Popis Gmail adresa za Play Console (Zatvoreno testiranje → Testeri → popis e-adresa).
-  const kopirajGmailove = () => {
+  // Brojevi mobitela za WhatsApp grupu testera (svaki u svom redu).
+  const kopiraj = (sto: "gmail" | "mobitel") => {
     if (!testeri?.length) return;
+    const tekst = sto === "gmail" ? testeri.map((t) => t.gmail).join(", ") : testeri.flatMap((t) => (t.mobitel ? [t.mobitel] : [])).join("\n");
     navigator.clipboard
-      ?.writeText(testeri.map((t) => t.gmail).join(", "))
+      ?.writeText(tekst)
       .then(() => {
-        setKopirano(true);
-        setTimeout(() => setKopirano(false), 2500);
+        setKopirano(sto);
+        setTimeout(() => setKopirano(null), 2500);
       })
       .catch(() => {});
   };
@@ -156,7 +159,7 @@ export default function Admin() {
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => ziv && !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
     sb()
-      .rpc("lov_admin_testeri")
+      .rpc("lov_admin_testeri_v2")
       .then(({ data, error }) => ziv && !error && setTesteri((data ?? []) as Tester[]));
     return () => {
       ziv = false;
@@ -234,9 +237,14 @@ export default function Admin() {
                 <span className="text-tekst-3 normal-case"> / cilj 20</span>)
               </h2>
               {testeri.length > 0 && (
-                <Gumb velicina="sm" ikona={kopirano ? "kvacica" : "plus"} onClick={kopirajGmailove}>
-                  {kopirano ? "Kopirano" : "Kopiraj Gmail adrese"}
-                </Gumb>
+                <div className="flex flex-wrap gap-2">
+                  <Gumb velicina="sm" ikona={kopirano === "gmail" ? "kvacica" : "plus"} onClick={() => kopiraj("gmail")}>
+                    {kopirano === "gmail" ? "Kopirano" : "Kopiraj Gmail adrese"}
+                  </Gumb>
+                  <Gumb velicina="sm" ikona={kopirano === "mobitel" ? "kvacica" : "plus"} onClick={() => kopiraj("mobitel")}>
+                    {kopirano === "mobitel" ? "Kopirano" : "Kopiraj brojeve"}
+                  </Gumb>
+                </div>
               )}
             </div>
             {testeri.length === 0 ? (
@@ -250,6 +258,14 @@ export default function Admin() {
                   <li key={t.gmail} className="flex items-baseline justify-between gap-2 rounded-xl border border-rub bg-povrsina-2 px-3 py-2 text-[13.5px]">
                     <span className="min-w-0 truncate">
                       <span className="font-medium">{t.gmail}</span>
+                      {t.mobitel ? (
+                        <a href={`https://wa.me/${t.mobitel.replace("+", "")}`} target="_blank" rel="noreferrer" className="text-naglasak">
+                          {" "}
+                          · {t.mobitel}
+                        </a>
+                      ) : (
+                        <span className="text-tekst-3"> · bez broja</span>
+                      )}
                       <span className="text-tekst-3">
                         {" "}
                         · {t.ime ?? t.korisnicko_ime ?? t.email}
