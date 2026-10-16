@@ -48,12 +48,15 @@ export function ocistiMobitel(unos: string) {
   return /^\+[1-9]\d{7,14}$/.test(m) ? m : null;
 }
 
+/** Prijave novih testera su zatvorene (skupljeno dovoljno ljudi); dopuna broja za prijavljene i dalje radi. */
+const PRIJAVE_OTVORENE = false;
+
 /** Što ponuditi: poziv (još nije tester, samo Android), dopunu broja (tester bez broja) ili ništa. */
 export function stoPonuditi(id: string): "poziv" | "mobitel" | null {
   const s = procitaj(id);
   const sada = Date.now();
   if (s.prijavljen) return s.imaMobitel || sada < (s.mobitelSljedece ?? 0) ? null : "mobitel";
-  if (!naAndroidu() || s.odbijeno || sada < (s.sljedece ?? 0)) return null;
+  if (!PRIJAVE_OTVORENE || !naAndroidu() || s.odbijeno || sada < (s.sljedece ?? 0)) return null;
   return "poziv";
 }
 
