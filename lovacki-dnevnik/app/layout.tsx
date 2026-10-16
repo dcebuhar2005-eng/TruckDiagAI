@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 };
 
 // Postavlja temu prije prvog iscrtavanja kako ne bi bljesnula pogrešna boja.
-const skriptaTeme = `try{var t=localStorage.getItem("lovacki-dnevnik:tema")||"tamna";if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"tamna":"svijetla";document.documentElement.dataset.tema=t;if(/CroLovacAndroid/.test(navigator.userAgent))document.documentElement.dataset.android="1"}catch(e){}`;
+const skriptaTeme = `try{var t=localStorage.getItem("lovacki-dnevnik:tema")||"tamna";if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"tamna":"svijetla";document.documentElement.dataset.tema=t;var d=document.documentElement,n=navigator,a=/CroLovacAndroid/.test(n.userAgent);if(a)d.dataset.android="1";if(a||(n.deviceMemory&&n.deviceMemory<=4)||(n.hardwareConcurrency&&n.hardwareConcurrency<=4))d.dataset.lagano="1"}catch(e){}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

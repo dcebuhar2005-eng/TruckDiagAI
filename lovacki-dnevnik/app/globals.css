@@ -315,18 +315,26 @@ select.unos {
   bottom: calc(9.5rem + env(safe-area-inset-bottom));
 }
 
-/* Android aplikacija (WebView): bez zamućenja i animiranih prijelaza stranica – na slabijim mobitelima
-   to uzrokuje zastajkivanje pri pomicanju i prelasku između stranica. */
-html[data-android] *,
-html[data-android] *::before,
-html[data-android] *::after {
+/* Lagani prikaz – Android aplikacija (WebView) i slabiji uređaji: bez zamućenja, pozadinskog sjaja,
+   teških sjena i animiranih prijelaza stranica. Na slabijim mobitelima to uzrokuje zastajkivanje
+   pri pomicanju i prelasku između stranica. */
+html[data-lagano] {
+  --sjena: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sjena-jaka: 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+}
+html[data-lagano] body::before {
+  display: none;
+}
+html[data-lagano] *,
+html[data-lagano] *::before,
+html[data-lagano] *::after {
   backdrop-filter: none !important;
 }
-html[data-android] [class*="backdrop-blur"][class*="bg-povrsina"] {
+html[data-lagano] [class*="backdrop-blur"][class*="bg-povrsina"] {
   background-color: var(--povrsina) !important;
 }
-html[data-android]::view-transition-group(*),
-html[data-android]::view-transition-old(*),
-html[data-android]::view-transition-new(*) {
+html[data-lagano]::view-transition-group(*),
+html[data-lagano]::view-transition-old(*),
+html[data-lagano]::view-transition-new(*) {
   animation: none !important;
 }

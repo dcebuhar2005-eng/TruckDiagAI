@@ -1,17 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { useBaza } from "@/lib/store";
-import { IzlazakDetalj, OdstrelDetalj } from "./Detalji";
-import IzlazakUrednik from "./IzlazakUrednik";
 import { useZahtjev } from "./kontroler";
-import OdstrelUrednik from "./OdstrelUrednik";
-import { DozvolaUrednik, LovisteUrednik, TockaUrednik } from "./OstaliUrednici";
+
+// Obrasci se učitavaju zasebno (manje JavaScripta pri pokretanju – brže na slabijim mobitelima);
+// odmah nakon učitavanja stranice predučitaju se u pozadini da se otvaraju bez čekanja.
+const ucitajDetalje = () => import("./Detalji");
+const ucitajOstale = () => import("./OstaliUrednici");
+const ucitajIzlazak = () => import("./IzlazakUrednik");
+const ucitajOdstrel = () => import("./OdstrelUrednik");
+const IzlazakUrednik = dynamic(ucitajIzlazak);
+const OdstrelUrednik = dynamic(ucitajOdstrel);
+const IzlazakDetalj = dynamic(() => ucitajDetalje().then((m) => m.IzlazakDetalj));
+const OdstrelDetalj = dynamic(() => ucitajDetalje().then((m) => m.OdstrelDetalj));
+const DozvolaUrednik = dynamic(() => ucitajOstale().then((m) => m.DozvolaUrednik));
+const LovisteUrednik = dynamic(() => ucitajOstale().then((m) => m.LovisteUrednik));
+const TockaUrednik = dynamic(() => ucitajOstale().then((m) => m.TockaUrednik));
 
 /** Jedno mjesto koje prikazuje sve obrasce i detalje kao klizne ploče. */
 export default function Urednici() {
   const baza = useBaza();
   const z = useZahtjev();
+  useEffect(() => {
+    const t = setTimeout(() => {
+      for (const f of [ucitajDetalje, ucitajIzlazak, ucitajOdstrel, ucitajOstale]) f().catch(() => {});
+    }, 2500);
+    return () => clearTimeout(t);
+  }, []);
   // Pamtimo zadnji zahtjev kako bi ploča mogla animirano nestati nakon zatvaranja.
   const [zadnji, setZadnji] = useState(z);
   if (z && z !== zadnji) setZadnji(z);
