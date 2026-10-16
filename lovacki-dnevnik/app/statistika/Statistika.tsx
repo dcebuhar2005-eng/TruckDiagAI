@@ -127,7 +127,7 @@ export default function Statistika() {
           />
 
           <AnimatePresence mode="wait">
-            <motion.div key={godina} variants={roditeljListe} initial="skriveno" animate="vidljivo" exit={{ opacity: 0, transition: { duration: 0.15 } }} className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <motion.div key={godina} variants={roditeljListe} initial="skriveno" animate="vidljivo" exit={{ opacity: 0, transition: { duration: 0.15 } }} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
               <Plocica oznaka="Izlazaka" v={p.izlasci.length} />
               <Plocica oznaka="Odstrijeljeno grla" v={p.odstrel.length} />
               <Plocica oznaka="Sati u lovištu" v={Math.round(p.minuta / 6) / 10} dec={1} />

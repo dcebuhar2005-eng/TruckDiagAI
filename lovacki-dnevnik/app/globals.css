@@ -306,3 +306,19 @@ select.unos {
 .karta-odabira .leaflet-bottom {
   bottom: calc(9.5rem + env(safe-area-inset-bottom));
 }
+
+/* Android aplikacija (WebView): bez zamućenja i animiranih prijelaza stranica – na slabijim mobitelima
+   to uzrokuje zastajkivanje pri pomicanju i prelasku između stranica. */
+html[data-android] *,
+html[data-android] *::before,
+html[data-android] *::after {
+  backdrop-filter: none !important;
+}
+html[data-android] [class*="backdrop-blur"][class*="bg-povrsina"] {
+  background-color: var(--povrsina) !important;
+}
+html[data-android]::view-transition-group(*),
+html[data-android]::view-transition-old(*),
+html[data-android]::view-transition-new(*) {
+  animation: none !important;
+}

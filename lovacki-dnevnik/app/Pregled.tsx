@@ -132,7 +132,7 @@ export default function Pregled() {
         </div>
       </motion.header>
 
-      <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-3">
+      <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Kreni u lov / lov u tijeku */}
         <motion.div variants={djeteListe} className="lg:col-span-3">
           <KreniULovKartica baza={baza} />
@@ -154,7 +154,7 @@ export default function Pregled() {
               Prognoza trenutno nije dostupna. Provjerite internetsku vezu.
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-[168px_1fr]">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-[168px_1fr]">
               <div className="svjetlucanje mx-auto size-[168px] rounded-full" />
               <div className="svjetlucanje h-40 rounded-2xl" />
             </div>
