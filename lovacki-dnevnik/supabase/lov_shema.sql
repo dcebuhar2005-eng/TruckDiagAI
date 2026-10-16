@@ -373,3 +373,40 @@ begin
 end $$;
 revoke all on function public.lov_admin_aktivnost() from public, anon;
 grant execute on function public.lov_admin_aktivnost() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Popis testera zatvorenog testiranja (upisuje administrator; nije dostupan korisnicima).
+-- korisnik = ručno povezan račun (drugi mail u aplikaciji); inače se povezuje po Gmailu.
+create table if not exists lov_privatno.testeri (
+  gmail text primary key,
+  ime text,
+  mobitel text,
+  korisnik uuid references auth.users (id) on delete set null,
+  napomena text
+);
+revoke all on lov_privatno.testeri from public, anon, authenticated;
+
+create or replace function public.lov_admin_testiranje()
+returns table (gmail text, ime text, mobitel text, racun text, profil text, korisnicko_ime text, napomena text,
+               dani date[], dani_14 int, izlasci int, zadnje timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query
+    with t as (
+      select x.*, coalesce(x.korisnik, (select u2.id from auth.users u2 where lower(u2.email) = lower(x.gmail) limit 1)) as k
+      from lov_privatno.testeri x
+    )
+    select t.gmail, t.ime, t.mobitel, u.email::text, p.ime, p.korisnicko_ime, t.napomena,
+      coalesce((select array_agg(a.dan order by a.dan) from public.lov_aktivnost a where a.korisnik = t.k and a.dan > current_date - 14), '{}'),
+      (select count(*)::int from public.lov_aktivnost a where a.korisnik = t.k and a.dan > current_date - 14),
+      coalesce((select jsonb_array_length(coalesce(d.podaci->'izlasci', '[]'::jsonb)) from public.lov_dnevnici d where d.korisnik = t.k), 0),
+      greatest((select v.azurirano from public.lov_verzije v where v.korisnik = t.k), u.last_sign_in_at)
+    from t
+    left join auth.users u on u.id = t.k
+    left join public.lov_profili p on p.id = t.k;
+end $$;
+revoke all on function public.lov_admin_testiranje() from public, anon;
+grant execute on function public.lov_admin_testiranje() to authenticated;

@@ -8,6 +8,7 @@ import { Brojac, Gumb, Naslov, cx, djeteListe, roditeljListe } from "@/component
 import { konfigurirano, sb, useDrustvo } from "@/lib/drustvo";
 import { datumKratki, mnozina, sat } from "@/lib/format";
 import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
+import Testiranje, { type TesterPlay } from "./Testiranje";
 
 interface Korisnik {
   email: string;
@@ -31,16 +32,6 @@ interface Misljenje {
   email: string;
   ime: string | null;
   korisnicko_ime: string | null;
-}
-
-interface Tester {
-  email: string;
-  gmail: string;
-  mobitel: string | null;
-  ime: string | null;
-  korisnicko_ime: string | null;
-  uredaj: string | null;
-  stvoreno: string;
 }
 
 interface VerzijaKorisnika {
@@ -92,9 +83,8 @@ export default function Admin() {
   const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
   const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
-  const [testeri, setTesteri] = useState<Tester[] | null>(null);
+  const [testeri, setTesteri] = useState<TesterPlay[] | null>(null);
   const [aktivnost, setAktivnost] = useState<Map<string, Aktivnost>>(new Map());
-  const [kopirano, setKopirano] = useState<"gmail" | "mobitel" | null>(null);
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
   const [osvjezeno, setOsvjezeno] = useState<Date | null>(null);
@@ -108,25 +98,11 @@ export default function Admin() {
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
     sb()
-      .rpc("lov_admin_testeri_v2")
-      .then(({ data, error }) => !error && setTesteri((data ?? []) as Tester[]));
+      .rpc("lov_admin_testiranje")
+      .then(({ data, error }) => !error && setTesteri((data ?? []) as TesterPlay[]));
     sb()
       .rpc("lov_admin_aktivnost")
       .then(({ data, error }) => !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
-  };
-
-  // Popis Gmail adresa za Play Console (Zatvoreno testiranje → Testeri → popis e-adresa).
-  // Brojevi mobitela za WhatsApp grupu testera (svaki u svom redu).
-  const kopiraj = (sto: "gmail" | "mobitel") => {
-    if (!testeri?.length) return;
-    const tekst = sto === "gmail" ? testeri.map((t) => t.gmail).join(", ") : testeri.flatMap((t) => (t.mobitel ? [t.mobitel] : [])).join("\n");
-    navigator.clipboard
-      ?.writeText(tekst)
-      .then(() => {
-        setKopirano(sto);
-        setTimeout(() => setKopirano(null), 2500);
-      })
-      .catch(() => {});
   };
 
   // „Osvježi” najprije provjeri je li objavljena nova verzija aplikacije; ako jest, učita je.
@@ -171,8 +147,8 @@ export default function Admin() {
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => ziv && !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
     sb()
-      .rpc("lov_admin_testeri_v2")
-      .then(({ data, error }) => ziv && !error && setTesteri((data ?? []) as Tester[]));
+      .rpc("lov_admin_testiranje")
+      .then(({ data, error }) => ziv && !error && setTesteri((data ?? []) as TesterPlay[]));
     sb()
       .rpc("lov_admin_aktivnost")
       .then(({ data, error }) => ziv && !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
@@ -217,6 +193,12 @@ export default function Admin() {
       />
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4">
+        {testeri && testeri.length > 0 && (
+          <motion.div variants={djeteListe}>
+            <Testiranje testeri={testeri} />
+          </motion.div>
+        )}
+
         <motion.section variants={djeteListe} className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Plocica ikona="korisnik" oznaka="Korisnika" vrijednost={s.korisnika} dodatak={`+${s.novi_7} ovaj tjedan`} istaknuta />
           <Plocica ikona="sat" oznaka="Aktivni danas" vrijednost={s.aktivni_1} dodatak={`${s.aktivni_7} u 7 dana · ${s.aktivni_30} u 30`} />
@@ -243,61 +225,6 @@ export default function Admin() {
           <Plocica ikona="kamera" oznaka="Fotografija u oblaku" vrijednost={s.fotografija} dodatak={`${s.foto_mb.toLocaleString("hr-HR")} MB`} />
           <Plocica ikona="stit" oznaka="Sigurnosnih kopija" vrijednost={s.kopija} dodatak={`${s.kopije_mb.toLocaleString("hr-HR")} MB · limit pohrane 1 GB`} />
         </motion.section>
-
-        {testeri && (
-          <motion.section variants={djeteListe} className="kartica p-5">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">
-                Testeri za Google Play ({testeri.length}
-                <span className="text-tekst-3 normal-case"> / cilj 20</span>)
-              </h2>
-              {testeri.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <Gumb velicina="sm" ikona={kopirano === "gmail" ? "kvacica" : "plus"} onClick={() => kopiraj("gmail")}>
-                    {kopirano === "gmail" ? "Kopirano" : "Kopiraj Gmail adrese"}
-                  </Gumb>
-                  <Gumb velicina="sm" ikona={kopirano === "mobitel" ? "kvacica" : "plus"} onClick={() => kopiraj("mobitel")}>
-                    {kopirano === "mobitel" ? "Kopirano" : "Kopiraj brojeve"}
-                  </Gumb>
-                </div>
-              )}
-            </div>
-            {testeri.length === 0 ? (
-              <p className="text-[13.5px] text-tekst-3">
-                Još nema prijava. Poziv „Postani tester” vide korisnici na Androidu (u pregledniku ili s ikone), 20 sekundi nakon
-                otvaranja aplikacije.
-              </p>
-            ) : (
-              <ul className="grid gap-1.5">
-                {testeri.map((t) => (
-                  <li key={t.gmail} className="flex items-baseline justify-between gap-2 rounded-xl border border-rub bg-povrsina-2 px-3 py-2 text-[13.5px]">
-                    <span className="min-w-0 truncate">
-                      <span className="font-medium">{t.gmail}</span>
-                      {t.mobitel ? (
-                        <a href={`https://wa.me/${t.mobitel.replace("+", "")}`} target="_blank" rel="noreferrer" className="text-naglasak">
-                          {" "}
-                          · {t.mobitel}
-                        </a>
-                      ) : (
-                        <span className="text-tekst-3"> · bez broja</span>
-                      )}
-                      <span className="text-tekst-3">
-                        {" "}
-                        · {t.ime ?? t.korisnicko_ime ?? t.email}
-                        {t.uredaj ? ` · ${t.uredaj}` : ""}
-                      </span>
-                      <span className="brojke font-medium text-naglasak"> · {aktivnost.get(t.email)?.dani_14 ?? 0}/14 dana</span>
-                    </span>
-                    <span className="brojke shrink-0 text-[12.5px] text-tekst-3">{kadJe(t.stvoreno)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-3 text-[12px] text-tekst-3">
-              „Kopiraj Gmail adrese” pa u Play Consoleu: Testiranje → Zatvoreno testiranje → Testeri → Napravi popis e-adresa → zalijepi.
-            </p>
-          </motion.section>
-        )}
 
         {misljenja && (
           <motion.section variants={djeteListe} className="kartica p-5">
