@@ -17,7 +17,6 @@ import {
   useOfflinePodrucja,
 } from "@/lib/offline";
 import type { Loviste } from "@/lib/types";
-import { predmemorirajPuteve } from "./SumskiPutevi";
 
 export interface PodlogaZaOffline {
   kljuc: string;
@@ -86,7 +85,6 @@ export default function OfflinePanel({
         setNapredak,
         k.signal,
       );
-      await predmemorirajPuteve(odabrano.g, k.signal).catch(() => {});
       obavijest(greske ? `Spremljeno uz ${greske} nedostupnih pločica` : `„${odabrano.naziv}” je spremljeno za rad bez signala`, greske ? "info" : "uspjeh");
     } catch (e) {
       if ((e as Error).name !== "AbortError") obavijest((e as Error).message || "Preuzimanje nije uspjelo", "greska");
@@ -113,7 +111,7 @@ export default function OfflinePanel({
           <Ikona ime="x" velicina={16} />
         </button>
       </div>
-      <p className="mb-3 text-[12.5px] text-white/60">Spremite lovište na mobitel prije odlaska – karta, šumski putevi i vaše točke radit će i bez interneta.</p>
+      <p className="mb-3 text-[12.5px] text-white/60">Spremite lovište na mobitel prije odlaska – karta i vaše točke radit će i bez interneta.</p>
 
       <div className="mb-1.5 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Područje</div>
       <div className="mb-3 grid gap-1">
