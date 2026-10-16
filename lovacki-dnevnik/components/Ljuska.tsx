@@ -106,7 +106,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       {!trebaPrijava && (
         <>
           <Navigacija />
-          <main className="relative z-10 min-h-dvh lg:pl-[248px]">{children}</main>
+          <main className="relative z-10 min-h-dvh pt-[env(safe-area-inset-top)] lg:pl-[248px]">{children}</main>
         </>
       )}
       <AnimatePresence>{trebaPrijava && <PrijavaZaslon key="prijava" />}</AnimatePresence>
