@@ -234,6 +234,26 @@ function useDesktop() {
   );
 }
 
+/*
+ * Zaključavanje pomicanja stranice dok je ploča otvorena. Broji se koliko je ploča otvoreno
+ * (potvrda preko obrasca), pa se pomicanje vraća tek kad se zatvori zadnja – prije je
+ * redoslijed zatvaranja znao ostaviti stranicu zaključanu.
+ */
+let otvorenihPloca = 0;
+const postaviZakljucavanje = () => {
+  document.body.style.overflow = otvorenihPloca > 0 ? "hidden" : "";
+};
+if (typeof window !== "undefined") {
+  // Sigurnost: kod povratka u aplikaciju bez otvorene ploče stranica se uvijek može pomicati.
+  const provjeri = () => {
+    if (document.visibilityState !== "visible") return;
+    if (!document.querySelector('[role="dialog"][aria-modal]')) otvorenihPloca = 0;
+    postaviZakljucavanje();
+  };
+  document.addEventListener("visibilitychange", provjeri);
+  window.addEventListener("pageshow", provjeri);
+}
+
 export function Ploca({
   otvorena,
   zatvori,
@@ -259,14 +279,19 @@ export function Ploca({
 
   useEffect(() => {
     if (!otvorena) return;
+    otvorenihPloca++;
+    postaviZakljucavanje();
+    return () => {
+      otvorenihPloca = Math.max(0, otvorenihPloca - 1);
+      postaviZakljucavanje();
+    };
+  }, [otvorena]);
+
+  useEffect(() => {
+    if (!otvorena) return;
     const tipka = (e: KeyboardEvent) => e.key === "Escape" && zatvori();
     window.addEventListener("keydown", tipka);
-    const staro = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", tipka);
-      document.body.style.overflow = staro;
-    };
+    return () => window.removeEventListener("keydown", tipka);
   }, [otvorena, zatvori]);
 
   if (!klijent) return null;
