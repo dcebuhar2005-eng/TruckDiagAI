@@ -16,6 +16,9 @@ import {
   pokreniDijeljenje,
   posaljiZahtjev,
   postaviDrzanjeZaslona,
+  predlozeniLovci,
+  ZUPANIJE,
+  type PredlozeniLovac,
   prihvati,
   prijeKoliko,
   spremiProfil,
@@ -84,6 +87,8 @@ function PostaviProfil() {
   const [ki, setKi] = useState("");
   const [ime, setIme] = useState(baza?.postavke.ime ?? "");
   const [drustvo, setDrustvo] = useState(baza?.postavke.drustvo ?? "");
+  const [zupanija, setZupanija] = useState("");
+  const [mjesto, setMjesto] = useState("");
   const [radim, setRadim] = useState(false);
   const [greska, setGreska] = useState<string | null>(null);
 
@@ -92,7 +97,7 @@ function PostaviProfil() {
     setRadim(true);
     setGreska(null);
     try {
-      await spremiProfil(ki, ime, drustvo);
+      await spremiProfil(ki, ime, drustvo, zupanija, mjesto);
       obavijest("Profil je spremljen");
     } catch (err) {
       setGreska((err as Error).message);
@@ -122,15 +127,94 @@ function PostaviProfil() {
         <Polje oznaka="Ime i prezime">
           <input id="lov-ime" required className="unos" value={ime} onChange={(e) => setIme(e.target.value)} />
         </Polje>
-        <Polje oznaka="Lovačko društvo" pomoc="Neobavezno – pomaže prijateljima da vas prepoznaju">
-          <input id="lov-drustvo" className="unos" value={drustvo} onChange={(e) => setDrustvo(e.target.value)} />
-        </Polje>
+        <PoljaPronalaska drustvo={drustvo} setDrustvo={setDrustvo} zupanija={zupanija} setZupanija={setZupanija} mjesto={mjesto} setMjesto={setMjesto} />
         {greska && <p className="rounded-xl bg-opasnost-meka p-3 text-[14px] text-opasnost">{greska}</p>}
         <Gumb type="submit" vrsta="primarni" disabled={radim}>
           {radim ? "Spremam…" : "Spremi profil"}
         </Gumb>
       </form>
     </div>
+  );
+}
+
+/** LD, županija i mjesto – po njima vas kolege pronalaze i dobivate prijedloge „Možda poznajete”. */
+function PoljaPronalaska(p: {
+  drustvo: string;
+  setDrustvo: (v: string) => void;
+  zupanija: string;
+  setZupanija: (v: string) => void;
+  mjesto: string;
+  setMjesto: (v: string) => void;
+}) {
+  return (
+    <>
+      <Polje oznaka="Lovačko društvo (LD)" pomoc="Kolege iz istog LD-a dobit će vas kao prijedlog">
+        <input id="lov-drustvo" className="unos" value={p.drustvo} onChange={(e) => p.setDrustvo(e.target.value)} placeholder="npr. LD Srnjak Bukovac" />
+      </Polje>
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+        <Polje oznaka="Županija">
+          <select id="lov-zupanija" className="unos" value={p.zupanija} onChange={(e) => p.setZupanija(e.target.value)}>
+            <option value="">— Odaberite —</option>
+            {ZUPANIJE.map((z) => (
+              <option key={z} value={z}>
+                {z}
+              </option>
+            ))}
+          </select>
+        </Polje>
+        <Polje oznaka="Mjesto">
+          <input id="lov-mjesto" className="unos" value={p.mjesto} onChange={(e) => p.setMjesto(e.target.value)} placeholder="npr. Daruvar" />
+        </Polje>
+      </div>
+      <p className="-mt-1 text-[12px] text-tekst-3">Neobavezno. Vidljivo drugim lovcima u pretrazi – lokacija u lovu ostaje skrivena kao i dosad.</p>
+    </>
+  );
+}
+
+/** Uređivanje profila: ime, LD, županija i mjesto (korisničko ime ostaje isto). */
+function UrediProfil({ otvorena, zatvori }: { otvorena: boolean; zatvori: () => void }) {
+  const d = useDrustvo();
+  const p = d.profil;
+  const [ime, setIme] = useState(p?.ime ?? "");
+  const [drustvo, setDrustvo] = useState(p?.drustvo ?? "");
+  const [zupanija, setZupanija] = useState(p?.zupanija ?? "");
+  const [mjesto, setMjesto] = useState(p?.mjesto ?? "");
+  const [radim, setRadim] = useState(false);
+  if (!p) return null;
+  const spremi = () => {
+    setRadim(true);
+    spremiProfil(p.korisnicko_ime, ime, drustvo, zupanija, mjesto)
+      .then(() => {
+        obavijest("Profil je spremljen");
+        zatvori();
+      })
+      .catch((e) => obavijest((e as Error).message, "greska"))
+      .finally(() => setRadim(false));
+  };
+  return (
+    <Ploca
+      otvorena={otvorena}
+      zatvori={zatvori}
+      naslov="Moj profil"
+      podnaslov={`@${p.korisnicko_ime}`}
+      podnozje={
+        <div className="flex gap-2">
+          <Gumb className="flex-1" onClick={zatvori}>
+            Odustani
+          </Gumb>
+          <Gumb vrsta="primarni" ikona="kvacica" className="flex-[1.5]" disabled={radim || !ime.trim()} onClick={spremi}>
+            {radim ? "Spremam…" : "Spremi"}
+          </Gumb>
+        </div>
+      }
+    >
+      <div className="grid gap-3.5">
+        <Polje oznaka="Ime i prezime">
+          <input className="unos" value={ime} onChange={(e) => setIme(e.target.value)} />
+        </Polje>
+        <PoljaPronalaska drustvo={drustvo} setDrustvo={setDrustvo} zupanija={zupanija} setZupanija={setZupanija} mjesto={mjesto} setMjesto={setMjesto} />
+      </div>
+    </Ploca>
   );
 }
 
@@ -151,6 +235,7 @@ function Glavno() {
   const odlazni = d.prijateljstva.filter((p) => p.status === "ceka" && !p.dolazni);
   const blizu = lovciUBlizini(d);
   const [qr, setQr] = useState(false);
+  const [profil, setProfil] = useState(false);
   // Dok lovac nema prijatelja, traženje je prvo na stranici (inače ga ljudi ne nađu ispod postavki alarma).
   const bezPrijatelja = !prijatelji.length && !odlazni.length && !dolazni.length;
   const dodaj = (
@@ -166,7 +251,10 @@ function Glavno() {
         naslov="Lovci"
         opis={
           <>
-            Prijavljeni kao <span className="font-medium text-tekst">@{d.profil!.korisnicko_ime}</span>
+            Prijavljeni kao <span className="font-medium text-tekst">@{d.profil!.korisnicko_ime}</span> ·{" "}
+            <button onClick={() => setProfil(true)} className="font-medium text-naglasak">
+              Uredi profil
+            </button>
           </>
         }
         akcija={
@@ -181,6 +269,7 @@ function Glavno() {
         }
       />
       <MojQr otvorena={qr} zatvori={() => setQr(false)} />
+      <UrediProfil key={String(profil)} otvorena={profil} zatvori={() => setProfil(false)} />
       <DodajIzPoveznice />
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-2">
@@ -509,15 +598,16 @@ function Trazilica() {
     <div>
       <div className="relative">
         <Ikona ime="pretraga" velicina={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-tekst-3" />
-        <input id="lov-trazi" className="unos pl-10" placeholder="Ime ili @korisničko ime" value={upit} onChange={(e) => setUpit(e.target.value)} />
+        <input id="lov-trazi" className="unos pl-10" placeholder="Ime, LD, mjesto ili županija" value={upit} onChange={(e) => setUpit(e.target.value)} />
       </div>
+      {upit.trim().length < 2 && <MozdaPoznajete />}
       <div className="mt-3 grid gap-2">
         {prikaz.map((p) => {
           const odnos = stanjeOdnosa(p.id);
           return (
             <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
               <Avatar ime={p.ime} />
-              <ProfilTekst p={p} />
+              <ProfilTekst p={p} mjesto />
               {odnos?.status === "prihvaceno" ? (
                 <span className="text-[12.5px] text-mahovina">Prijatelj</span>
               ) : odnos && !odnos.dolazni ? (
@@ -704,7 +794,8 @@ function Avatar({ ime, aktivan }: { ime: string; aktivan?: boolean }) {
   );
 }
 
-function ProfilTekst({ p, dodatak }: { p: Profil; dodatak?: string }) {
+function ProfilTekst({ p, dodatak, mjesto }: { p: Profil; dodatak?: string; mjesto?: boolean }) {
+  const gdje = mjesto ? [p.mjesto, p.zupanija].filter(Boolean).join(", ") : "";
   return (
     <div className="min-w-0 flex-1">
       <div className="truncate font-medium">{p.ime}</div>
@@ -713,6 +804,68 @@ function ProfilTekst({ p, dodatak }: { p: Profil; dodatak?: string }) {
         {p.drustvo ? ` · ${p.drustvo}` : ""}
         {dodatak ? ` · ${dodatak}` : ""}
       </div>
+      {gdje && <div className="truncate text-[12px] text-tekst-3">{gdje}</div>}
+    </div>
+  );
+}
+
+const RAZLOZI: Record<PredlozeniLovac["razlog"], string> = { ld: "Isti LD", mjesto: "Isto mjesto", zupanija: "Ista županija" };
+
+/** Prijedlozi: lovci iz istog LD-a, mjesta ili županije koji vam još nisu prijatelji. */
+function MozdaPoznajete() {
+  const d = useDrustvo();
+  const [lovci, setLovci] = useState<PredlozeniLovac[] | null>(null);
+  const [poslano, setPoslano] = useState<Set<string>>(new Set());
+  const p = d.profil;
+  const kljuc = `${p?.drustvo}|${p?.zupanija}|${p?.mjesto}`;
+  useEffect(() => {
+    let ziv = true;
+    predlozeniLovci()
+      .then((r) => ziv && setLovci(r))
+      .catch(() => ziv && setLovci([]));
+    return () => {
+      ziv = false;
+    };
+  }, [kljuc]);
+  const nepotpun = !p?.drustvo || !p?.zupanija;
+  const prikaz = (lovci ?? []).filter((l) => !poslano.has(l.id));
+  if (!prikaz.length && !nepotpun) return null;
+  return (
+    <div className="mt-4">
+      {prikaz.length > 0 && (
+        <>
+          <div className="mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Možda poznajete</div>
+          <div className="grid gap-2">
+            {prikaz.map((l) => (
+              <motion.div key={l.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
+                <Avatar ime={l.ime} />
+                <ProfilTekst p={l} dodatak={RAZLOZI[l.razlog]} mjesto />
+                <Gumb
+                  velicina="sm"
+                  vrsta="primarni"
+                  ikona="plus"
+                  onClick={() =>
+                    posaljiZahtjev(l.id)
+                      .then(() => {
+                        setPoslano((s) => new Set(s).add(l.id));
+                        obavijest(`Zahtjev je poslan: ${l.ime}`);
+                      })
+                      .catch((e) => obavijest(e.message, "greska"))
+                  }
+                >
+                  Dodaj
+                </Gumb>
+              </motion.div>
+            ))}
+          </div>
+        </>
+      )}
+      {nepotpun && (
+        <p className="mt-3 rounded-xl border border-naglasak/30 bg-naglasak-meki px-3 py-2 text-[12.5px] text-tekst-2">
+          Upišite svoj <b>LD i županiju</b> (<b>Uredi profil</b> gore) – kolege iz društva i kraja pojavit će se ovdje, a i oni će lakše
+          pronaći vas.
+        </p>
+      )}
     </div>
   );
 }

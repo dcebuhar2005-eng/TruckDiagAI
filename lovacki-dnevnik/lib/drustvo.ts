@@ -34,7 +34,38 @@ export interface Profil {
   korisnicko_ime: string;
   ime: string;
   drustvo: string | null;
+  zupanija?: string | null;
+  mjesto?: string | null;
 }
+
+/** Predloženi lovac: isti LD, isto mjesto ili ista županija. */
+export type PredlozeniLovac = Profil & { razlog: "ld" | "mjesto" | "zupanija" };
+
+export const ZUPANIJE = [
+  "Bjelovarsko-bilogorska",
+  "Brodsko-posavska",
+  "Dubrovačko-neretvanska",
+  "Grad Zagreb",
+  "Istarska",
+  "Karlovačka",
+  "Koprivničko-križevačka",
+  "Krapinsko-zagorska",
+  "Ličko-senjska",
+  "Međimurska",
+  "Osječko-baranjska",
+  "Požeško-slavonska",
+  "Primorsko-goranska",
+  "Sisačko-moslavačka",
+  "Splitsko-dalmatinska",
+  "Šibensko-kninska",
+  "Varaždinska",
+  "Virovitičko-podravska",
+  "Vukovarsko-srijemska",
+  "Zadarska",
+  "Zagrebačka",
+  "Bosna i Hercegovina",
+  "Izvan Hrvatske",
+] as const;
 
 export interface Prijateljstvo {
   id: number;
@@ -155,14 +186,21 @@ function prevedi(poruka: string) {
 
 /* ---------------- Profil i prijatelji ---------------- */
 
-const POLJA_PROFILA = "id,korisnicko_ime,ime,drustvo";
+const POLJA_PROFILA = "id,korisnicko_ime,ime,drustvo,zupanija,mjesto";
 
-export async function spremiProfil(korisnickoIme: string, ime: string, drustvo?: string) {
+export async function spremiProfil(korisnickoIme: string, ime: string, drustvo?: string, zupanija?: string, mjesto?: string) {
   const id = stanje.sesija?.user.id;
   if (!id) throw new Error("Niste prijavljeni");
   const { data, error } = await sb()
     .from("lov_profili")
-    .upsert({ id, korisnicko_ime: korisnickoIme.trim().toLowerCase(), ime: ime.trim(), drustvo: drustvo?.trim() || null })
+    .upsert({
+      id,
+      korisnicko_ime: korisnickoIme.trim().toLowerCase(),
+      ime: ime.trim(),
+      drustvo: drustvo?.trim() || null,
+      zupanija: zupanija?.trim() || null,
+      mjesto: mjesto?.trim() || null,
+    })
     .select(POLJA_PROFILA)
     .single();
   if (error) throw prevedi(error.message);
@@ -173,9 +211,16 @@ export async function spremiProfil(korisnickoIme: string, ime: string, drustvo?:
 export async function trazi(upit: string): Promise<Profil[]> {
   const q = upit.trim().replace(/^@+/, "");
   if (q.length < 2) return [];
-  const { data, error } = await sb().rpc("lov_trazi_lovce", { upit: q.slice(0, 60) });
+  const { data, error } = await sb().rpc("lov_trazi_lovce_v2", { upit: q.slice(0, 60) });
   if (error) throw prevedi(error.message);
   return (data ?? []) as Profil[];
+}
+
+/** Lovci koje možda poznajete: isti LD, isto mjesto ili ista županija (bez postojećih prijatelja i zahtjeva). */
+export async function predlozeniLovci(): Promise<PredlozeniLovac[]> {
+  const { data, error } = await sb().rpc("lov_predlozeni_lovci");
+  if (error) throw prevedi(error.message);
+  return (data ?? []) as PredlozeniLovac[];
 }
 
 export async function posaljiZahtjev(za: string) {
