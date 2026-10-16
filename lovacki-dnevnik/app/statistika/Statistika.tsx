@@ -381,7 +381,7 @@ function RuzaVjetrova({ ruza }: { ruza: { svi: number; uspjesni: number }[] }) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 style={{ transformOrigin: "100px 100px" }}
-                transition={{ delay: 0.35 + k * 0.05, type: "spring", stiffness: 120, damping: 14 }}
+                transition={{ delay: 0.15 + k * 0.03, type: "spring", stiffness: 120, damping: 14 }}
               />
             )}
             <text

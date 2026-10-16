@@ -861,7 +861,7 @@ export default function KartaPrikaz() {
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
-            transition={{ delay: 0.6, ...opruga }}
+            transition={{ delay: 0.3, ...opruga }}
             onClick={() => setLegenda(true)}
             className="absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+8.85rem)] right-[4.6rem] z-[500] flex items-center gap-1.5 rounded-full bg-[#e8a947] px-3 py-1.5 text-[12.5px] font-semibold whitespace-nowrap text-[#17130a] shadow-jaka md:top-[9.6rem] md:right-[5.6rem]"
           >

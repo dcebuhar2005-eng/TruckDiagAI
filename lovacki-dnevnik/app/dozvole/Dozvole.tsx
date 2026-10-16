@@ -137,7 +137,7 @@ function KarticaDozvole({ d, baza }: { d: Dozvola; baza: Baza }) {
               className={cx("h-full rounded-full", status === "istekla" ? "bg-[#e2735f]" : status === "istice" ? "bg-[#e8a947]" : "bg-[#8cbf6e]")}
               initial={{ width: 0 }}
               animate={{ width: `${napredak * 100}%` }}
-              transition={{ delay: 0.3, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             />
           </div>
         )}
@@ -190,7 +190,7 @@ function Kvota({ vrsta, spol, iskoristeno, ukupno, red }: { vrsta: string; spol?
           strokeDasharray={o}
           initial={{ strokeDashoffset: o }}
           animate={{ strokeDashoffset: o * (1 - udio) }}
-          transition={{ delay: 0.3 + red * 0.08, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: 0.1 + red * 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         />
       </svg>
       <div className="min-w-0">

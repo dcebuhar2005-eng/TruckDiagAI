@@ -20,7 +20,7 @@ import {
 import { createPortal } from "react-dom";
 import Ikona, { type ImeIkone } from "./Ikona";
 
-export const opruga = { type: "spring", stiffness: 420, damping: 34, mass: 0.9 } as const;
+export const opruga = { type: "spring", stiffness: 560, damping: 38, mass: 0.8 } as const;
 export const mekaOpruga = { type: "spring", stiffness: 260, damping: 30 } as const;
 
 export function cx(...k: (string | false | null | undefined)[]) {
@@ -350,7 +350,7 @@ export function Naslov({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="mb-6 flex flex-wrap items-end gap-4"
     >
       <div className="min-w-0 flex-1">
@@ -426,7 +426,7 @@ export function Brojac({ vrijednost, decimale = 0 }: { vrijednost: number; decim
     const el = ref.current;
     if (!el) return;
     const kontrola = animate(prethodna.current, vrijednost, {
-      duration: 0.9,
+      duration: 0.6,
       ease: [0.22, 1, 0.36, 1],
       onUpdate: (v) => {
         el.textContent = v.toLocaleString("hr-HR", {
@@ -447,12 +447,12 @@ export function Brojac({ vrijednost, decimale = 0 }: { vrijednost: number; decim
 
 export const roditeljListe = {
   skriveno: {},
-  vidljivo: { transition: { staggerChildren: 0.045, delayChildren: 0.05 } },
+  vidljivo: { transition: { staggerChildren: 0.025, delayChildren: 0 } },
 };
 
 export const djeteListe = {
-  skriveno: { opacity: 0, y: 14 },
-  vidljivo: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const } },
+  skriveno: { opacity: 0, y: 10 },
+  vidljivo: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
 /* ---------------- Obavijesti ---------------- */
