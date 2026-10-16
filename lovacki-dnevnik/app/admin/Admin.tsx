@@ -201,7 +201,7 @@ export default function Admin() {
         }
       />
 
-      <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4">
+      <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4">
         <motion.section variants={djeteListe} className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Plocica ikona="korisnik" oznaka="Korisnika" vrijednost={s.korisnika} dodatak={`+${s.novi_7} ovaj tjedan`} istaknuta />
           <Plocica ikona="sat" oznaka="Aktivni danas" vrijednost={s.aktivni_1} dodatak={`${s.aktivni_7} u 7 dana · ${s.aktivni_30} u 30`} />
