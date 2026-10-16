@@ -418,3 +418,60 @@ create table if not exists lov_privatno.testiranje (
 );
 revoke all on lov_privatno.testiranje from public, anon, authenticated;
 -- lov_admin_testiranje_pocetak() vraća datum; lov_admin_testiranje() broji samo dane između pocetak i pocetak + 13.
+
+-- Bodovi testera za nagradnu igru (greška 3, prijedlog 2); lovovi (1 bod) računaju se iz dnevnika.
+create table if not exists lov_privatno.bodovi (
+  id bigint generated always as identity primary key,
+  gmail text not null,
+  bodovi int not null,
+  razlog text not null default '',
+  kada timestamptz not null default now()
+);
+revoke all on lov_privatno.bodovi from public, anon, authenticated;
+
+create or replace function public.lov_admin_bodovi()
+returns table (id bigint, gmail text, bodovi int, razlog text, kada timestamptz)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query select b.id, b.gmail, b.bodovi, b.razlog, b.kada from lov_privatno.bodovi b order by b.kada desc;
+end $$;
+revoke all on function public.lov_admin_bodovi() from public, anon;
+grant execute on function public.lov_admin_bodovi() to authenticated;
+
+create or replace function public.lov_admin_bodovi_dodaj(p_gmail text, p_bodovi int, p_razlog text)
+returns void
+language plpgsql volatile security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  insert into lov_privatno.bodovi (gmail, bodovi, razlog) values (lower(p_gmail), p_bodovi, coalesce(p_razlog, ''));
+end $$;
+revoke all on function public.lov_admin_bodovi_dodaj(text, int, text) from public, anon;
+grant execute on function public.lov_admin_bodovi_dodaj(text, int, text) to authenticated;
+
+-- Završeni lovovi (izlasci) od početka testiranja, po testeru.
+create or replace function public.lov_admin_lovovi_testiranja()
+returns table (gmail text, lovova int)
+language plpgsql stable security definer set search_path = '' as $$
+declare od date;
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  select t.pocetak into od from lov_privatno.testiranje t limit 1;
+  return query
+    with t as (
+      select x.gmail, coalesce(x.korisnik, (select u2.id from auth.users u2 where lower(u2.email) = lower(x.gmail) limit 1)) as k
+      from lov_privatno.testeri x
+    )
+    select t.gmail,
+      coalesce((select count(*)::int from public.lov_dnevnici d, jsonb_array_elements(coalesce(d.podaci->'izlasci', '[]'::jsonb)) e
+        where d.korisnik = t.k and od is not null and (e->>'datum') >= od::text and coalesce((e->>'uTijeku')::boolean, false) = false), 0)
+    from t;
+end $$;
+revoke all on function public.lov_admin_lovovi_testiranja() from public, anon;
+grant execute on function public.lov_admin_lovovi_testiranja() to authenticated;

@@ -389,7 +389,7 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
-  const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -410,6 +410,7 @@ export default function KartaPrikaz() {
     }
   };
   const [nacin, setNacin] = useState<Nacin>("pregled");
+  const [dodajNa, setDodajNa] = useState<{ lat: number; lng: number } | null>(null);
   const [odabir, setOdabir] = useState<Odabir>(null);
   const [crtez, setCrtez] = useState<[number, number][]>([]);
   const [lovisteZaGranicu, setLovisteZaGranicu] = useState<string | undefined>();
@@ -493,15 +494,21 @@ export default function KartaPrikaz() {
       setCrtez((c) => [...c, [ll.lat, ll.lng]]);
     } else {
       setOdabir(null);
+      setDodajNa(null);
     }
   };
 
+  /** Dugi pritisak: izbor što dodati na to mjesto (čeka, zasjeda ili odstrel). */
   const dugiDodir = (ll: L.LatLng) => {
     if (nacin !== "pregled" && nacin !== "tocka") return;
     navigator.vibrate?.(30);
     setNacin("pregled");
     setOdabir(null);
-    novaTocka(ll.lat, ll.lng);
+    setDodajNa({ lat: ll.lat, lng: ll.lng });
+  };
+  const odstrelNa = (lat: number, lng: number) => {
+    const loviste = baza.lovista.find((l) => l.granica && l.granica.length > 2 && uPoligonu([lat, lng], l.granica));
+    otvori({ tip: "odstrel", pocetno: { lat, lng, ...(loviste ? { lovisteId: loviste.id } : {}) } });
   };
 
   /** Brzo spremanje mjesta na kojem stojite (GPS): zasjeda s tronošcem ili čeka. */
@@ -622,6 +629,17 @@ export default function KartaPrikaz() {
         <Upravljac cilj={cilj} />
         <GraniceNaPocetku baza={baza} />
 
+        {/* Službene granice državnih i privatnih lovišta – Ministarstvo poljoprivrede, šumarstva i ribarstva (otvorena dozvola) */}
+        {slojevi.sluzbena && (
+          <WMSTileLayer
+            url="https://geoportal.mps.hr/geocluster/am2/wms"
+            params={{ layers: "ForestManagementArea", styles: "", format: "image/png", transparent: true, version: "1.1.1" }}
+            opacity={0.6}
+            zIndex={5}
+            minZoom={7}
+            attribution="Granice lovišta: Ministarstvo poljoprivrede, šumarstva i ribarstva"
+          />
+        )}
         {slojevi.lovista &&
           baza.lovista.map((l) =>
             l.granica && l.granica.length > 2 && !(nacin === "granica" && l.id === lovisteZaGranicu) ? (
@@ -719,6 +737,7 @@ export default function KartaPrikaz() {
             <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer)} interactive={false} zIndexOffset={2000} />
           </>
         )}
+        {dodajNa && <Marker position={[dodajNa.lat, dodajNa.lng]} icon={ikonaVrha} interactive={false} zIndexOffset={2500} />}
 
         {/* GPS trag: lov u tijeku i izlazak otvoren iz detalja */}
         {baza.izlasci
@@ -855,7 +874,8 @@ export default function KartaPrikaz() {
             <div className="mb-1.5 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Slojevi</div>
             {(
               [
-                ["lovista", "Granice lovišta"],
+                ["sluzbena", "Službena lovišta (državna i privatna)"],
+                ["lovista", "Moja lovišta"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
                 ["miris", "Zona mirisa (vjetar)"],
@@ -1065,6 +1085,41 @@ export default function KartaPrikaz() {
                 <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez((c) => c.slice(0, -1))} disabled={!crtez.length}>
                   Poništi
                 </Gumb>
+              </div>
+            </Panel>
+          )}
+
+          {nacin === "pregled" && dodajNa && (
+            <Panel key={`dodaj-${dodajNa.lat}`}>
+              <div className="mb-3 flex items-center gap-2">
+                <Ikona ime="lokacija" velicina={18} className="text-[#e8a947]" />
+                <span className="flex-1 font-medium">Što dodati na ovo mjesto?</span>
+                <button onClick={() => setDodajNa(null)} className="p-1 text-white/50 hover:text-white" aria-label="Zatvori">
+                  <Ikona ime="x" velicina={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ["Čeka", "lokacija", () => novaTocka(dodajNa.lat, dodajNa.lng, "ceka")],
+                    ["Zasjeda", "nisan", () => novaTocka(dodajNa.lat, dodajNa.lng, "zasjeda")],
+                    ["Odstrel", "meta", () => odstrelNa(dodajNa.lat, dodajNa.lng)],
+                  ] as const
+                ).map(([oznaka, ikona, radnja]) => (
+                  <Gumb
+                    key={oznaka}
+                    velicina="sm"
+                    vrsta={oznaka === "Odstrel" ? "primarni" : undefined}
+                    className={oznaka === "Odstrel" ? "" : "border-white/10 bg-white/10 text-white"}
+                    ikona={ikona}
+                    onClick={() => {
+                      setDodajNa(null);
+                      radnja();
+                    }}
+                  >
+                    {oznaka}
+                  </Gumb>
+                ))}
               </div>
             </Panel>
           )}
