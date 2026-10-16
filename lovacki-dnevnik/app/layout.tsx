@@ -24,6 +24,9 @@ export const viewport: Viewport = {
   themeColor: "#0b100c",
   width: "device-width",
   initialScale: 1,
+  // Aplikacija se ne zumira prstima (karta ima vlastito zumiranje).
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 

@@ -12,6 +12,9 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Bez zumiranja prstima (karta ima vlastito zumiranje).
+        bridge.getWebView().getSettings().setSupportZoom(false);
+        bridge.getWebView().getSettings().setBuiltInZoomControls(false);
         otvoriPoveznicu(getIntent());
     }
 
