@@ -28,10 +28,35 @@ type Primatelj = { na: (p: Polozaj) => void; greska?: (odbijeno: boolean) => voi
 const BG = registerPlugin<BackgroundGeolocationPlugin>("BackgroundGeolocation");
 const primatelji = new Set<Primatelj>();
 let nativniId: Promise<string> | null = null;
+let zadnjeUklanjanje: Promise<unknown> = Promise.resolve();
+
+// Nativno praćenje živi i kad se stranica ponovno učita (npr. prijelaz bez signala). Njegov id se
+// pamti, pa nova stranica najprije ugasi praćenje koje je ostalo od prethodne – inače bi obavijest
+// „lov u tijeku” ostala i nakon završenog lova.
+const KLJUC_PRACENJA = "lovacki-dnevnik:gps-pracenje";
+let ciscenje: Promise<unknown> | null = null;
+export function ocistiStaroPracenje() {
+  if (!uAplikaciji()) return Promise.resolve();
+  ciscenje ??= (async () => {
+    try {
+      const id = localStorage.getItem(KLJUC_PRACENJA);
+      if (!id) return;
+      localStorage.removeItem(KLJUC_PRACENJA);
+      await BG.removeWatcher({ id });
+    } catch {}
+  })();
+  return ciscenje;
+}
+
+/** Čeka da se nativno praćenje stvarno ugasi (najviše 1,5 s). */
+export function pracenjeUgaseno() {
+  return Promise.race([zadnjeUklanjanje, new Promise((ok) => setTimeout(ok, 1500))]);
+}
 
 async function pokreniNativno() {
+  await ocistiStaroPracenje();
   await dozvoliObavijesti();
-  return BG.addWatcher(
+  const id = await BG.addWatcher(
     {
       backgroundTitle: "CroLovac · lov u tijeku",
       backgroundMessage: "Bilježi se vaš trag. Kad završite lov, lokacija se više ne koristi.",
@@ -50,6 +75,10 @@ async function pokreniNativno() {
       primatelji.forEach((x) => x.na(p));
     },
   );
+  try {
+    localStorage.setItem(KLJUC_PRACENJA, id);
+  } catch {}
+  return id;
 }
 
 /**
@@ -76,7 +105,12 @@ export function pratiLokaciju(na: Primatelj["na"], greska?: Primatelj["greska"],
     if (!primatelji.delete(p) || primatelji.size) return;
     const id = nativniId;
     nativniId = null;
-    id?.then((x) => BG.removeWatcher({ id: x })).catch(() => {});
+    zadnjeUklanjanje = (id ?? Promise.reject())
+      .then(async (x) => {
+        await BG.removeWatcher({ id: x });
+        if (localStorage.getItem(KLJUC_PRACENJA) === x) localStorage.removeItem(KLJUC_PRACENJA);
+      })
+      .catch(() => {});
   };
 }
 

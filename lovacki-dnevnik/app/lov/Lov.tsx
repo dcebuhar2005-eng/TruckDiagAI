@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
-import { otvori } from "@/components/urednici/kontroler";
+import { najaviOtvaranjeIzlaska, otvori, otvoriNajavljeniIzlazak } from "@/components/urednici/kontroler";
 import { Koracnik, OdabirLovista } from "@/components/urednici/zajednicko";
 import { Cipovi, Gumb, Naslov, Ploca, Polje, Segmenti, cx, obavijest, opruga, usePotvrda } from "@/components/ui";
 import { suncevaVremena } from "@/lib/astro";
@@ -26,6 +26,7 @@ import {
   useLovPozicija,
   zavrsiLov,
 } from "@/lib/lov";
+import { pracenjeUgaseno } from "@/lib/nativno";
 import { useBaza } from "@/lib/store";
 import type { Baza, Izlazak, Spol, VrstaLova } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
@@ -273,12 +274,16 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
   };
 
   const zavrsi = () =>
-    potvrda.pitaj("Završiti lov?", "Izlazak se zatvara s trenutnim vremenom. Zatim možete dopuniti ocjenu, bilješke i fotografije.", () => {
+    potvrda.pitaj("Završiti lov?", "Izlazak se zatvara s trenutnim vremenom. Zatim možete dopuniti ocjenu, bilješke i fotografije.", async () => {
       zavrsiLov(i.id);
       if (d.dijelim) zaustaviDijeljenje().catch(() => {});
-      router.push("/dnevnik");
-      setTimeout(() => otvori({ tip: "izlazak", id: i.id }), 350);
       obavijest("Lov je završen – dopunite izlazak");
+      // Bez signala prelazak na Dnevnik ponovno učitava stranicu: najprije se ugasi GPS, a obrazac
+      // izlaska otvara se i nakon ponovnog učitavanja.
+      najaviOtvaranjeIzlaska(i.id);
+      await pracenjeUgaseno();
+      router.push("/dnevnik");
+      setTimeout(() => otvoriNajavljeniIzlazak(), 350);
     }, { oznaka: "Završi lov", ikona: "kvacica", vrsta: "primarni" });
 
   return (
