@@ -120,11 +120,24 @@ export function vibriraj(uzorak: number[]) {
  * skrivena, zahtjevi prema Supabaseu (lokacija, prijatelji, obnova prijave) idu nativno.
  * Kad je aplikacija otvorena, koristi se obični fetch.
  */
+/** Najdulje čekanje odgovora poslužitelja – sa slabim signalom zahtjev inače visi i minutu. */
+const ROK_MS = 15_000;
+
+function fetchSRokom(ulaz: RequestInfo | URL, init?: RequestInit) {
+  // Bez signala nema smisla čekati: odmah greška, aplikacija radi s podacima na mobitelu.
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return Promise.reject(new TypeError("Nema internetske veze"));
+  const url = ulaz instanceof Request ? ulaz.url : String(ulaz);
+  if (url.includes("/storage/v1/") || init?.signal) return fetch(ulaz, init);
+  const prekid = new AbortController();
+  const t = setTimeout(() => prekid.abort(), ROK_MS);
+  return fetch(ulaz, { ...init, signal: prekid.signal }).finally(() => clearTimeout(t));
+}
+
 export const fetchZaSupabase: typeof fetch = async (ulaz, init) => {
-  if (!uAplikaciji() || document.visibilityState === "visible" || ulaz instanceof Request) return fetch(ulaz, init);
+  if (!uAplikaciji() || document.visibilityState === "visible" || ulaz instanceof Request) return fetchSRokom(ulaz, init);
   const url = String(ulaz);
   const tijelo = init?.body;
-  if (url.includes("/storage/v1/") || (tijelo != null && typeof tijelo !== "string")) return fetch(ulaz, init);
+  if (url.includes("/storage/v1/") || (tijelo != null && typeof tijelo !== "string")) return fetchSRokom(ulaz, init);
   const zaglavlja: Record<string, string> = {};
   new Headers(init?.headers).forEach((v, k) => (zaglavlja[k] = v));
   const r = await CapacitorHttp.request({

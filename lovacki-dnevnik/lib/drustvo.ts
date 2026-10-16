@@ -432,16 +432,7 @@ export function pokreniDrustvo() {
     if (localStorage.getItem(KLJUC_ISTEKLA)) postavi({ prijavaIstekla: true });
   } catch {}
   const k = sb();
-  k.auth.getSession().then(({ data, error }) => {
-    zabiljeziAktivnost();
-    // Bez signala (npr. u šumi) istekli token se ne može obnoviti pa Supabase ne vraća sesiju,
-    // iako je prijava i dalje spremljena. Tada koristimo spremljenu prijavu; token se obnovi
-    // čim se veza vrati.
-    let sesija = data.session;
-    if (!sesija && (error || !navigator.onLine)) {
-      sesija = spremljenaSesija();
-      if (sesija) window.addEventListener("online", () => k.auth.getSession().catch(() => {}), { once: true });
-    }
+  const zavrsi = (sesija: Session | null) => {
     postaviVlasnika(sesija?.user.id ?? null);
     postavi({ sesija, spremno: true });
     if (sesija) {
@@ -456,6 +447,35 @@ export function pokreniDrustvo() {
         pokreniPracenje();
       }
     }
+  };
+  // Sa slabim signalom obnova isteklog tokena zna dugo čekati mrežu. Aplikacija se zato ne čeka:
+  // nakon kratkog vremena otvara se sa spremljenom prijavom, a token se obnovi kad mreža odgovori.
+  let gotovo = false;
+  const bezCekanja = setTimeout(() => {
+    const spremljena = spremljenaSesija();
+    if (gotovo || !spremljena) return;
+    gotovo = true;
+    zabiljeziAktivnost();
+    zavrsi(spremljena);
+  }, 1200);
+  k.auth.getSession().then(({ data, error }) => {
+    clearTimeout(bezCekanja);
+    if (gotovo) {
+      // Već otvoreno sa spremljenom prijavom – samo preuzmi obnovljeni token istog korisnika.
+      if (data.session && data.session.user.id === stanje.sesija?.user.id) postavi({ sesija: data.session });
+      return;
+    }
+    gotovo = true;
+    zabiljeziAktivnost();
+    // Bez signala (npr. u šumi) istekli token se ne može obnoviti pa Supabase ne vraća sesiju,
+    // iako je prijava i dalje spremljena. Tada koristimo spremljenu prijavu; token se obnovi
+    // čim se veza vrati.
+    let sesija = data.session;
+    if (!sesija && (error || !navigator.onLine)) {
+      sesija = spremljenaSesija();
+      if (sesija) window.addEventListener("online", () => k.auth.getSession().catch(() => {}), { once: true });
+    }
+    zavrsi(sesija);
   });
   k.auth.onAuthStateChange((dogadaj, sesija) => {
     // Prazna sesija bez stvarne odjave (npr. neuspjelo obnavljanje bez signala) ne odjavljuje korisnika.
