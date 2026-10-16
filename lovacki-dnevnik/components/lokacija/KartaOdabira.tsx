@@ -7,6 +7,13 @@ import Ikona from "../Ikona";
 import { cx, obavijest, opruga } from "../ui";
 import type { Tocka2D } from "@/lib/types";
 
+/** Udaljenost u metrima (dovoljno točno za par kilometara). */
+function udaljenost(a: Tocka2D, b: Tocka2D) {
+  const x = (b.lng - a.lng) * 111320 * Math.cos(((a.lat + b.lat) * Math.PI) / 360);
+  const y = (b.lat - a.lat) * 110540;
+  return Math.hypot(x, y);
+}
+
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const PODLOGE = {
   hibrid: [
@@ -19,6 +26,8 @@ const PODLOGE = {
 
 function Pracenje({ onPomak, onPocetak }: { onPomak: (c: Tocka2D) => void; onPocetak: () => void }) {
   useMapEvents({
+    // Dodir na karti dovede pribadaču na to mjesto – ne treba vući kartu.
+    click: (e) => e.target.panTo(e.latlng),
     movestart: onPocetak,
     moveend: (e) => {
       const c = e.target.getCenter();
@@ -42,11 +51,14 @@ export default function KartaOdabira({
   naslov,
   potvrdi,
   odustani,
+  mojaLokacija,
 }: {
   pocetak: Tocka2D;
   naslov: string;
   potvrdi: (t: Tocka2D) => void;
   odustani: () => void;
+  /** Karta se odmah prebaci na moju lokaciju ako je unutar ovoliko metara od početka (Infinity = uvijek). */
+  mojaLokacija?: number;
 }) {
   const [centar, setCentar] = useState<Tocka2D>(pocetak);
   const [mice, setMice] = useState(false);
@@ -69,6 +81,19 @@ export default function KartaOdabira({
       { enableHighAccuracy: true, timeout: 15000 },
     );
   };
+
+  // Nova točka: karta se otvara tamo gdje stojite (ako ste u lovištu), ne treba je tražiti.
+  useEffect(() => {
+    if (mojaLokacija == null || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const t = { lat: p.coords.latitude, lng: p.coords.longitude };
+        if (udaljenost(t, pocetak) <= mojaLokacija) setCilj({ ...t, k: Date.now() });
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 120000 },
+    );
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <motion.div
@@ -113,7 +138,7 @@ export default function KartaOdabira({
         </button>
         <div className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0d130e]/85 px-4 py-2.5 text-white backdrop-blur-xl">
           <div className="truncate text-[15px] font-semibold">{naslov}</div>
-          <div className="text-[12px] text-white/60">Pomaknite kartu da pribadača bude na mjestu</div>
+          <div className="text-[12px] text-white/60">Dodirnite mjesto na karti ili je pomaknite</div>
         </div>
       </div>
 
