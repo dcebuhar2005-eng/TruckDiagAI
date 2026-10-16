@@ -84,6 +84,7 @@ export default function Admin() {
   const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
   const [testeri, setTesteri] = useState<TesterPlay[] | null>(null);
+  const [pocetak, setPocetak] = useState<string | null>(null);
   const [aktivnost, setAktivnost] = useState<Map<string, Aktivnost>>(new Map());
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
@@ -100,6 +101,9 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_testiranje")
       .then(({ data, error }) => !error && setTesteri((data ?? []) as TesterPlay[]));
+    sb()
+      .rpc("lov_admin_testiranje_pocetak")
+      .then(({ data, error }) => !error && setPocetak(typeof data === "string" ? data : null));
     sb()
       .rpc("lov_admin_aktivnost")
       .then(({ data, error }) => !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
@@ -150,6 +154,9 @@ export default function Admin() {
       .rpc("lov_admin_testiranje")
       .then(({ data, error }) => ziv && !error && setTesteri((data ?? []) as TesterPlay[]));
     sb()
+      .rpc("lov_admin_testiranje_pocetak")
+      .then(({ data, error }) => ziv && !error && setPocetak(typeof data === "string" ? data : null));
+    sb()
       .rpc("lov_admin_aktivnost")
       .then(({ data, error }) => ziv && !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
     return () => {
@@ -195,7 +202,7 @@ export default function Admin() {
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4">
         {testeri && testeri.length > 0 && (
           <motion.div variants={djeteListe}>
-            <Testiranje testeri={testeri} />
+            <Testiranje testeri={testeri} pocetak={pocetak} />
           </motion.div>
         )}
 
