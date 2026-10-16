@@ -76,6 +76,14 @@ body {
   overscroll-behavior: none;
 }
 
+/* Stavke u mreži smiju biti uže od svog sadržaja – inače široka tablica ili dugi tekst
+   rašire stupac preko ruba ekrana (stranica se vodoravno ne pomiče). */
+@layer base {
+  .grid > * {
+    min-width: 0;
+  }
+}
+
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
