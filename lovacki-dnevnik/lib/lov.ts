@@ -167,6 +167,8 @@ export async function dodajFotografiju(id: string, dataUrl: string) {
 export function zavrsiLov(id: string) {
   spremiTrag();
   db.uredi("izlasci", id, { uTijeku: undefined, do: sada() });
+  // Praćenje se gasi odmah, a ne tek kad ljuska primijeti promjenu.
+  if (izlazakId === id) uskladiPracenje(null);
 }
 
 export function trenutnaPozicija() {

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useBaza } from "@/lib/store";
-import { useZahtjev } from "./kontroler";
+import { otvoriNajavljeniIzlazak, useZahtjev } from "./kontroler";
 
 // Obrasci se učitavaju zasebno (manje JavaScripta pri pokretanju – brže na slabijim mobitelima);
 // odmah nakon učitavanja stranice predučitaju se u pozadini da se otvaraju bez čekanja.
@@ -27,7 +27,12 @@ export default function Urednici() {
     const t = setTimeout(() => {
       for (const f of [ucitajDetalje, ucitajIzlazak, ucitajOdstrel, ucitajOstale]) f().catch(() => {});
     }, 2500);
-    return () => clearTimeout(t);
+    // Završen lov, a stranica se ponovno učitala (bez signala): otvori obrazac izlaska.
+    const n = setTimeout(otvoriNajavljeniIzlazak, 600);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(n);
+    };
   }, []);
   // Pamtimo zadnji zahtjev kako bi ploča mogla animirano nestati nakon zatvaranja.
   const [zadnji, setZadnji] = useState(z);

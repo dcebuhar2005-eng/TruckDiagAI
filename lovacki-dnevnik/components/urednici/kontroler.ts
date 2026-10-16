@@ -20,6 +20,24 @@ export function otvori(z: Zahtjev) {
   slusaci.forEach((f) => f());
 }
 
+/* Obrazac izlaska nakon „Završi lov” – pamti se i preko ponovnog učitavanja stranice (bez signala). */
+const KLJUC_NAJAVE = "lovacki-dnevnik:otvori-izlazak";
+
+export function najaviOtvaranjeIzlaska(id: string) {
+  try {
+    sessionStorage.setItem(KLJUC_NAJAVE, id);
+  } catch {}
+}
+
+export function otvoriNajavljeniIzlazak() {
+  try {
+    const id = sessionStorage.getItem(KLJUC_NAJAVE);
+    if (!id) return;
+    sessionStorage.removeItem(KLJUC_NAJAVE);
+    otvori({ tip: "izlazak", id });
+  } catch {}
+}
+
 export function zatvori() {
   trenutni = null;
   slusaci.forEach((f) => f());
