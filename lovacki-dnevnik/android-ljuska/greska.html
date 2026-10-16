@@ -5,5 +5,6 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b100
 h1{font-size:20px;margin:0 0 8px}p{margin:0 0 20px;color:#b9b4a3}
 button{background:#d8c28a;color:#14190f;border:0;border-radius:12px;padding:12px 22px;font-weight:600;font-size:16px}
 </style></head>
-<body><div><h1>Nema internetske veze</h1><p>CroLovac se treba spojiti barem prvi put.<br>Nakon toga radi i bez signala.</p>
-<button onclick="location.replace('https://hunt-jade.vercel.app/')">Pokušaj ponovno</button></div></body></html>
+<body><div><h1>Nema internetske veze</h1><p>CroLovac se nakon instalacije treba jednom otvoriti s internetom.<br>Nakon toga radi i bez signala.</p>
+<button onclick="location.replace('https://hunt-jade.vercel.app/')">Pokušaj ponovno</button></div><script>addEventListener("online",function(){location.replace("https://hunt-jade.vercel.app/")});</script>
+</body></html>
