@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useBaza } from "@/lib/store";
-import { otvoriNajavljeniIzlazak, useZahtjev } from "./kontroler";
+import { obavijest } from "../ui";
+import { LOV_U_TIJEKU, otvoriNajavljeniIzlazak, useZahtjev } from "./kontroler";
 
 // Obrasci se učitavaju zasebno (manje JavaScripta pri pokretanju – brže na slabijim mobitelima);
 // odmah nakon učitavanja stranice predučitaju se u pozadini da se otvaraju bez čekanja.
@@ -23,6 +25,15 @@ const TockaUrednik = dynamic(() => ucitajOstale().then((m) => m.TockaUrednik));
 export default function Urednici() {
   const baza = useBaza();
   const z = useZahtjev();
+  const router = useRouter();
+  useEffect(() => {
+    const naLov = () => {
+      obavijest("Lov je već u tijeku – završite ga prije novog izlaska", "info");
+      router.push("/lov");
+    };
+    window.addEventListener(LOV_U_TIJEKU, naLov);
+    return () => window.removeEventListener(LOV_U_TIJEKU, naLov);
+  }, [router]);
   useEffect(() => {
     const t = setTimeout(() => {
       for (const f of [ucitajDetalje, ucitajIzlazak, ucitajOdstrel, ucitajOstale]) f().catch(() => {});

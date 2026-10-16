@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { db } from "@/lib/store";
 import type { Izlazak, Odstrel, Tocka } from "@/lib/types";
 
 export type Zahtjev =
@@ -15,7 +16,15 @@ export type Zahtjev =
 let trenutni: (Zahtjev & { kljuc: number }) | null = null;
 const slusaci = new Set<() => void>();
 
+/** Javlja se kad netko pokuša novi izlazak dok lov traje (Urednici tada vode na lov u tijeku). */
+export const LOV_U_TIJEKU = "lovacki-dnevnik:lov-u-tijeku";
+
 export function otvori(z: Zahtjev) {
+  // Dok lov traje nema novog izlaska – inače nastane drugi, odmah završen izlazak.
+  if (z.tip === "izlazak" && !z.id && db.dohvati().izlasci.some((i) => i.uTijeku)) {
+    window.dispatchEvent(new Event(LOV_U_TIJEKU));
+    return;
+  }
   trenutni = { ...z, kljuc: Date.now() };
   slusaci.forEach((f) => f());
 }
