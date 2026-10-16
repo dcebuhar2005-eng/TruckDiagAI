@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ista boja kao pozadina web aplikacije (#0b100c): vidi se iza traka sustava i tipkovnice. -->
+    <color name="pozadina">#0b100c</color>
+</resources>
