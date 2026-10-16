@@ -61,7 +61,7 @@ export default function Privatnost() {
             </li>
             <li>
               <strong>Tehnički podaci:</strong> verzija aplikacije, vrsta uređaja (npr. „Android · Play aplikacija”) i vrijeme
-              zadnjeg korištenja – za otklanjanje grešaka i obavijest o novoj verziji.
+              zadnjeg korištenja te dani u kojima ste otvorili aplikaciju (samo datum) – za otklanjanje grešaka, obavijest o novoj verziji i praćenje testiranja.
             </li>
           </ul>
           <p>Ne prikupljamo kontakte iz imenika, poruke, podatke o plaćanju ni oglasni identifikator. Nema oglasa ni praćenja za oglase.</p>
@@ -134,11 +134,11 @@ export default function Privatnost() {
         </Odjeljak>
 
         <Odjeljak naslov="Djeca">
-          <p>CroLovac je namijenjen odraslim lovcima i nije namijenjen djeci mlađoj od 16 godina.</p>
+          <p>CroLovac je namijenjen odraslim lovcima i nije namijenjen djeci mlađoj od 18 godina.</p>
         </Odjeljak>
 
         <Odjeljak naslov="Promjene">
-          <p>O važnim promjenama ovih pravila obavijestit ćemo vas u aplikaciji. Zadnja izmjena: 14. listopada 2026.</p>
+          <p>O važnim promjenama ovih pravila obavijestit ćemo vas u aplikaciji. Zadnja izmjena: 16. listopada 2026.</p>
         </Odjeljak>
       </div>
     </div>
