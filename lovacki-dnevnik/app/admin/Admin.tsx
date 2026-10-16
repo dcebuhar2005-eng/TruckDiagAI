@@ -51,6 +51,14 @@ interface VerzijaKorisnika {
   azurirano: string;
 }
 
+interface Aktivnost {
+  email: string;
+  dani_14: number;
+  dani_ukupno: number;
+  prvi: string;
+  zadnji: string;
+}
+
 const PRAVA_ADRESA = "hunt-jade.vercel.app";
 /** Broj korisnika po stranici u popisu. */
 const PO_STRANICI = 10;
@@ -85,6 +93,7 @@ export default function Admin() {
   const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
   const [testeri, setTesteri] = useState<Tester[] | null>(null);
+  const [aktivnost, setAktivnost] = useState<Map<string, Aktivnost>>(new Map());
   const [kopirano, setKopirano] = useState<"gmail" | "mobitel" | null>(null);
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
@@ -101,6 +110,9 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_testeri_v2")
       .then(({ data, error }) => !error && setTesteri((data ?? []) as Tester[]));
+    sb()
+      .rpc("lov_admin_aktivnost")
+      .then(({ data, error }) => !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
   };
 
   // Popis Gmail adresa za Play Console (Zatvoreno testiranje → Testeri → popis e-adresa).
@@ -161,6 +173,9 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_testeri_v2")
       .then(({ data, error }) => ziv && !error && setTesteri((data ?? []) as Tester[]));
+    sb()
+      .rpc("lov_admin_aktivnost")
+      .then(({ data, error }) => ziv && !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
     return () => {
       ziv = false;
     };
@@ -271,6 +286,7 @@ export default function Admin() {
                         · {t.ime ?? t.korisnicko_ime ?? t.email}
                         {t.uredaj ? ` · ${t.uredaj}` : ""}
                       </span>
+                      <span className="brojke font-medium text-naglasak"> · {aktivnost.get(t.email)?.dani_14 ?? 0}/14 dana</span>
                     </span>
                     <span className="brojke shrink-0 text-[12.5px] text-tekst-3">{kadJe(t.stvoreno)}</span>
                   </li>
@@ -320,12 +336,13 @@ export default function Admin() {
         <motion.section variants={djeteListe} className="kartica overflow-hidden">
           <h2 className="p-5 pb-3 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Korisnici ({s.popis.length})</h2>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-[13.5px]">
+            <table className="w-full min-w-[700px] text-left text-[13.5px]">
               <thead className="text-[11.5px] tracking-wide text-tekst-3 uppercase">
                 <tr className="border-y border-rub">
                   <th className="px-5 py-2 font-medium">Korisnik</th>
                   <th className="px-3 py-2 font-medium">Registriran</th>
                   <th className="px-3 py-2 font-medium">Zadnje aktivan</th>
+                  <th className="px-3 py-2 text-right font-medium" title="Dani korištenja u zadnjih 14 dana">Dani (14)</th>
                   <th className="px-3 py-2 text-right font-medium">Odstrel</th>
                   <th className="px-3 py-2 text-right font-medium">Izlasci</th>
                   <th className="px-5 py-2 text-right font-medium">Foto</th>
@@ -347,6 +364,7 @@ export default function Admin() {
                       </td>
                       <td className="brojke px-3 py-2.5 text-tekst-2">{datumKratki(new Date(k.registriran))}</td>
                       <td className="brojke px-3 py-2.5 text-tekst-2">{zadnje ? kadJe(zadnje) : "–"}</td>
+                      <td className="brojke px-3 py-2.5 text-right">{aktivnost.get(k.email)?.dani_14 ?? "–"}</td>
                       <td className="brojke px-3 py-2.5 text-right">{k.odstrel}</td>
                       <td className="brojke px-3 py-2.5 text-right">{k.izlasci}</td>
                       <td className="brojke px-5 py-2.5 text-right">{k.fotografija}</td>

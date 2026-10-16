@@ -51,3 +51,22 @@ export async function zabiljeziVerziju(korisnik: string) {
       .upsert({ korisnik, verzija: MOJA_VERZIJA.slice(0, 40), adresa: location.host.slice(0, 120), uredaj: opisUredaja(), azurirano: new Date().toISOString() });
   } catch {}
 }
+
+/**
+ * Bilježi dan korištenja (samo datum, jednom dnevno) – administrator vidi koliko je dana tester
+ * koristio aplikaciju. Nikad ne baca grešku.
+ */
+export async function zabiljeziDan(korisnik: string) {
+  if (!navigator.onLine) return;
+  const s = new Date();
+  const dan = `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
+  const kljuc = `lovacki-dnevnik:dan-koristenja:${korisnik}`;
+  try {
+    if (localStorage.getItem(kljuc) === dan) return;
+  } catch {}
+  try {
+    const { sb } = await import("./drustvo");
+    const { error } = await sb().from("lov_aktivnost").upsert({ korisnik, dan }, { onConflict: "korisnik,dan", ignoreDuplicates: true });
+    if (!error) localStorage.setItem(kljuc, dan);
+  } catch {}
+}

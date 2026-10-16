@@ -14,7 +14,7 @@ import Navigacija from "./Navigacija";
 import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
-import { zabiljeziVerziju } from "@/lib/verzija";
+import { zabiljeziDan, zabiljeziVerziju } from "@/lib/verzija";
 import NovaVerzija from "./NovaVerzija";
 import PitanjeMisljenja from "./PitanjeMisljenja";
 import PozivTesterima from "./PozivTesterima";
@@ -41,6 +41,15 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       zabiljeziVerziju(prijavljen);
     }
   }, [prijavljen, drustvo.spremno]);
+
+  // Dan korištenja – i kad aplikacija ostane otvorena preko noći, bilježi se pri povratku u nju.
+  useEffect(() => {
+    if (!konfigurirano || !prijavljen) return;
+    const zabiljezi = () => document.visibilityState === "visible" && zabiljeziDan(prijavljen);
+    zabiljezi();
+    document.addEventListener("visibilitychange", zabiljezi);
+    return () => document.removeEventListener("visibilitychange", zabiljezi);
+  }, [prijavljen]);
 
   // Prazan dnevnik nakon prijave (npr. nova ikona, novi mobitel): sam vrati zadnju kopiju s podacima.
   const sinkroniziran = sinkronizacija.spremno;

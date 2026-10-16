@@ -342,3 +342,34 @@ begin
 end $$;
 revoke all on function public.lov_admin_testeri_v2() from public, anon;
 grant execute on function public.lov_admin_testeri_v2() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Dani korištenja (samo datum, jednom dnevno) – administrator vidi koliko je dana tester koristio aplikaciju.
+create table if not exists public.lov_aktivnost (
+  korisnik uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  dan date not null,
+  primary key (korisnik, dan)
+);
+alter table public.lov_aktivnost enable row level security;
+create policy "lov_aktivnost_citanje" on public.lov_aktivnost for select to authenticated using (korisnik = (select auth.uid()));
+create policy "lov_aktivnost_unos" on public.lov_aktivnost for insert to authenticated with check (korisnik = (select auth.uid()) and dan between current_date - 1 and current_date + 1);
+revoke all on public.lov_aktivnost from anon;
+revoke all on public.lov_aktivnost from authenticated;
+grant select, insert on public.lov_aktivnost to authenticated;
+
+create or replace function public.lov_admin_aktivnost()
+returns table (email text, dani_14 int, dani_ukupno int, prvi date, zadnji date)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not exists (select 1 from lov_privatno.admini a where a.korisnik = (select auth.uid())) then
+    raise exception 'Nema pristupa' using errcode = '42501';
+  end if;
+  return query
+    select u.email::text,
+           count(*) filter (where a.dan > current_date - 14)::int,
+           count(*)::int, min(a.dan), max(a.dan)
+    from public.lov_aktivnost a join auth.users u on u.id = a.korisnik
+    group by u.email;
+end $$;
+revoke all on function public.lov_admin_aktivnost() from public, anon;
+grant execute on function public.lov_admin_aktivnost() to authenticated;
