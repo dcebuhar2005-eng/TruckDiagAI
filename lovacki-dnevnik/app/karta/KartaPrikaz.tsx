@@ -389,7 +389,7 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
-  const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -629,6 +629,17 @@ export default function KartaPrikaz() {
         <Upravljac cilj={cilj} />
         <GraniceNaPocetku baza={baza} />
 
+        {/* Službene granice državnih i privatnih lovišta – Ministarstvo poljoprivrede, šumarstva i ribarstva (otvorena dozvola) */}
+        {slojevi.sluzbena && (
+          <WMSTileLayer
+            url="https://geoportal.mps.hr/geocluster/am2/wms"
+            params={{ layers: "ForestManagementArea", styles: "", format: "image/png", transparent: true, version: "1.1.1" }}
+            opacity={0.6}
+            zIndex={5}
+            minZoom={7}
+            attribution="Granice lovišta: Ministarstvo poljoprivrede, šumarstva i ribarstva"
+          />
+        )}
         {slojevi.lovista &&
           baza.lovista.map((l) =>
             l.granica && l.granica.length > 2 && !(nacin === "granica" && l.id === lovisteZaGranicu) ? (
@@ -863,7 +874,8 @@ export default function KartaPrikaz() {
             <div className="mb-1.5 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Slojevi</div>
             {(
               [
-                ["lovista", "Granice lovišta"],
+                ["sluzbena", "Službena lovišta (državna i privatna)"],
+                ["lovista", "Moja lovišta"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
                 ["miris", "Zona mirisa (vjetar)"],
