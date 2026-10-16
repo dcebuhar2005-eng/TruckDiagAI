@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { DOBNI_RAZREDI, nazivSpola, vrsta as nadiVrstu } from "@/lib/katalog";
-import { datumKratki, isoDatum, isoVrijeme } from "@/lib/format";
+import { datumKratki, isoDatum, isoVrijeme, udaljenostM } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela, obrisiFoto, spremiFoto } from "@/lib/foto";
 import Fotografije, { type Slika } from "./Fotografije";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
@@ -58,6 +58,26 @@ export default function OdstrelUrednik({
   const [lok, setLok] = useState<{ lat: number; lng: number } | undefined>(
     p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : undefined,
   );
+  const [lokGps, setLokGps] = useState(false);
+
+  // Novi odstrel: mjesto se samo popuni s GPS-a ako ste u lovu ili u lovištu (do 5 km) – kod kuće ne.
+  useEffect(() => {
+    if (postojeci || (p.lat != null && p.lng != null) || !navigator.geolocation) return;
+    const uLovu = baza.izlasci.some((i) => i.uTijeku);
+    const l = baza.lovista.find((x) => x.id === p.lovisteId);
+    const imaLoviste = !!l?.granica?.length || baza.tocke.some((t) => t.lovisteId === p.lovisteId);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const t = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (!uLovu && !(imaLoviste && udaljenostM(t, centarLovista(baza, p.lovisteId)) < 5000)) return;
+        setLok((s) => s ?? t);
+        setLokGps(true);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const pocetneFoto = fotografijeOdstrela(p);
   const [slike, setSlike] = useState<Slika[]>([]);
   const [slikeUcitane, setSlikeUcitane] = useState(pocetneFoto.length === 0);
@@ -235,12 +255,15 @@ export default function OdstrelUrednik({
             </Polje>
           </Red>
           <PoljeLokacije
-            naslov="Mjesto odstrela"
+            naslov={lokGps ? "Mjesto odstrela · s GPS-a, provjerite" : "Mjesto odstrela"}
             naslovKarte="Gdje je divljač odstrijeljena?"
             prazno="Nije zabilježeno"
             vrijednost={lok}
             sredina={centarLovista(baza, v.lovisteId)}
-            promjena={setLok}
+            promjena={(x) => {
+              setLok(x);
+              setLokGps(false);
+            }}
           />
         </Odjeljak>
 
