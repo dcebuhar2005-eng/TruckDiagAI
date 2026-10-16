@@ -1,17 +1,23 @@
 /* CroLovac – service worker: rad bez signala.
  *
  * - Ljuska aplikacije (stranice i /_next/static) sprema se pa se aplikacija otvara i bez interneta.
+ *   Stranice se dohvaćaju kao HTML (Accept: text/html) – u Android aplikaciji tako dobiju i
+ *   nativni most (GPS u pozadini, obavijesti), pa i spremljena kopija radi s njima bez signala.
+ * - Sa slabim signalom stranica se ne čeka dulje od nekoliko sekundi – otvara se spremljena kopija.
  * - Pločice karte: najprije iz spremljenih (offline) područja, zatim iz predmemorije
  *   nedavno gledanih pločica, tek onda s mreže.
  */
 
-const LJUSKA = "lov-ljuska-v1";
+const LJUSKA = "lov-ljuska-v2";
 const STATIKA = "lov-statika-v1";
 const OFFLINE = "lov-offline-v1"; // ručno preuzeta područja – brišu se samo na zahtjev
 const NEDAVNO = "lov-plocice-v1"; // pasivno, ograničeno na MAKS_NEDAVNIH
 const MAKS_NEDAVNIH = 2500;
 
-const STRANICE = ["/", "/dnevnik", "/karta", "/lovci", "/lovista", "/dozvole", "/statistika", "/postavke", "/izvori"];
+const STRANICE = ["/", "/lov", "/dnevnik", "/karta", "/lovci", "/lovista", "/dozvole", "/statistika", "/postavke", "/izvori", "/privatnost"];
+/** Koliko najdulje čekati mrežu za stranicu prije nego se otvori spremljena kopija. */
+const CEKANJE_MS = 3500;
+const HTML = { Accept: "text/html,application/xhtml+xml" };
 
 // Poslužitelji pločica koji šalju CORS zaglavlja (spremaju se bez „opaque” kazne za kvotu).
 const PLOCICE_CORS = ["server.arcgisonline.com", "services.arcgisonline.com", "clarity.maptiles.arcgis.com"];
@@ -26,7 +32,7 @@ async function spremiLjusku() {
   await Promise.all(
     STRANICE.map(async (p) => {
       try {
-        const r = await fetch(p, { cache: "no-store" });
+        const r = await fetch(p, { cache: "no-store", headers: HTML });
         if (!r.ok) return;
         const html = await r.clone().text();
         await c.put(p, r);
@@ -100,13 +106,16 @@ async function plocica(e, u) {
 
 async function stranica(e, u) {
   const c = await caches.open(LJUSKA);
-  try {
-    const r = await fetch(e.request);
+  const spremljena = (await c.match(u.pathname)) || (await c.match("/"));
+  const mreza = fetch(e.request).then((r) => {
     if (r.ok && !u.search) e.waitUntil(c.put(u.pathname, r.clone()));
     return r;
-  } catch {
-    return (await c.match(u.pathname)) || (await c.match("/")) || Response.error();
-  }
+  });
+  if (!spremljena) return mreza.catch(() => Response.error());
+  // Mreža ima prednost, ali bez signala ili sa slabim signalom otvara se spremljena kopija.
+  mreza.catch(() => {});
+  const istek = new Promise((ok) => setTimeout(() => ok(null), CEKANJE_MS));
+  return (await Promise.race([mreza.catch(() => null), istek])) || spremljena;
 }
 
 async function statika(e) {
