@@ -1,7 +1,7 @@
 "use client";
 
 import { metri } from "./format";
-import { nativnaObavijest, uAplikaciji, vibriraj } from "./nativno";
+import { nativnaObavijest, uAplikaciji, vibriraj, zaustaviVibraciju } from "./nativno";
 
 /**
  * Alarm kad prijatelj u lovu uđe u zadanu udaljenost.
@@ -41,6 +41,36 @@ export function spremiPostavkeBlizine(p: Partial<PostavkeBlizine>) {
 
 /** iPhone (Safari) ne dopušta vibraciju iz web aplikacije. */
 export const vibracijaPodrzana = () => uAplikaciji() || (typeof navigator !== "undefined" && typeof navigator.vibrate === "function");
+
+/* ---------------- Otkucaji srca ---------------- */
+
+const OTKUCAJI_MS = 8000;
+
+/** Jedan otkucaj „tup-tup” pa stanka do sljedećeg; razmak je trajanje cijelog otkucaja. */
+const otkucaj = (razmak: number) => [80, 120, 130, Math.max(120, razmak - 330)];
+
+/** Što bliže, to brže: na granici otkucaj svakih 1,5 s, na 50 m i bliže svakih 0,45 s. */
+function razmakOtkucaja(udaljenost: number, granica: number) {
+  const r = Math.min(1, Math.max(0, (udaljenost - 50) / Math.max(1, granica - 50)));
+  return Math.round(450 + r * 1050);
+}
+
+function otkucaji(udaljenost: number, granica: number) {
+  const razmak = razmakOtkucaja(udaljenost, granica);
+  const uzorak: number[] = [];
+  for (let t = 0; t < OTKUCAJI_MS; t += razmak) uzorak.push(...otkucaj(razmak));
+  vibriraj(uzorak);
+}
+
+/** Za „Isprobaj alarm”: lovac prilazi – otkucaji se ubrzavaju od granice do 50 m. */
+function otkucajiPrilaska(granica: number) {
+  const uzorak: number[] = [];
+  for (let i = 0; i < 12; i++) uzorak.push(...otkucaj(razmakOtkucaja(granica - ((granica - 50) * i) / 11, granica)));
+  vibriraj(uzorak);
+}
+
+/** „U redu” na alarmu: srce prestaje kucati do sljedećeg približavanja. */
+export const utisajAlarm = () => zaustaviVibraciju();
 
 /* ---------------- Zvuk ---------------- */
 
@@ -104,21 +134,26 @@ export function naAlarm(f: Javi) {
   javi = f;
 }
 
-export function oglasiAlarm(ime: string, udaljenost: number, hitno: boolean) {
+export function oglasiAlarm(ime: string, udaljenost: number, hitno: boolean, proba = false) {
   const p = postavkeBlizine();
   const naslov = hitno ? "Lovac vrlo blizu!" : "Lovac u blizini";
   const tijelo = `${ime} je ${metri(udaljenost)} od vas. Provjerite smjer pucanja.`;
-  if (p.vibracija) vibriraj(hitno ? [400, 120, 400, 120, 400, 120, 800] : [300, 150, 300, 150, 600]);
+  if (p.vibracija) {
+    if (proba) otkucajiPrilaska(p.granica);
+    else otkucaji(udaljenost, p.granica);
+  }
   if (p.zvuk) zapistiZvuk(hitno);
   javi(`${naslov}: ${tijelo}`);
   if (document.visibilityState !== "visible") sistemskaObavijest(naslov, tijelo);
 }
 
 const razine = new Map<string, number>();
+/** Udaljenost pri zadnjim otkucajima, po lovcu – srce kuca ponovno tek kad se osjetno približi. */
+const zadnjiOtkucaji = new Map<string, number>();
 
 /** Poziva se nakon svake promjene moje pozicije ili pozicija prijatelja. */
 export function provjeriBlizinu(lovci: { id: string; ime: string; udaljenost: number }[]) {
-  const { granica } = postavkeBlizine();
+  const { granica, vibracija } = postavkeBlizine();
   const vidjeni = new Set<string>();
   for (const l of lovci) {
     vidjeni.add(l.id);
@@ -129,12 +164,26 @@ export function provjeriBlizinu(lovci: { id: string; ime: string; udaljenost: nu
       if (prije === 2 && l.udaljenost <= Math.min(VRLO_BLIZU_M, granica) * 1.5) sada = 2;
       else if (l.udaljenost <= granica * 1.3) sada = Math.max(sada, 1);
     }
-    if (sada > prije) oglasiAlarm(l.ime, l.udaljenost, sada === 2);
+    const zadnje = zadnjiOtkucaji.get(l.id);
+    if (sada > prije) {
+      oglasiAlarm(l.ime, l.udaljenost, sada === 2);
+      zadnjiOtkucaji.set(l.id, l.udaljenost);
+    } else if (!sada) {
+      zadnjiOtkucaji.delete(l.id);
+    } else if (zadnje != null && l.udaljenost <= zadnje - Math.max(30, zadnje * 0.12)) {
+      // I dalje prilazi: novi niz otkucaja, brži nego prošli.
+      if (vibracija) otkucaji(l.udaljenost, granica);
+      zadnjiOtkucaji.set(l.id, l.udaljenost);
+    } else if (zadnje != null && l.udaljenost > zadnje + 50) {
+      zadnjiOtkucaji.set(l.id, l.udaljenost);
+    }
     razine.set(l.id, sada);
   }
   for (const id of razine.keys()) if (!vidjeni.has(id)) razine.delete(id);
+  for (const id of zadnjiOtkucaji.keys()) if (!vidjeni.has(id)) zadnjiOtkucaji.delete(id);
 }
 
 export function ponistiBlizinu() {
   razine.clear();
+  zadnjiOtkucaji.clear();
 }

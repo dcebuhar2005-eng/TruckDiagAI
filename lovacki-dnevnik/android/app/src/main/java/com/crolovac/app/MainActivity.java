@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(VibracijaPlugin.class);
         super.onCreate(savedInstanceState);
         // Bez zumiranja prstima (karta ima vlastito zumiranje).
         bridge.getWebView().getSettings().setSupportZoom(false);

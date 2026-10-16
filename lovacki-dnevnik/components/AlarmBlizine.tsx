@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { naAlarm } from "@/lib/blizina";
+import { naAlarm, utisajAlarm } from "@/lib/blizina";
 import Ikona from "./Ikona";
 import { opruga } from "./ui";
 
@@ -47,7 +47,10 @@ export default function AlarmBlizine() {
               <div className="mt-0.5 text-[14px] text-white/90">{ostalo.join(": ")}</div>
             </div>
             <button
-              onClick={() => setPoruka(null)}
+              onClick={() => {
+                utisajAlarm();
+                setPoruka(null);
+              }}
               className="shrink-0 rounded-xl bg-white px-3 py-2 text-[13px] font-semibold text-[#b3261e]"
             >
               U redu

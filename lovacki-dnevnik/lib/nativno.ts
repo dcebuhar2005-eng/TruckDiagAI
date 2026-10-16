@@ -147,16 +147,46 @@ export async function nativnaObavijest(naslov: string, tijelo: string) {
   } catch {}
 }
 
+interface VibracijaPlugin {
+  uzorak(o: { vremena: number[] }): Promise<void>;
+  zaustavi(): Promise<void>;
+}
+// Nativni dodatak iz Android ljuske (od verzije 1.0.9); vibrira kao alarm, i na tihom načinu.
+const NativnaVibracija = registerPlugin<VibracijaPlugin>("Vibracija");
+
+let pulsevi: ReturnType<typeof setTimeout>[] = [];
+
+/** Starija ljuska bez dodatka: uzorak se odsvira pulsevima preko Haptics. */
+function uzorakPrekoHaptics(uzorak: number[]) {
+  let t = 0;
+  uzorak.forEach((ms, i) => {
+    if (i % 2 === 0 && ms > 0) {
+      const u = t;
+      pulsevi.push(setTimeout(() => Haptics.vibrate({ duration: ms }).catch(() => {}), u));
+    }
+    t += ms;
+  });
+}
+
 /**
- * Vibracija. U aplikaciji uvijek nativno: WebView preskače navigator.vibrate kad je mobitel
- * na tihom načinu (a i dalje vraća true), a lovci su u lovu uglavnom na tihom.
+ * Vibracija po uzorku [vibriraj, stani, …]. U aplikaciji uvijek nativno: WebView preskače
+ * navigator.vibrate kad je mobitel na tihom načinu (a i dalje vraća true).
  */
 export function vibriraj(uzorak: number[]) {
-  if (uAplikaciji()) {
-    Haptics.vibrate({ duration: Math.min(2000, uzorak.reduce((a, b) => a + b, 0)) }).catch(() => navigator.vibrate?.(uzorak));
+  zaustaviVibraciju();
+  if (!uAplikaciji()) {
+    if (typeof navigator.vibrate === "function") navigator.vibrate(uzorak);
     return;
   }
-  if (typeof navigator.vibrate === "function") navigator.vibrate(uzorak);
+  if (Capacitor.isPluginAvailable("Vibracija")) NativnaVibracija.uzorak({ vremena: uzorak }).catch(() => uzorakPrekoHaptics(uzorak));
+  else uzorakPrekoHaptics(uzorak);
+}
+
+export function zaustaviVibraciju() {
+  pulsevi.forEach(clearTimeout);
+  pulsevi = [];
+  if (uAplikaciji() && Capacitor.isPluginAvailable("Vibracija")) NativnaVibracija.zaustavi().catch(() => {});
+  else if (typeof navigator.vibrate === "function") navigator.vibrate(0);
 }
 
 /* ---------------- Mreža u pozadini ---------------- */
