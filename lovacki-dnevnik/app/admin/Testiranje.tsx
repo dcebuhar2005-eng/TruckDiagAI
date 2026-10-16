@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Gumb, cx } from "@/components/ui";
+import { useCallback, useEffect, useState } from "react";
+import Ikona from "@/components/Ikona";
+import { Gumb, cx, obavijest } from "@/components/ui";
+import { sb } from "@/lib/drustvo";
 import { datumKratki } from "@/lib/format";
 
 export interface TesterPlay {
@@ -19,6 +21,22 @@ export interface TesterPlay {
 }
 
 const DANA = 14;
+
+/** Ručno upisani bodovi (greška 3, prijedlog 2); lovovi od početka testiranja donose po 1 bod. */
+interface UnosBodova {
+  id: number;
+  gmail: string;
+  bodovi: number;
+  razlog: string;
+  kada: string;
+}
+
+const VRSTE = [
+  { bodovi: 3, oznaka: "Greška", ikona: "upozorenje" },
+  { bodovi: 2, oznaka: "Prijedlog", ikona: "zvijezda" },
+] as const;
+
+const izvanIgre = (t: TesterPlay) => /ne sudjeluje/i.test(t.napomena ?? "");
 
 const oznaka = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
 
@@ -38,11 +56,45 @@ function kada(iso: string) {
 /** Testeri zatvorenog testiranja: dani korištenja u zadnjih 14 dana, izlasci i zadnja aktivnost. */
 export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]; pocetak: string | null }) {
   const [kopirano, setKopirano] = useState<"gmail" | "mobitel" | null>(null);
+  const [unosi, setUnosi] = useState<UnosBodova[]>([]);
+  const [lovovi, setLovovi] = useState<Map<string, number>>(new Map());
+  const [upis, setUpis] = useState<{ gmail: string; bodovi: number; oznaka: string } | null>(null);
+  const [razlog, setRazlog] = useState("");
+  const [povijest, setPovijest] = useState<string | null>(null);
+
+  const ucitajBodove = useCallback(() => {
+    sb()
+      .rpc("lov_admin_bodovi")
+      .then(({ data, error }) => !error && setUnosi((data ?? []) as UnosBodova[]));
+    sb()
+      .rpc("lov_admin_lovovi_testiranja")
+      .then(({ data, error }) => !error && setLovovi(new Map(((data ?? []) as { gmail: string; lovova: number }[]).map((x) => [x.gmail.toLowerCase(), x.lovova]))));
+  }, []);
+  useEffect(ucitajBodove, [ucitajBodove]);
+
+  const spremiBodove = async () => {
+    if (!upis) return;
+    const { error } = await sb().rpc("lov_admin_bodovi_dodaj", { p_gmail: upis.gmail, p_bodovi: upis.bodovi, p_razlog: `${upis.oznaka}: ${razlog.trim()}` });
+    if (error) return obavijest("Bodovi nisu spremljeni", "greska");
+    obavijest(`+${upis.bodovi} boda upisano`);
+    setUpis(null);
+    setRazlog("");
+    ucitajBodove();
+  };
+
+  const rucni = (g: string) => unosi.filter((u) => u.gmail === g.toLowerCase());
+  const bodoviOd = (t: TesterPlay) => rucni(t.gmail).reduce((s, u) => s + u.bodovi, 0) + (lovovi.get(t.gmail.toLowerCase()) ?? 0);
+  const ljestvica = testeri
+    .filter((t) => !izvanIgre(t))
+    .map((t) => ({ t, b: bodoviOd(t) }))
+    .filter((x) => x.b > 0)
+    .sort((a, b) => b.b - a.b || b.t.dani_14 - a.t.dani_14)
+    .slice(0, 3);
   const dani = pocetak ? daniTestiranja(pocetak) : [];
   const danas = oznaka(new Date());
   const danTestiranja = pocetak ? dani.indexOf(danas) + 1 || (danas > dani[DANA - 1] ? DANA + 1 : 0) : 0;
   const poredak = [...testeri].sort(
-    (a, b) => b.dani_14 - a.dani_14 || b.izlasci - a.izlasci || (a.ime ?? a.gmail).localeCompare(b.ime ?? b.gmail, "hr"),
+    (a, b) => bodoviOd(b) - bodoviOd(a) || b.dani_14 - a.dani_14 || (a.ime ?? a.gmail).localeCompare(b.ime ?? b.gmail, "hr"),
   );
   const aktivnih = testeri.filter((t) => t.dani_14 > 0).length;
 
@@ -91,10 +143,33 @@ export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]
         )}
       </p>
 
+      {ljestvica.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-naglasak/30 bg-naglasak-meki p-3">
+          <div className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-naglasak">
+            <Ikona ime="trofej" velicina={16} /> Ljestvica za majice
+          </div>
+          <div className="grid gap-1.5">
+            {ljestvica.map(({ t, b }, i) => (
+              <div key={t.gmail} className="flex items-center gap-2 text-[14px]">
+                <span className="w-6 text-center">{["🥇", "🥈", "🥉"][i]}</span>
+                <span className="min-w-0 flex-1 truncate font-medium">{t.ime ?? t.profil ?? t.gmail}</span>
+                <span className="brojke font-bold text-naglasak">{b}</span>
+                <span className="text-[12px] text-tekst-3">bod.</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 text-[11.5px] text-tekst-3">Greška 3 · prijedlog 2 · zabilježen lov 1 (od početka testiranja)</div>
+        </div>
+      )}
+
       <ol className="grid gap-2">
         {poredak.map((t, i) => {
           const koristio = new Set(t.dani);
           const ime = t.ime ?? t.profil ?? t.gmail;
+          const moji = rucni(t.gmail);
+          const lovova = lovovi.get(t.gmail.toLowerCase()) ?? 0;
+          const ukupno = bodoviOd(t);
+          const upisujem = upis?.gmail === t.gmail;
           return (
             <li key={t.gmail} className="rounded-2xl border border-rub bg-povrsina-2 p-3">
               <div className="flex items-start gap-3">
@@ -139,12 +214,69 @@ export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]
                   Izlazaka: <span className="brojke font-semibold text-tekst">{t.izlasci}</span>
                 </span>
                 <span>Zadnje: {t.zadnje ? kada(t.zadnje) : "–"}</span>
+                <button
+                  onClick={() => setPovijest((x) => (x === t.gmail ? null : t.gmail))}
+                  className={cx("font-semibold", izvanIgre(t) ? "text-tekst-3" : "text-naglasak")}
+                >
+                  {izvanIgre(t) ? "izvan igre" : `🏆 ${ukupno} bod.`}
+                </button>
                 {t.mobitel && (
                   <a href={`https://wa.me/${t.mobitel.replace("+", "")}`} target="_blank" rel="noreferrer" className="text-naglasak">
                     {t.mobitel}
                   </a>
                 )}
               </div>
+              {povijest === t.gmail && (
+                <div className="mt-2 grid gap-1 rounded-xl bg-povrsina-3/50 p-2 text-[12.5px]">
+                  {moji.map((u) => (
+                    <div key={u.id} className="flex gap-2">
+                      <span className="brojke w-7 shrink-0 font-semibold text-naglasak">{u.bodovi > 0 ? `+${u.bodovi}` : u.bodovi}</span>
+                      <span className="min-w-0 flex-1 text-tekst-2">{u.razlog}</span>
+                      <span className="shrink-0 text-tekst-3">{datumKratki(new Date(u.kada))}</span>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <span className="brojke w-7 shrink-0 font-semibold text-naglasak">+{lovova}</span>
+                    <span className="flex-1 text-tekst-2">Zabilježeni lovovi od početka testiranja</span>
+                  </div>
+                </div>
+              )}
+
+              {!izvanIgre(t) && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {VRSTE.map((v) => (
+                    <button
+                      key={v.oznaka}
+                      onClick={() => {
+                        setUpis(upisujem && upis?.bodovi === v.bodovi ? null : { gmail: t.gmail, bodovi: v.bodovi, oznaka: v.oznaka });
+                        setRazlog("");
+                      }}
+                      className={cx(
+                        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-medium",
+                        upisujem && upis?.bodovi === v.bodovi ? "border-naglasak bg-naglasak-meki text-naglasak" : "border-rub text-tekst-2",
+                      )}
+                    >
+                      <Ikona ime={v.ikona} velicina={14} />+{v.bodovi} {v.oznaka}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {upisujem && upis && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    autoFocus
+                    className="unos h-10 min-w-0 flex-1 text-[14px]"
+                    placeholder={upis.bodovi === 3 ? "Koja greška? (npr. tipka natrag)" : "Koji prijedlog?"}
+                    value={razlog}
+                    onChange={(e) => setRazlog(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && razlog.trim() && spremiBodove()}
+                  />
+                  <Gumb velicina="sm" vrsta="primarni" disabled={!razlog.trim()} onClick={spremiBodove}>
+                    +{upis.bodovi}
+                  </Gumb>
+                </div>
+              )}
+
               {!t.racun ? (
                 <div className="mt-1.5 text-[12px] font-medium text-[#e0a14f]">Nema računa u CroLovcu s ovim mailom</div>
               ) : (
