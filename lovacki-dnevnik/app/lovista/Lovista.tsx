@@ -68,7 +68,7 @@ function Obris({ l, tocke, velicina = 120 }: { l: Loviste; tocke?: Baza["tocke"]
             strokeWidth={0.8}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.6 + i * 0.05, type: "spring", stiffness: 400, damping: 14 }}
+            transition={{ delay: 0.25 + i * 0.03, type: "spring", stiffness: 400, damping: 14 }}
           />
         );
       })}
@@ -267,7 +267,7 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
                       style={{ background: bojaVrste(v) }}
                       initial={{ width: 0 }}
                       animate={{ width: `${(n / poVrsti[0][1]) * 100}%` }}
-                      transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                     />
                   </div>
                   <span className="brojke w-6 text-right font-semibold">{n}</span>

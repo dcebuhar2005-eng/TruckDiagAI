@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { konfigurirano, pokreniDrustvo, useDrustvo } from "@/lib/drustvo";
@@ -88,8 +88,9 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     return () => m.removeEventListener("change", primijeni);
   }, [tema]);
 
+  // Ako je u sustavu uključeno „smanji pokrete”, animacije se svode na kratko pojavljivanje.
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       {!trebaPrijava && (
         <>
           <Navigacija />
@@ -104,6 +105,6 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <NovaVerzija />
       <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
       <PozivTesterima korisnik={prijavljen} email={drustvo.sesija?.user.email} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
-    </>
+    </MotionConfig>
   );
 }

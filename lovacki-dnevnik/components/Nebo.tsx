@@ -87,7 +87,7 @@ export function TrakaDana({
             key={i}
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
-            transition={{ delay: 0.3 + i * 0.08, type: "spring", stiffness: 200, damping: 20 }}
+            transition={{ delay: 0.1 + i * 0.05, type: "spring", stiffness: 200, damping: 20 }}
             title={`${r.povod}: ${sat(r.od)}–${sat(r.do)}`}
             className={cx(
               "absolute bottom-0 origin-bottom rounded-t-md",

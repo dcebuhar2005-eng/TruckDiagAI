@@ -190,7 +190,7 @@ export default function Pregled() {
                   key={i}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: 0.4 + i * 0.07, type: "spring", stiffness: 400, damping: 15 }}
+                  transition={{ delay: 0.15 + i * 0.04, type: "spring", stiffness: 400, damping: 15 }}
                 >
                   <Ikona ime="zvijezda" velicina={18} className={i <= astro.sol.ocjena ? "text-naglasak" : "text-tekst-3/50"} fill={i <= astro.sol.ocjena ? "currentColor" : "none"} />
                 </motion.span>

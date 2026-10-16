@@ -173,14 +173,14 @@ select.unos {
 ::view-transition-old(.naprijed),
 ::view-transition-old(.natrag) {
   animation:
-    160ms cubic-bezier(0.4, 0, 1, 1) both nestani,
-    380ms cubic-bezier(0.65, 0, 0.35, 1) both klizi-van;
+    100ms cubic-bezier(0.4, 0, 1, 1) both nestani,
+    220ms cubic-bezier(0.65, 0, 0.35, 1) both klizi-van;
 }
 ::view-transition-new(.naprijed),
 ::view-transition-new(.natrag) {
   animation:
-    240ms cubic-bezier(0, 0, 0.2, 1) 120ms both pojavi,
-    420ms cubic-bezier(0.22, 1, 0.36, 1) both klizi-unutra;
+    160ms cubic-bezier(0, 0, 0.2, 1) 60ms both pojavi,
+    240ms cubic-bezier(0.22, 1, 0.36, 1) both klizi-unutra;
 }
 ::view-transition-old(.naprijed) { --pomak: -48px; }
 ::view-transition-new(.naprijed) { --pomak: 48px; }
@@ -188,10 +188,10 @@ select.unos {
 ::view-transition-new(.natrag) { --pomak: -48px; }
 
 ::view-transition-old(.izblijedi) {
-  animation: 160ms ease-in both nestani;
+  animation: 100ms ease-in both nestani;
 }
 ::view-transition-new(.izblijedi) {
-  animation: 260ms ease-out 80ms both pojavi;
+  animation: 170ms ease-out 40ms both pojavi;
 }
 
 @keyframes nestani {
@@ -315,18 +315,26 @@ select.unos {
   bottom: calc(9.5rem + env(safe-area-inset-bottom));
 }
 
-/* Android aplikacija (WebView): bez zamućenja i animiranih prijelaza stranica – na slabijim mobitelima
-   to uzrokuje zastajkivanje pri pomicanju i prelasku između stranica. */
-html[data-android] *,
-html[data-android] *::before,
-html[data-android] *::after {
+/* Lagani prikaz – Android aplikacija (WebView) i slabiji uređaji: bez zamućenja, pozadinskog sjaja,
+   teških sjena i animiranih prijelaza stranica. Na slabijim mobitelima to uzrokuje zastajkivanje
+   pri pomicanju i prelasku između stranica. */
+html[data-lagano] {
+  --sjena: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sjena-jaka: 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+}
+html[data-lagano] body::before {
+  display: none;
+}
+html[data-lagano] *,
+html[data-lagano] *::before,
+html[data-lagano] *::after {
   backdrop-filter: none !important;
 }
-html[data-android] [class*="backdrop-blur"][class*="bg-povrsina"] {
+html[data-lagano] [class*="backdrop-blur"][class*="bg-povrsina"] {
   background-color: var(--povrsina) !important;
 }
-html[data-android]::view-transition-group(*),
-html[data-android]::view-transition-old(*),
-html[data-android]::view-transition-new(*) {
+html[data-lagano]::view-transition-group(*),
+html[data-lagano]::view-transition-old(*),
+html[data-lagano]::view-transition-new(*) {
   animation: none !important;
 }
