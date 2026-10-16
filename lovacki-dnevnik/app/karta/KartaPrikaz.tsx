@@ -29,7 +29,7 @@ import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
-import type { Baza, Tocka } from "@/lib/types";
+import type { Baza, TipTocke, Tocka } from "@/lib/types";
 import { beaufort, smjerVjetra, usePrognoza, type SatnaPrognoza } from "@/lib/vrijeme";
 import { OCJENE, imaVjetrove, zaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 
@@ -246,11 +246,13 @@ function stozac(lat: number, lng: number, smjerIz: number, duljina = 350, kut = 
 
 function Dogadaji({
   onKlik,
+  onDugiDodir,
   onPomak,
   onPovlacenje,
   onGranice,
 }: {
   onKlik: (ll: L.LatLng) => void;
+  onDugiDodir: (ll: L.LatLng) => void;
   onPomak: (c: L.LatLng) => void;
   onPovlacenje: () => void;
   onGranice?: (g: Granice) => void;
@@ -261,6 +263,11 @@ function Dogadaji({
   };
   const map = useMapEvents({
     click: (e) => onKlik(e.latlng),
+    // Dugi pritisak prstom (ili desni klik) – nova točka točno na tom mjestu.
+    contextmenu: (e) => {
+      e.originalEvent.preventDefault();
+      onDugiDodir(e.latlng);
+    },
     moveend: (e) => {
       onPomak(e.target.getCenter());
       javiGranice(e.target);
@@ -472,9 +479,15 @@ export default function KartaPrikaz() {
 
   if (!baza) return <div className="svjetlucanje h-full w-full" />;
 
+  /** Nova točka na zadanom mjestu; lovište se prepozna po granici. */
+  const novaTocka = (lat: number, lng: number, tip: TipTocke = "ceka") => {
+    const loviste = baza.lovista.find((l) => l.granica && l.granica.length > 2 && uPoligonu([lat, lng], l.granica));
+    otvori({ tip: "tocka", pocetno: { tip, lat, lng, lovisteId: loviste?.id } });
+  };
+
   const klik = (ll: L.LatLng) => {
     if (nacin === "tocka") {
-      otvori({ tip: "tocka", pocetno: { lat: ll.lat, lng: ll.lng } });
+      novaTocka(ll.lat, ll.lng);
       setNacin("pregled");
     } else if (nacin === "granica" || nacin === "mjerenje") {
       setCrtez((c) => [...c, [ll.lat, ll.lng]]);
@@ -483,12 +496,18 @@ export default function KartaPrikaz() {
     }
   };
 
-  /** Brzo spremanje mjesta na kojem stojite s tronošcem (GPS). */
-  const zasjedaOvdje = () => {
-    const otvoriNa = (lat: number, lng: number) => {
-      const loviste = baza.lovista.find((l) => l.granica && l.granica.length > 2 && uPoligonu([lat, lng], l.granica));
-      otvori({ tip: "tocka", pocetno: { tip: "zasjeda", lat, lng, lovisteId: loviste?.id } });
-    };
+  const dugiDodir = (ll: L.LatLng) => {
+    if (nacin !== "pregled" && nacin !== "tocka") return;
+    navigator.vibrate?.(30);
+    setNacin("pregled");
+    setOdabir(null);
+    novaTocka(ll.lat, ll.lng);
+  };
+
+  /** Brzo spremanje mjesta na kojem stojite (GPS): zasjeda s tronošcem ili čeka. */
+  const tockaOvdje = (tip: TipTocke) => {
+    setNacin("pregled");
+    const otvoriNa = (lat: number, lng: number) => novaTocka(lat, lng, tip);
     if (moja) return otvoriNa(moja.lat, moja.lng);
     if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
     obavijest("Tražim vašu lokaciju…", "info");
@@ -496,7 +515,7 @@ export default function KartaPrikaz() {
       (p) => otvoriNa(p.coords.latitude, p.coords.longitude),
       () => {
         obavijest("Lokacija nije dostupna – odaberite mjesto na karti", "greska");
-        otvori({ tip: "tocka", pocetno: { tip: "zasjeda" } });
+        otvori({ tip: "tocka", pocetno: { tip } });
       },
       { enableHighAccuracy: true, timeout: 15000 },
     );
@@ -588,7 +607,7 @@ export default function KartaPrikaz() {
             setPodloga("hibrid");
           }}
         />
-        <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} onGranice={setGranice} />
+        <Dogadaji onKlik={klik} onDugiDodir={dugiDodir} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} onGranice={setGranice} />
         <Okvir g={okvir} />
         {offlinePanel &&
           offlinePodrucja.map((p) => (
@@ -1056,8 +1075,14 @@ export default function KartaPrikaz() {
                 <motion.span animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 1.2 }}>
                   <Ikona ime="lokacija" className="text-[#e8a947]" />
                 </motion.span>
-                <span className="flex-1 font-medium">Dodirnite kartu gdje želite postaviti točku</span>
+                <div className="flex-1">
+                  <div className="font-medium">Dodirnite kartu gdje želite postaviti točku</div>
+                  <div className="text-[12.5px] text-white/60">Ili na karti samo dugo pritisnite mjesto</div>
+                </div>
               </div>
+              <Gumb velicina="sm" vrsta="primarni" className="mt-3 w-full" ikona="gps" onClick={() => tockaOvdje("ceka")}>
+                Čeka na mojoj lokaciji
+              </Gumb>
             </Panel>
           )}
         </AnimatePresence>
@@ -1070,7 +1095,7 @@ export default function KartaPrikaz() {
           className="pointer-events-auto flex gap-0.5 rounded-2xl border border-white/10 bg-[#0d130e]/85 p-1 text-white shadow-jaka backdrop-blur-xl"
         >
           <Alat ikona="lokacija" oznaka="Točka" aktivan={nacin === "tocka"} onClick={() => pokreniNacin("tocka")} />
-          <Alat ikona="nisan" oznaka="Zasjeda" onClick={zasjedaOvdje} />
+          <Alat ikona="nisan" oznaka="Zasjeda" onClick={() => tockaOvdje("zasjeda")} />
           <Alat ikona="poligon" oznaka="Granica" aktivan={nacin === "granica"} onClick={() => pokreniNacin("granica")} />
           <Alat ikona="ravnalo" oznaka="Mjeri" aktivan={nacin === "mjerenje"} onClick={() => pokreniNacin("mjerenje")} />
           <Alat

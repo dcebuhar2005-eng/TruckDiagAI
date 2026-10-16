@@ -25,12 +25,14 @@ export function OdabirNaKarti({
   naslov,
   potvrdi,
   zatvori,
+  mojaLokacija,
 }: {
   otvoren: boolean;
   pocetak?: Tocka2D;
   naslov: string;
   potvrdi: (t: Tocka2D) => void;
   zatvori: () => void;
+  mojaLokacija?: number;
 }) {
   const klijent = useNaKlijentu();
   const baza = useBaza();
@@ -41,6 +43,7 @@ export function OdabirNaKarti({
         <KartaOdabira
           pocetak={pocetak ?? baza?.postavke.lokacija ?? ZADANE_POSTAVKE.lokacija}
           naslov={naslov}
+          mojaLokacija={mojaLokacija}
           odustani={zatvori}
           potvrdi={(t) => {
             potvrdi(t);
@@ -121,6 +124,8 @@ export default function PoljeLokacije({
         otvoren={karta}
         pocetak={vrijednost ?? sredina}
         naslov={naslovKarte ?? naslov}
+        // Bez odabrane lokacije karta skoči na vas – u lovištu (do 5 km od središta) ili bilo gdje ako lovište nema granicu.
+        mojaLokacija={vrijednost ? undefined : sredina ? 5000 : Infinity}
         potvrdi={promjena}
         zatvori={() => setKarta(false)}
       />
