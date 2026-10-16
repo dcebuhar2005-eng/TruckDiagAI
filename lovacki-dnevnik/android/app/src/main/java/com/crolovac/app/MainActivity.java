@@ -3,6 +3,7 @@ package com.crolovac.app;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -15,6 +16,8 @@ public class MainActivity extends BridgeActivity {
         // Bez zumiranja prstima (karta ima vlastito zumiranje).
         bridge.getWebView().getSettings().setSupportZoom(false);
         bridge.getWebView().getSettings().setBuiltInZoomControls(false);
+        // Bez rastezanja sadržaja na rubu pri pomicanju (Android 12+).
+        bridge.getWebView().setOverScrollMode(View.OVER_SCROLL_NEVER);
         otvoriPoveznicu(getIntent());
     }
 
