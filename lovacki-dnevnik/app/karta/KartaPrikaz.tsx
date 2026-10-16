@@ -411,6 +411,7 @@ export default function KartaPrikaz() {
   };
   const [nacin, setNacin] = useState<Nacin>("pregled");
   const [dodajNa, setDodajNa] = useState<{ lat: number; lng: number } | null>(null);
+  const [sluzbeno, setSluzbeno] = useState<{ k: number; stanje: "trazim" | "nema" | "greska" | "ok"; podaci?: Record<string, unknown> } | null>(null);
   const [odabir, setOdabir] = useState<Odabir>(null);
   const [crtez, setCrtez] = useState<[number, number][]>([]);
   const [lovisteZaGranicu, setLovisteZaGranicu] = useState<string | undefined>();
@@ -493,9 +494,24 @@ export default function KartaPrikaz() {
     } else if (nacin === "granica" || nacin === "mjerenje") {
       setCrtez((c) => [...c, [ll.lat, ll.lng]]);
     } else {
+      const bilo = odabir || dodajNa || sluzbeno;
       setOdabir(null);
       setDodajNa(null);
+      setSluzbeno(null);
+      // Dodir na službeno lovište (kad je sloj uključen) pokaže koje je to lovište.
+      if (!bilo && slojevi.sluzbena) pitajSluzbeno(ll.lat, ll.lng);
     }
+  };
+
+  const pitajSluzbeno = (lat: number, lng: number) => {
+    const k = Date.now();
+    setSluzbeno({ k, stanje: "trazim" });
+    fetch(`/api/loviste?lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`)
+      .then((r) => r.json())
+      .then((j: { loviste?: Record<string, unknown> | null; greska?: string }) =>
+        setSluzbeno((s) => (s?.k !== k ? s : j.greska ? { k, stanje: "greska" } : j.loviste ? { k, stanje: "ok", podaci: j.loviste } : { k, stanje: "nema" })),
+      )
+      .catch(() => setSluzbeno((s) => (s?.k === k ? { k, stanje: "greska" } : s)));
   };
 
   /** Dugi pritisak: izbor što dodati na to mjesto (čeka, zasjeda ili odstrel). */
@@ -1089,6 +1105,35 @@ export default function KartaPrikaz() {
             </Panel>
           )}
 
+          {nacin === "pregled" && sluzbeno && (
+            <Panel key={`sluzbeno-${sluzbeno.k}`}>
+              <div className="flex items-start gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#5fbf5f]/25 text-[#8fdc8f]">
+                  <Ikona ime="loviste" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  {sluzbeno.stanje === "trazim" && <div className="py-2.5 text-white/70">Tražim lovište…</div>}
+                  {sluzbeno.stanje === "nema" && (
+                    <>
+                      <div className="font-semibold">Nije državno ni privatno lovište</div>
+                      <div className="text-[13px] text-white/60">Ovdje je vjerojatno zajedničko lovište – njih država još ne objavljuje.</div>
+                    </>
+                  )}
+                  {sluzbeno.stanje === "greska" && (
+                    <>
+                      <div className="font-semibold">Servis Ministarstva ne odgovara</div>
+                      <div className="text-[13px] text-white/60">Pokušajte ponovno za koji trenutak.</div>
+                    </>
+                  )}
+                  {sluzbeno.stanje === "ok" && sluzbeno.podaci && <OpisSluzbenog podaci={sluzbeno.podaci} />}
+                </div>
+                <button onClick={() => setSluzbeno(null)} className="p-1 text-white/50 hover:text-white" aria-label="Zatvori">
+                  <Ikona ime="x" velicina={16} />
+                </button>
+              </div>
+            </Panel>
+          )}
+
           {nacin === "pregled" && dodajNa && (
             <Panel key={`dodaj-${dodajNa.lat}`}>
               <div className="mb-3 flex items-center gap-2">
@@ -1190,6 +1235,33 @@ function StanjeVjetra({ t, smjer, brzina, satno }: { t: Tocka; smjer?: number; b
         {sljedeci && ` · dobar od ${sat(sljedeci.od)}`}
       </span>
     </div>
+  );
+}
+
+/** Podaci službenog lovišta s WMS-a: naziv, broj i ostala kratka polja. */
+function OpisSluzbenog({ podaci }: { podaci: Record<string, unknown> }) {
+  const polja = Object.entries(podaci).filter(
+    ([k, v]) => (typeof v === "string" || typeof v === "number") && String(v).trim() && String(v).length < 80 && !/^(fid|objectid|gml_id|shape_|the_geom|geom)/i.test(k),
+  );
+  const nadi = (re: RegExp) => polja.find(([k]) => re.test(k));
+  const naziv = nadi(/naziv|name|ime/i);
+  const broj = nadi(/broj|sifra|šifra|oznaka|code|localid|thematicid/i);
+  const ostalo = polja.filter((p) => p !== naziv && p !== broj).slice(0, 5);
+  return (
+    <>
+      <div className="font-semibold">{naziv ? String(naziv[1]) : "Službeno lovište"}</div>
+      {broj && <div className="brojke text-[13px] text-[#8fdc8f]">{String(broj[1])}</div>}
+      {ostalo.length > 0 && (
+        <div className="mt-1 grid gap-0.5 text-[12.5px] text-white/65">
+          {ostalo.map(([k, v]) => (
+            <div key={k} className="truncate">
+              {k}: {String(v)}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-1 text-[11px] text-white/40">Izvor: Ministarstvo poljoprivrede, šumarstva i ribarstva</div>
+    </>
   );
 }
 
