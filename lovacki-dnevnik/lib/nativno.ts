@@ -147,10 +147,16 @@ export async function nativnaObavijest(naslov: string, tijelo: string) {
   } catch {}
 }
 
-/** Vibracija; u aplikaciji preko nativnog sučelja ako WebView odbije uzorak. */
+/**
+ * Vibracija. U aplikaciji uvijek nativno: WebView preskače navigator.vibrate kad je mobitel
+ * na tihom načinu (a i dalje vraća true), a lovci su u lovu uglavnom na tihom.
+ */
 export function vibriraj(uzorak: number[]) {
-  const ok = typeof navigator.vibrate === "function" && navigator.vibrate(uzorak);
-  if (!ok && uAplikaciji()) Haptics.vibrate({ duration: Math.min(1500, uzorak.reduce((a, b) => a + b, 0)) }).catch(() => {});
+  if (uAplikaciji()) {
+    Haptics.vibrate({ duration: Math.min(2000, uzorak.reduce((a, b) => a + b, 0)) }).catch(() => navigator.vibrate?.(uzorak));
+    return;
+  }
+  if (typeof navigator.vibrate === "function") navigator.vibrate(uzorak);
 }
 
 /* ---------------- Mreža u pozadini ---------------- */
