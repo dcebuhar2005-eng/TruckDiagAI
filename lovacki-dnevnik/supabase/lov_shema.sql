@@ -470,7 +470,13 @@ begin
     )
     select t.gmail,
       coalesce((select count(*)::int from public.lov_dnevnici d, jsonb_array_elements(coalesce(d.podaci->'izlasci', '[]'::jsonb)) e
-        where d.korisnik = t.k and od is not null and (e->>'datum') >= od::text and coalesce((e->>'uTijeku')::boolean, false) = false), 0)
+        where d.korisnik = t.k and od is not null and (e->>'datum') >= od::text and coalesce((e->>'uTijeku')::boolean, false) = false
+          -- Samo pravi lovovi: završeni i trajali 30 min – 16 h (ne testni ni prazni izlasci).
+          and e->>'od' ~ '^\d{1,2}:\d{2}$' and e->>'do' ~ '^\d{1,2}:\d{2}$'
+          and (case when (e->>'do')::time >= (e->>'od')::time
+                    then (e->>'do')::time - (e->>'od')::time
+                    else (e->>'do')::time - (e->>'od')::time + interval '24 hours' end)
+              between interval '30 minutes' and interval '16 hours'), 0)
     from t;
 end $$;
 revoke all on function public.lov_admin_lovovi_testiranja() from public, anon;

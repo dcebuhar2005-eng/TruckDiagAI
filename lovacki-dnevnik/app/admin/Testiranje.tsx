@@ -158,7 +158,7 @@ export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]
               </div>
             ))}
           </div>
-          <div className="mt-2 text-[11.5px] text-tekst-3">Greška 3 · prijedlog 2 · zabilježen lov 1 (od početka testiranja)</div>
+          <div className="mt-2 text-[11.5px] text-tekst-3">Greška 3 · prijedlog 2 · zabilježen lov od barem 30 min 1 (od početka testiranja)</div>
         </div>
       )}
 
@@ -237,7 +237,7 @@ export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]
                   ))}
                   <div className="flex gap-2">
                     <span className="brojke w-7 shrink-0 font-semibold text-naglasak">+{lovova}</span>
-                    <span className="flex-1 text-tekst-2">Zabilježeni lovovi od početka testiranja</span>
+                    <span className="flex-1 text-tekst-2">Lovovi od barem 30 min od početka testiranja</span>
                   </div>
                 </div>
               )}
