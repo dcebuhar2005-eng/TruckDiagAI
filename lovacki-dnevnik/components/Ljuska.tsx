@@ -8,7 +8,7 @@ import { pokreniSinkronizaciju, useSinkronizacija } from "@/lib/sinkronizacija";
 import { automatskaKopija, vratiAkoJePrazno } from "@/lib/kopije";
 import { registrirajSW } from "@/lib/offline";
 import { aktivniLov, uskladiPracenje } from "@/lib/lov";
-import { ocistiStaroPracenje } from "@/lib/nativno";
+import { ocistiStaroPracenje, pokreniTipkuNatrag } from "@/lib/nativno";
 import { oznaciUvodGotov, useBaza, uvodGotov } from "@/lib/store";
 import AlarmBlizine from "./AlarmBlizine";
 import Navigacija from "./Navigacija";
@@ -30,6 +30,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     registrirajSW();
     // GPS praćenje ostalo od prethodnog učitavanja stranice (nastavlja se ako je lov u tijeku).
     ocistiStaroPracenje();
+    pokreniTipkuNatrag();
   }, []);
 
   // Dnevnik prijavljenog korisnika: sinkronizacija s njegovim privatnim zapisom i mjesečna kopija.

@@ -8,6 +8,7 @@
 
 import { Capacitor, CapacitorHttp, registerPlugin } from "@capacitor/core";
 import type { BackgroundGeolocationPlugin, Location } from "@capacitor-community/background-geolocation";
+import { App } from "@capacitor/app";
 import { Haptics } from "@capacitor/haptics";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
@@ -226,3 +227,25 @@ export const fetchZaSupabase: typeof fetch = async (ulaz, init) => {
   const tekst = typeof r.data === "string" ? r.data : JSON.stringify(r.data ?? null);
   return new Response(r.status === 204 ? null : tekst, { status: r.status, headers: r.headers });
 };
+
+/* ---------------- Tipka natrag ---------------- */
+
+let natrag = false;
+
+/**
+ * Androidova tipka natrag: zatvara otvoreni prozor, inače ide na prethodnu stranicu, a na
+ * Pregledu (ili kad nema kamo natrag) spušta aplikaciju kao i druge aplikacije. Bez ovoga
+ * Capacitor na početnoj stranici ne radi ništa ili vraća na stranice od prije.
+ */
+export function pokreniTipkuNatrag() {
+  if (!uAplikaciji() || natrag) return;
+  natrag = true;
+  App.addListener("backButton", ({ canGoBack }) => {
+    if (document.querySelector('[role="dialog"][aria-modal]')) {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      return;
+    }
+    if (location.pathname === "/" || !canGoBack) App.minimizeApp().catch(() => App.exitApp());
+    else history.back();
+  }).catch(() => {});
+}
