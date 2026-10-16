@@ -430,7 +430,7 @@ function PostavkeAlarma() {
           ikona="upozorenje"
           onClick={() => {
             pripremiZvuk();
-            oglasiAlarm("Probni lovac", Math.round(p.granica * 0.7), false);
+            oglasiAlarm("Probni lovac", Math.round(p.granica * 0.7), false, true);
           }}
         >
           Isprobaj alarm
@@ -448,8 +448,8 @@ function PostavkeAlarma() {
         </p>
       )}
       <p className="text-[12.5px] text-tekst-3">
-        Alarm radi dok ste u lovu (dijelite lokaciju): oglasi se kad prijatelj uđe u odabranu udaljenost, i ponovno ako
-        priđe bliže od 200 m.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
+        Alarm radi dok ste u lovu (dijelite lokaciju): oglasi se kad prijatelj uđe u odabranu udaljenost, a vibracija kuca
+        kao srce dok je u zoni – sve brže što vam je bliže. „U redu” utiša dok se ne približi još više.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
       </p>
     </div>
   );
