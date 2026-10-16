@@ -27,7 +27,6 @@ import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
-import SumskiPutevi from "./SumskiPutevi";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, Tocka } from "@/lib/types";
@@ -139,7 +138,8 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
           attribution: sl.attr,
           maxNativeZoom: sl.nativni,
           maxZoom: MAKS_ZOOM,
-          keepBuffer: 4,
+          keepBuffer: 2,
+          updateWhenZooming: false,
           eventHandlers: {
             tileload: () => {
               uspjesi.current++;
@@ -382,8 +382,7 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
-  const [slojevi, setSlojevi] = useState({ putevi: true, lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
-  const [stanjePuteva, setStanjePuteva] = useState<"malo" | "ucitava" | "ok" | "greska">("ok");
+  const [slojevi, setSlojevi] = useState({ lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -570,6 +569,8 @@ export default function KartaPrikaz() {
         zoom={13}
         maxZoom={MAKS_ZOOM}
         zoomControl={false}
+        // Linije i područja crtaju se na jednom platnu (canvas) – brže od SVG-a na slabijim mobitelima.
+        preferCanvas
         className="h-full w-full"
         attributionControl
       >
@@ -587,7 +588,6 @@ export default function KartaPrikaz() {
             setPodloga("hibrid");
           }}
         />
-        {slojevi.putevi && <SumskiPutevi onStanje={setStanjePuteva} />}
         <Dogadaji onKlik={klik} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} onGranice={setGranice} />
         <Okvir g={okvir} />
         {offlinePanel &&
@@ -726,24 +726,6 @@ export default function KartaPrikaz() {
         )}
       </MapContainer>
 
-      <AnimatePresence>
-        {slojevi.putevi && stanjePuteva !== "ok" && (
-          <motion.div
-            key={stanjePuteva}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="pointer-events-none absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+5.5rem)] left-1/2 z-[500] -translate-x-1/2 rounded-full border border-white/10 bg-[#0d130e]/85 px-3.5 py-1.5 text-[12.5px] whitespace-nowrap text-white/85 backdrop-blur-xl md:top-28"
-          >
-            {stanjePuteva === "malo"
-              ? "Približite kartu da vidite šumske puteve"
-              : stanjePuteva === "ucitava"
-                ? "Učitavam šumske puteve…"
-                : "Šumski putevi trenutno nisu dostupni"}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Gornja traka: vjetar */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex items-start gap-2 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:p-5">
         <motion.div
@@ -854,7 +836,6 @@ export default function KartaPrikaz() {
             <div className="mb-1.5 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Slojevi</div>
             {(
               [
-                ["putevi", "Šumski putevi i staze"],
                 ["lovista", "Granice lovišta"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
@@ -875,7 +856,7 @@ export default function KartaPrikaz() {
 
       {/* Jednokratni savjet za legendu */}
       <AnimatePresence>
-        {savjetLegende && !legenda && !izbornik && slojevi.putevi && stanjePuteva === "ok" && (
+        {savjetLegende && !legenda && !izbornik && (
           <motion.button
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -884,7 +865,7 @@ export default function KartaPrikaz() {
             onClick={() => setLegenda(true)}
             className="absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+8.85rem)] right-[4.6rem] z-[500] flex items-center gap-1.5 rounded-full bg-[#e8a947] px-3 py-1.5 text-[12.5px] font-semibold whitespace-nowrap text-[#17130a] shadow-jaka md:top-[9.6rem] md:right-[5.6rem]"
           >
-            Što znače linije?
+            Što znače oznake?
             <Ikona ime="desno" velicina={14} debljina={2.4} />
           </motion.button>
         )}
@@ -1086,7 +1067,7 @@ export default function KartaPrikaz() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, ...opruga }}
-          className="pointer-events-auto flex gap-1 rounded-2xl border border-white/10 bg-[#0d130e]/85 p-1.5 text-white shadow-jaka backdrop-blur-xl"
+          className="pointer-events-auto flex gap-0.5 rounded-2xl border border-white/10 bg-[#0d130e]/85 p-1 text-white shadow-jaka backdrop-blur-xl"
         >
           <Alat ikona="lokacija" oznaka="Točka" aktivan={nacin === "tocka"} onClick={() => pokreniNacin("tocka")} />
           <Alat ikona="nisan" oznaka="Zasjeda" onClick={zasjedaOvdje} />
@@ -1166,9 +1147,9 @@ function KartaGumb({ ikona, oznaka, onClick, aktivan }: { ikona: ImeIkone; oznak
 
 function Alat({ ikona, oznaka, onClick, aktivan }: { ikona: ImeIkone; oznaka: string; onClick: () => void; aktivan?: boolean }) {
   return (
-    <motion.button whileTap={{ scale: 0.92 }} onClick={onClick} className="relative flex w-[72px] flex-col items-center gap-0.5 rounded-xl py-2 text-[11.5px] font-medium">
+    <motion.button whileTap={{ scale: 0.92 }} onClick={onClick} className="relative flex w-[58px] flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10.5px] font-medium">
       {aktivan && <motion.span layoutId="alat-aktivan" transition={opruga} className="absolute inset-0 rounded-xl bg-[#e8a947]" />}
-      <Ikona ime={ikona} velicina={20} className={cx("relative", aktivan ? "text-[#17130a]" : "text-white/85")} />
+      <Ikona ime={ikona} velicina={17} className={cx("relative", aktivan ? "text-[#17130a]" : "text-white/85")} />
       <span className={cx("relative", aktivan ? "text-[#17130a]" : "text-white/70")}>{oznaka}</span>
     </motion.button>
   );

@@ -3,24 +3,6 @@
 import { TIPOVI_TOCAKA } from "@/lib/katalog";
 import type { TipTocke } from "@/lib/types";
 
-// Uzorci odgovaraju stilovima u SumskiPutevi.tsx (obrub + linija).
-const PUTEVI: { naziv: string; opis: string; boja: string; obrub: string; debljina: number; crtice?: string }[] = [
-  { naziv: "Makadam / servisna cesta", opis: "Prohodno autom", boja: "#fff4d6", obrub: "#2a2116", debljina: 3.6 },
-  { naziv: "Dobra šumska cesta", opis: "Tvrda podloga, terenac", boja: "#ffd27a", obrub: "#2a1c0c", debljina: 3.4 },
-  { naziv: "Šumska vlaka", opis: "Zemlja/šljunak, po suhom", boja: "#f5b84a", obrub: "#2a1c0c", debljina: 2.8, crtice: "9 6" },
-  { naziv: "Loša vlaka", opis: "Traktor ili pješice", boja: "#f5b84a", obrub: "#2a1c0c", debljina: 2.8, crtice: "5 5" },
-  { naziv: "Staza", opis: "Samo pješice", boja: "#ffffff", obrub: "#1c1c1c", debljina: 2, crtice: "2 5" },
-];
-
-function UzorakLinije({ boja, obrub, debljina, crtice }: { boja: string; obrub: string; debljina: number; crtice?: string }) {
-  return (
-    <svg width="46" height="16" viewBox="0 0 46 16" className="shrink-0 overflow-visible rounded bg-[#3d4a35]">
-      <line x1="4" y1="8" x2="42" y2="8" stroke={obrub} strokeOpacity="0.75" strokeWidth={debljina + 2.4} strokeLinecap="round" />
-      <line x1="4" y1="8" x2="42" y2="8" stroke={boja} strokeWidth={debljina} strokeLinecap="round" strokeDasharray={crtice} />
-    </svg>
-  );
-}
-
 function Stavka({ uzorak, naziv, opis }: { uzorak: React.ReactNode; naziv: string; opis?: string }) {
   return (
     <div className="flex items-center gap-3 py-1.5">
@@ -37,12 +19,7 @@ export default function Legenda() {
   const tocke: TipTocke[] = ["ceka", "zasjeda", "prijelaz", "hraniliste", "soliste", "kamera", "kaljuziste", "pojiliste"];
   return (
     <div className="max-h-[60dvh] overflow-y-auto pr-1">
-      <div className="mb-1 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Putevi</div>
-      {PUTEVI.map((p) => (
-        <Stavka key={p.naziv} naziv={p.naziv} opis={p.opis} uzorak={<UzorakLinije {...p} />} />
-      ))}
-
-      <div className="mt-3 mb-1 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Oznake</div>
+      <div className="mb-1 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Oznake</div>
       <Stavka
         naziv="Granica lovišta"
         uzorak={
@@ -108,9 +85,6 @@ export default function Legenda() {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[11.5px] text-white/45">
-        Putevi su iz OpenStreetMapa i mogu biti nepotpuni. Stanje puta provjerite na terenu.
-      </p>
     </div>
   );
 }
