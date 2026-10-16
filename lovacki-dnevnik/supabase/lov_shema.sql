@@ -410,3 +410,11 @@ begin
 end $$;
 revoke all on function public.lov_admin_testiranje() from public, anon;
 grant execute on function public.lov_admin_testiranje() to authenticated;
+
+-- Početak zatvorenog testiranja: dani korištenja broje se 14 dana od tog datuma (postavlja administrator).
+create table if not exists lov_privatno.testiranje (
+  id boolean primary key default true check (id),
+  pocetak date
+);
+revoke all on lov_privatno.testiranje from public, anon, authenticated;
+-- lov_admin_testiranje_pocetak() vraća datum; lov_admin_testiranje() broji samo dane između pocetak i pocetak + 13.

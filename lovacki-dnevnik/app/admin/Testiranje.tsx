@@ -20,13 +20,12 @@ export interface TesterPlay {
 
 const DANA = 14;
 
-/** Zadnjih 14 dana kao „GGGG-MM-DD” (lokalno vrijeme), od najstarijeg do danas. */
-function zadnjiDani() {
-  const d = new Date();
-  return Array.from({ length: DANA }, (_, i) => {
-    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (DANA - 1 - i));
-    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-  });
+const oznaka = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+
+/** 14 dana testiranja od dana početka („GGGG-MM-DD”). */
+function daniTestiranja(pocetak: string) {
+  const [g, m, d] = pocetak.split("-").map(Number);
+  return Array.from({ length: DANA }, (_, i) => oznaka(new Date(g, m - 1, d + i)));
 }
 
 function kada(iso: string) {
@@ -37,9 +36,11 @@ function kada(iso: string) {
 }
 
 /** Testeri zatvorenog testiranja: dani korištenja u zadnjih 14 dana, izlasci i zadnja aktivnost. */
-export default function Testiranje({ testeri }: { testeri: TesterPlay[] }) {
+export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]; pocetak: string | null }) {
   const [kopirano, setKopirano] = useState<"gmail" | "mobitel" | null>(null);
-  const dani = zadnjiDani();
+  const dani = pocetak ? daniTestiranja(pocetak) : [];
+  const danas = oznaka(new Date());
+  const danTestiranja = pocetak ? dani.indexOf(danas) + 1 || (danas > dani[DANA - 1] ? DANA + 1 : 0) : 0;
   const poredak = [...testeri].sort(
     (a, b) => b.dani_14 - a.dani_14 || b.izlasci - a.izlasci || (a.ime ?? a.gmail).localeCompare(b.ime ?? b.gmail, "hr"),
   );
@@ -49,7 +50,10 @@ export default function Testiranje({ testeri }: { testeri: TesterPlay[] }) {
   const kopiraj = (sto: "gmail" | "mobitel") => {
     const tekst =
       sto === "gmail"
-        ? testeri.flatMap((t) => [t.gmail, ...(t.napomena?.match(/[^\s:]+@gmail\.com/gi) ?? [])]).filter((g, i, a) => a.indexOf(g) === i).join(", ")
+        ? testeri
+            .flatMap((t) => [t.gmail, ...(t.napomena?.match(/[^\s:]+@gmail\.com/gi) ?? [])])
+            .filter((g, i, a) => a.indexOf(g) === i)
+            .join(", ")
         : testeri.flatMap((t) => (t.mobitel ? [t.mobitel] : [])).join("\n");
     navigator.clipboard
       ?.writeText(tekst)
@@ -74,8 +78,17 @@ export default function Testiranje({ testeri }: { testeri: TesterPlay[] }) {
         </div>
       </div>
       <p className="mb-4 text-[13px] text-tekst-3">
-        {testeri.length} testera · aktivnih u zadnjih 14 dana: <span className="font-semibold text-tekst">{aktivnih}</span> · kružići su dani (lijevo
-        prije 14 dana, desno danas)
+        {testeri.length} testera
+        {pocetak ? (
+          <>
+            {" "}
+            · {danTestiranja > DANA ? "testiranje završeno" : `dan ${danTestiranja} od ${DANA}`} · aktivnih:{" "}
+            <span className="font-semibold text-tekst">{aktivnih}</span> · kružići su dani testiranja (od{" "}
+            {datumKratki(new Date(`${pocetak}T12:00:00`))})
+          </>
+        ) : (
+          " · brojanje dana kreće kad Google odobri zatvoreno testiranje"
+        )}
       </p>
 
       <ol className="grid gap-2">
@@ -95,20 +108,31 @@ export default function Testiranje({ testeri }: { testeri: TesterPlay[] }) {
                     {t.korisnicko_ime ? ` · @${t.korisnicko_ime}` : ""}
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <div className={cx("brojke text-[20px] leading-none font-bold", t.dani_14 ? "text-naglasak" : "text-tekst-3")}>
-                    {t.dani_14}
-                    <span className="text-[13px] font-medium text-tekst-3">/14</span>
+                {pocetak && (
+                  <div className="shrink-0 text-right">
+                    <div className={cx("brojke text-[20px] leading-none font-bold", t.dani_14 ? "text-naglasak" : "text-tekst-3")}>
+                      {t.dani_14}
+                      <span className="text-[13px] font-medium text-tekst-3">/14</span>
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-tekst-3">dana</div>
                   </div>
-                  <div className="mt-0.5 text-[11px] text-tekst-3">dana</div>
-                </div>
+                )}
               </div>
 
-              <div className="mt-2.5 flex gap-[3px]" aria-label={`Koristio ${t.dani_14} od 14 dana`}>
-                {dani.map((d) => (
-                  <span key={d} title={d} className={cx("h-2.5 flex-1 rounded-full", koristio.has(d) ? "bg-mahovina" : "bg-povrsina-3")} />
-                ))}
-              </div>
+              {pocetak && (
+                <div className="mt-2.5 flex gap-[3px]" aria-label={`Koristio ${t.dani_14} od 14 dana`}>
+                  {dani.map((d) => (
+                    <span
+                      key={d}
+                      title={d}
+                      className={cx(
+                        "h-2.5 flex-1 rounded-full",
+                        koristio.has(d) ? "bg-mahovina" : d > danas ? "bg-povrsina-3/40" : "bg-povrsina-3",
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
 
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-tekst-2">
                 <span>
