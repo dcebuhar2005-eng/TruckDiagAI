@@ -67,10 +67,11 @@ export function uskladiPracenje(id: string | null) {
   if (!id) return;
   zaustaviPracenje = pratiLokaciju(
     (p) => {
-      pozicija = { lat: p.lat, lng: p.lng, tocnost: p.tocnost, t: Date.now() };
+      pozicija = { lat: p.lat, lng: p.lng, tocnost: p.tocnost, t: p.vrijeme ?? Date.now() };
       javi();
-      // Trag: samo dovoljno točne pozicije, najmanje 20 m od prethodne.
-      if (p.tocnost > 60) return;
+      // Trag: samo svježe i dovoljno točne pozicije, najmanje 20 m od prethodne
+      // (zadnja poznata lokacija s početka može biti stara pa se samo prikazuje).
+      if (p.tocnost > 60 || Date.now() - (p.vrijeme ?? Date.now()) > 2 * 60_000) return;
       const z = zadnjaTockaTraga();
       if (!z || udaljenostM({ lat: z[0], lng: z[1] }, pozicija) >= 20) {
         novi.push([Number(pozicija.lat.toFixed(6)), Number(pozicija.lng.toFixed(6))]);

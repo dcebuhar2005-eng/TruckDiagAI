@@ -301,7 +301,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
         <div className="relative mt-4 grid grid-cols-3 gap-2">
           <Mala oznaka="Vjetar" vrijednost={smjer != null ? `${smjerVjetra(smjer)} ${Math.round(brzina ?? 0)}` : "–"} dodatak={ocjena && ocjena !== "nepoznato" ? OCJENE[ocjena].naziv : smjer != null ? "km/h" : undefined} boja={ocjena && ocjena !== "nepoznato" ? OCJENE[ocjena].boja : undefined} />
           <Mala oznaka={svjetlo.oznaka} vrijednost={svjetlo.vrijednost} dodatak={svjetlo.dodatak} />
-          <Mala oznaka="Prijeđeno" vrijednost={prijedeno >= 1000 ? `${(prijedeno / 1000).toFixed(1)} km` : `${Math.round(prijedeno)} m`} dodatak={poz ? `GPS ±${Math.round(poz.tocnost)} m` : "čekam GPS…"} />
+          <Mala oznaka="Prijeđeno" vrijednost={prijedeno >= 1000 ? `${(prijedeno / 1000).toFixed(1)} km` : `${Math.round(prijedeno)} m`} dodatak={!poz ? "tražim GPS…" : sad - poz.t > 2 * 60_000 ? "zadnja poznata · tražim GPS…" : poz.tocnost > 60 ? `GPS ±${Math.round(poz.tocnost)} m · izoštravam…` : `GPS ±${Math.round(poz.tocnost)} m`} />
         </div>
       </div>
 

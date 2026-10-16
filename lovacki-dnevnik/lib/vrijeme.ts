@@ -56,7 +56,9 @@ export async function dohvatiPrognozu(lat: number, lng: number): Promise<Prognoz
 
   let res: Response;
   try {
-    res = await fetch(url);
+    // Bez signala odmah spremljena prognoza; sa slabim signalom ne čeka se dulje od 8 s.
+    if (!navigator.onLine) throw new Error();
+    res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) throw new Error();
   } catch {
     // Bez signala: zadnja spremljena prognoza je bolja od nikakve.
