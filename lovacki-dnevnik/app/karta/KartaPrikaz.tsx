@@ -151,7 +151,7 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
           },
         };
         return sl.wms ? (
-          <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={{ layers: sl.wms.layers, format: sl.wms.format, transparent: false, version: "1.1.1" }} {...zajednicko} />
+          <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={parametriWms(sl.wms.layers, sl.wms.format)} {...zajednicko} />
         ) : (
           <TileLayer
             key={`${podloga}-${i}`}
@@ -653,7 +653,7 @@ export default function KartaPrikaz() {
         {slojevi.sluzbena && (
           <WMSTileLayer
             url="https://geoportal.mps.hr/geocluster/am2/wms"
-            params={{ layers: "ForestManagementArea", styles: "", format: "image/png", transparent: true, version: "1.1.1" }}
+            params={PARAMETRI_SLUZBENIH}
             opacity={0.6}
             zIndex={5}
             minZoom={ZUM_SLUZBENIH}
@@ -1249,6 +1249,18 @@ function StanjeVjetra({ t, smjer, brzina, satno }: { t: Tocka; smjer?: number; b
       </span>
     </div>
   );
+}
+
+/*
+ * Parametri WMS slojeva moraju biti isti objekt pri svakom iscrtavanju: react-leaflet na svaki
+ * novi objekt zove setParams() i ponovno učita sve pločice – sloj tada trepće.
+ */
+const PARAMETRI_SLUZBENIH = { layers: "ForestManagementArea", styles: "", format: "image/png", transparent: true, version: "1.1.1" };
+const parametriPodloga = new Map<string, { layers: string; format: string; transparent: boolean; version: string }>();
+function parametriWms(layers: string, format: string) {
+  const k = `${layers}|${format}`;
+  if (!parametriPodloga.has(k)) parametriPodloga.set(k, { layers, format, transparent: false, version: "1.1.1" });
+  return parametriPodloga.get(k)!;
 }
 
 /** Od kojeg zuma se crtaju službene granice (pri manjem bi servis Ministarstva crtao pola države po pločici). */
