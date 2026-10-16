@@ -44,7 +44,14 @@ export const vibracijaPodrzana = () => uAplikaciji() || (typeof navigator !== "u
 
 /* ---------------- Otkucaji srca ---------------- */
 
-const OTKUCAJI_MS = 8000;
+/**
+ * Dok je lovac u zoni, srce kuca neprestano, sve brže što je bliže. Uzorak traje 40 s i
+ * obnavlja se pri svakoj provjeri (svakih ~10 s), pa ako provjere stanu (nema signala,
+ * aplikacija zatvorena), vibracija sama prestane.
+ */
+const NIZ_MS = 40_000;
+/** Uzorak se obnavlja kad mu ostane manje od ovoga (provjera je svakih ~10 s). */
+const OBNOVA_MS = 12_000;
 
 /** Jedan otkucaj „tup-tup” pa stanka do sljedećeg; razmak je trajanje cijelog otkucaja. */
 const otkucaj = (razmak: number) => [80, 120, 130, Math.max(120, razmak - 330)];
@@ -55,11 +62,22 @@ function razmakOtkucaja(udaljenost: number, granica: number) {
   return Math.round(450 + r * 1050);
 }
 
-function otkucaji(udaljenost: number, granica: number) {
-  const razmak = razmakOtkucaja(udaljenost, granica);
+let srce: { razmak: number; kraj: number } | null = null;
+
+function kucaj(razmak: number) {
+  if (srce && Math.abs(srce.razmak - razmak) < srce.razmak * 0.08 && srce.kraj - Date.now() > OBNOVA_MS) return;
   const uzorak: number[] = [];
-  for (let t = 0; t < OTKUCAJI_MS; t += razmak) uzorak.push(...otkucaj(razmak));
+  // U pregledniku navigator.vibrate prima ograničen niz – tamo kraći uzorak (obnavlja se svejedno).
+  const trajanje = uAplikaciji() ? NIZ_MS : 25_000;
+  for (let t = 0; t < trajanje && (uAplikaciji() || uzorak.length < 96); t += razmak) uzorak.push(...otkucaj(razmak));
   vibriraj(uzorak);
+  srce = { razmak, kraj: Date.now() + uzorak.reduce((a, b) => a + b, 0) };
+}
+
+function stani() {
+  if (!srce) return;
+  srce = null;
+  zaustaviVibraciju();
 }
 
 /** Za „Isprobaj alarm”: lovac prilazi – otkucaji se ubrzavaju od granice do 50 m. */
@@ -69,8 +87,16 @@ function otkucajiPrilaska(granica: number) {
   vibriraj(uzorak);
 }
 
-/** „U redu” na alarmu: srce prestaje kucati do sljedećeg približavanja. */
-export const utisajAlarm = () => zaustaviVibraciju();
+/** Lovci koje je korisnik utišao („U redu”), s udaljenošću u tom trenutku. */
+const utisani = new Map<string, number>();
+const uZoni = new Map<string, number>();
+
+/** „U redu” na alarmu: srce staje dok se netko od lovaca u zoni ne približi još 30 m ili ne uđe novi. */
+export function utisajAlarm() {
+  for (const [id, d] of uZoni) utisani.set(id, d);
+  srce = null;
+  zaustaviVibraciju();
+}
 
 /* ---------------- Zvuk ---------------- */
 
@@ -138,23 +164,19 @@ export function oglasiAlarm(ime: string, udaljenost: number, hitno: boolean, pro
   const p = postavkeBlizine();
   const naslov = hitno ? "Lovac vrlo blizu!" : "Lovac u blizini";
   const tijelo = `${ime} je ${metri(udaljenost)} od vas. Provjerite smjer pucanja.`;
-  if (p.vibracija) {
-    if (proba) otkucajiPrilaska(p.granica);
-    else otkucaji(udaljenost, p.granica);
-  }
+  if (p.vibracija && proba) otkucajiPrilaska(p.granica);
   if (p.zvuk) zapistiZvuk(hitno);
   javi(`${naslov}: ${tijelo}`);
   if (document.visibilityState !== "visible") sistemskaObavijest(naslov, tijelo);
 }
 
 const razine = new Map<string, number>();
-/** Udaljenost pri zadnjim otkucajima, po lovcu – srce kuca ponovno tek kad se osjetno približi. */
-const zadnjiOtkucaji = new Map<string, number>();
 
 /** Poziva se nakon svake promjene moje pozicije ili pozicija prijatelja. */
 export function provjeriBlizinu(lovci: { id: string; ime: string; udaljenost: number }[]) {
   const { granica, vibracija } = postavkeBlizine();
   const vidjeni = new Set<string>();
+  let najblizi = Infinity;
   for (const l of lovci) {
     vidjeni.add(l.id);
     const prije = razine.get(l.id) ?? 0;
@@ -164,26 +186,29 @@ export function provjeriBlizinu(lovci: { id: string; ime: string; udaljenost: nu
       if (prije === 2 && l.udaljenost <= Math.min(VRLO_BLIZU_M, granica) * 1.5) sada = 2;
       else if (l.udaljenost <= granica * 1.3) sada = Math.max(sada, 1);
     }
-    const zadnje = zadnjiOtkucaji.get(l.id);
     if (sada > prije) {
+      utisani.delete(l.id);
       oglasiAlarm(l.ime, l.udaljenost, sada === 2);
-      zadnjiOtkucaji.set(l.id, l.udaljenost);
-    } else if (!sada) {
-      zadnjiOtkucaji.delete(l.id);
-    } else if (zadnje != null && l.udaljenost <= zadnje - Math.max(30, zadnje * 0.12)) {
-      // I dalje prilazi: novi niz otkucaja, brži nego prošli.
-      if (vibracija) otkucaji(l.udaljenost, granica);
-      zadnjiOtkucaji.set(l.id, l.udaljenost);
-    } else if (zadnje != null && l.udaljenost > zadnje + 50) {
-      zadnjiOtkucaji.set(l.id, l.udaljenost);
     }
     razine.set(l.id, sada);
+    if (!sada) {
+      uZoni.delete(l.id);
+      utisani.delete(l.id);
+      continue;
+    }
+    uZoni.set(l.id, l.udaljenost);
+    const tiho = utisani.get(l.id);
+    if (tiho != null && l.udaljenost <= tiho - 30) utisani.delete(l.id);
+    if (!utisani.has(l.id)) najblizi = Math.min(najblizi, l.udaljenost);
   }
-  for (const id of razine.keys()) if (!vidjeni.has(id)) razine.delete(id);
-  for (const id of zadnjiOtkucaji.keys()) if (!vidjeni.has(id)) zadnjiOtkucaji.delete(id);
+  for (const m of [razine, uZoni, utisani]) for (const id of m.keys()) if (!vidjeni.has(id)) m.delete(id);
+  if (vibracija && najblizi < Infinity) kucaj(razmakOtkucaja(najblizi, granica));
+  else stani();
 }
 
 export function ponistiBlizinu() {
   razine.clear();
-  zadnjiOtkucaji.clear();
+  uZoni.clear();
+  utisani.clear();
+  stani();
 }

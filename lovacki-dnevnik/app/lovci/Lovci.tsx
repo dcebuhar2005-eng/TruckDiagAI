@@ -449,7 +449,7 @@ function PostavkeAlarma() {
       )}
       <p className="text-[12.5px] text-tekst-3">
         Alarm radi dok ste u lovu (dijelite lokaciju): oglasi se kad prijatelj uđe u odabranu udaljenost, a vibracija kuca
-        kao srce – sve brže što vam je bliže.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
+        kao srce dok je u zoni – sve brže što vam je bliže. „U redu” utiša dok se ne približi još više.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
       </p>
     </div>
   );
