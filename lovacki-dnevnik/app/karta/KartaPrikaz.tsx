@@ -1238,28 +1238,19 @@ function StanjeVjetra({ t, smjer, brzina, satno }: { t: Tocka; smjer?: number; b
   );
 }
 
-/** Podaci službenog lovišta s WMS-a: naziv, broj i ostala kratka polja. */
+/** Podaci službenog lovišta s WMS-a Ministarstva: „VIII/19 - RISNJAK”, status „državno”/„privatno”. */
 function OpisSluzbenog({ podaci }: { podaci: Record<string, unknown> }) {
-  const polja = Object.entries(podaci).filter(
-    ([k, v]) => (typeof v === "string" || typeof v === "number") && String(v).trim() && String(v).length < 80 && !/^(fid|objectid|gml_id|shape_|the_geom|geom)/i.test(k),
-  );
-  const nadi = (re: RegExp) => polja.find(([k]) => re.test(k));
-  const naziv = nadi(/naziv|name|ime/i);
-  const broj = nadi(/broj|sifra|šifra|oznaka|code|localid|thematicid/i);
-  const ostalo = polja.filter((p) => p !== naziv && p !== broj).slice(0, 5);
+  const puno = String(podaci.loviste ?? podaci.naziv ?? "").trim();
+  const [, broj, ime] = puno.match(/^([IVXLC]+\/\d+)\s*[-–]\s*(.+)$/) ?? [null, null, puno];
+  const naziv = ime ? ime.toLocaleLowerCase("hr").replace(/(^|[\s-])(\p{L})/gu, (_, a: string, z: string) => a + z.toLocaleUpperCase("hr")) : "Službeno lovište";
+  const status = typeof podaci.status === "string" ? podaci.status : "";
   return (
     <>
-      <div className="font-semibold">{naziv ? String(naziv[1]) : "Službeno lovište"}</div>
-      {broj && <div className="brojke text-[13px] text-[#8fdc8f]">{String(broj[1])}</div>}
-      {ostalo.length > 0 && (
-        <div className="mt-1 grid gap-0.5 text-[12.5px] text-white/65">
-          {ostalo.map(([k, v]) => (
-            <div key={k} className="truncate">
-              {k}: {String(v)}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="font-semibold">{naziv}</div>
+      <div className="text-[13px] text-[#8fdc8f]">
+        {status ? `${status[0].toUpperCase()}${status.slice(1)} lovište` : "Lovište"}
+        {broj ? ` · ${broj}` : ""}
+      </div>
       <div className="mt-1 text-[11px] text-white/40">Izvor: Ministarstvo poljoprivrede, šumarstva i ribarstva</div>
     </>
   );
