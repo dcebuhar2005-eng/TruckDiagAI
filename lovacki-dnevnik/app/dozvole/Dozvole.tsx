@@ -11,6 +11,7 @@ import { datumDugi, izIso, mnozina } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, Dozvola, TipDozvole } from "@/lib/types";
 import { iskoristenostKvote, nazivLovista, statusDozvole, type StatusDozvole } from "@/lib/upiti";
+import MojeOruzje from "./Oruzje";
 
 const GRADIJENTI: Record<TipDozvole, [string, string]> = {
   "lovacka-iskaznica": ["#2f4a2a", "#13200f"],
@@ -71,6 +72,8 @@ export default function Dozvole() {
           ))}
         </motion.div>
       )}
+
+      <MojeOruzje baza={baza} />
 
       <p className="mt-8 flex items-start gap-2 text-[12.5px] text-tekst-3">
         <Ikona ime="upozorenje" velicina={14} className="mt-0.5 shrink-0" />

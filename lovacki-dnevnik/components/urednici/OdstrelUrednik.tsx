@@ -10,7 +10,8 @@ import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { centarLovista } from "@/lib/upiti";
 import { db, noviId } from "@/lib/store";
 import type { Baza, Odstrel, Spol } from "@/lib/types";
-import { Ploca, Polje, Segmenti, obavijest, usePotvrda } from "../ui";
+import Ikona from "../Ikona";
+import { Ploca, Polje, Segmenti, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import { OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
 
@@ -268,6 +269,28 @@ export default function OdstrelUrednik({
         </Odjeljak>
 
         <Odjeljak naslov="Hitac">
+          {(baza.oruzje ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {(baza.oruzje ?? []).map((o) => {
+                const odabrano = v.oruzje === o.naziv;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => setV((s) => ({ ...s, oruzje: o.naziv, kalibar: o.kalibar ?? s.kalibar }))}
+                    className={cx(
+                      "flex items-center gap-2 rounded-full border px-3.5 py-2 text-[13.5px] transition-colors",
+                      odabrano ? "border-naglasak bg-naglasak-meki text-tekst" : "border-rub text-tekst-2 hover:border-naglasak",
+                    )}
+                  >
+                    {odabrano && <Ikona ime="kvacica" velicina={14} className="text-naglasak" />}
+                    <span className="font-medium">{o.naziv}</span>
+                    {o.kalibar && <span className="text-tekst-3">{o.kalibar}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <Red stupci={3}>
             <Polje oznaka="Oružje">
               <input className="unos" value={v.oruzje} onChange={(e) => postaviV("oruzje", e.target.value)} />
@@ -279,6 +302,18 @@ export default function OdstrelUrednik({
               <input inputMode="numeric" className="unos brojke" value={v.udaljenost} onChange={(e) => postaviV("udaljenost", e.target.value)} />
             </Polje>
           </Red>
+          {v.oruzje.trim() && !(baza.oruzje ?? []).some((o) => o.naziv.trim().toLowerCase() === v.oruzje.trim().toLowerCase()) && (
+            <button
+              type="button"
+              className="-mt-1 self-start text-[13px] font-medium text-naglasak"
+              onClick={() => {
+                db.dodaj("oruzje", { naziv: v.oruzje.trim(), kalibar: v.kalibar.trim() || undefined });
+                obavijest(`${v.oruzje.trim()} je spremljen u Moje oružje`);
+              }}
+            >
+              + Spremi „{v.oruzje.trim()}” u moje oružje
+            </button>
+          )}
         </Odjeljak>
 
         <Odjeljak naslov="Bilješka">

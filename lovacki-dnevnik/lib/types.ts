@@ -183,6 +183,17 @@ export interface Postavke {
   primjer?: boolean;
 }
 
+/** Lovačko oružje – odabire se kod upisa odstrela. */
+export interface Oruzje {
+  id: ID;
+  naziv: string;
+  kalibar?: string;
+  /** Serijski broj ili broj iz oružnog lista. */
+  broj?: string;
+  napomena?: string;
+  createdAt: number;
+}
+
 export interface Baza {
   verzija: 1;
   lovista: Loviste[];
@@ -190,7 +201,8 @@ export interface Baza {
   izlasci: Izlazak[];
   odstrel: Odstrel[];
   dozvole: Dozvola[];
+  oruzje: Oruzje[];
   postavke: Postavke;
 }
 
-export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole";
+export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole" | "oruzje";
