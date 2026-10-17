@@ -27,6 +27,7 @@ export type TipTocke =
   | "kaljuziste"
   | "pojiliste"
   | "zaklon"
+  | "remiza"
   | "zasjeda"
   | "prijelaz"
   | "parking"
@@ -42,8 +43,12 @@ export interface Tocka {
   napomena?: string;
   /** Za prijelaz divljači: koja divljač njime prelazi (ključevi iz DIVLJAC_PRIJELAZA). */
   divljac?: string[];
+  /** Za remizu: što je posijano (ključevi iz USJEVI). */
+  usjevi?: string[];
   /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */
   vjetrovi?: number[];
+  /** Na istom mjestu još (npr. čeka s hranilištem i kamerom). */
+  dodatno?: TipTocke[];
   createdAt: number;
 }
 
@@ -66,7 +71,19 @@ export type VrstaLova =
   | "skupni"
   | "pogon"
   | "s psom"
+  | "obilazak"
   | "ostalo";
+
+/** Rad u lovištu tijekom izlaska: prihrana, dopuna solišta ili pojilišta. */
+export type VrstaRada = "prihrana" | "sol" | "voda";
+
+export interface Rad {
+  vrsta: VrstaRada;
+  /** kg (prihrana, sol) ili litre (voda) */
+  kolicina?: number;
+  /** Hranilište, solište ili pojilište koje je dopunjeno. */
+  tockaId?: ID;
+}
 
 export interface Opazanje {
   vrsta: string;
@@ -76,6 +93,8 @@ export interface Opazanje {
   spol?: Spol;
   lat?: number;
   lng?: number;
+  /** Fotografija opažene divljači (id u spremištu fotografija; nalazi se i u fotoIds izlaska). */
+  fotoId?: string;
 }
 
 export interface Izlazak {
@@ -92,6 +111,7 @@ export interface Izlazak {
   vrijeme?: Vrijeme;
   pratitelji?: string;
   opazanja: Opazanje[];
+  radovi?: Rad[];
   ocjena?: number;
   napomena?: string;
   /** Lov je u tijeku (pokrenut gumbom „Kreni u lov”). */
@@ -170,6 +190,17 @@ export interface Postavke {
   primjer?: boolean;
 }
 
+/** Lovačko oružje – odabire se kod upisa odstrela. */
+export interface Oruzje {
+  id: ID;
+  naziv: string;
+  kalibar?: string;
+  /** Serijski broj ili broj iz oružnog lista. */
+  broj?: string;
+  napomena?: string;
+  createdAt: number;
+}
+
 export interface Baza {
   verzija: 1;
   lovista: Loviste[];
@@ -177,7 +208,8 @@ export interface Baza {
   izlasci: Izlazak[];
   odstrel: Odstrel[];
   dozvole: Dozvola[];
+  oruzje: Oruzje[];
   postavke: Postavke;
 }
 
-export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole";
+export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole" | "oruzje";

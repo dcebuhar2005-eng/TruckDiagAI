@@ -7,11 +7,12 @@ import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import { Brojac, Gumb, Naslov, PraznoStanje, Segmenti, cx, djeteListe, roditeljListe } from "@/components/ui";
 import { lovnaGodina } from "@/lib/astro";
-import { NACINI_LOVA, SKUPINE, bojaVrste, nazivSpola, vrsta as nadiVrstu, type Skupina } from "@/lib/katalog";
+import { NACINI_LOVA, RADOVI, SKUPINE, TIPOVI_TOCAKA, bojaVrste, nazivSpola, vrsta as nadiVrstu, type Skupina } from "@/lib/katalog";
 import { MJESECI_KRATKO, datumKratki, izIso, trajanjeIzlaska } from "@/lib/format";
 import { useBaza } from "@/lib/store";
-import type { Baza, VrstaLova } from "@/lib/types";
-import { nazivLovista } from "@/lib/upiti";
+import type { Baza, VrstaLova, VrstaRada } from "@/lib/types";
+import { danaOd, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
+import { imaTip } from "@/lib/vjetarCeke";
 
 const SMJEROVI8 = ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"];
 // Mjeseci lovne godine: travanj → ožujak
@@ -70,6 +71,7 @@ export default function Statistika() {
     });
 
     const poNacinu = (Object.keys(NACINI_LOVA) as VrstaLova[])
+      .filter((n) => n !== "obilazak")
       .map((n) => {
         const s = izlasci.filter((i) => i.nacin === n);
         const u = s.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id)).length;
@@ -80,7 +82,18 @@ export default function Statistika() {
 
     const trofeji = [...odstrel].filter((o) => o.trofejCic).sort((a, b) => b.trofejCic! - a.trofejCic!).slice(0, 5);
     const skupine = [...new Set(poVrsti.map(([v]) => nadiVrstu(v)?.skupina).filter(Boolean))] as Skupina[];
-    return { izlasci, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine };
+    // Prihrana i solišta: ukupne količine u razdoblju i zadnja dopuna svake točke (bez obzira na razdoblje).
+    const radovi = (Object.keys(RADOVI) as VrstaRada[]).map((v) => ({
+      v,
+      kolicina: izlasci.reduce((s, i) => s + (i.radovi ?? []).filter((r) => r.vrsta === v).reduce((a, r) => a + (r.kolicina ?? 0), 0), 0),
+      puta: izlasci.filter((i) => i.radovi?.some((r) => r.vrsta === v)).length,
+    }));
+    const dopune = zadnjeDopune(baza);
+    const mjesta = baza.tocke
+      .filter((t) => imaTip(t, "hraniliste") || imaTip(t, "soliste") || imaTip(t, "pojiliste"))
+      .map((t) => ({ t, z: dopune.get(t.id) }))
+      .sort((a, b) => (a.z?.datum ?? "").localeCompare(b.z?.datum ?? ""));
+    return { izlasci, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, mjesta };
   }, [baza, godina]);
 
   if (!baza || !p) return <Kostur />;
@@ -211,6 +224,51 @@ export default function Statistika() {
                   </div>
                 ) : (
                   <Prazno />
+                )}
+              </Okvir>
+
+              <Okvir naslov="Prihrana i solišta" opis="Iz izlazaka; mjesta poredana od najduže nedopunjenog" sirina="xl:col-span-6 md:col-span-2">
+                <div className="grid grid-cols-3 gap-2">
+                  {p.radovi.map((r) => (
+                    <div key={r.v} className="rounded-2xl bg-povrsina-2 p-3">
+                      <div className="font-display text-[24px] leading-none font-semibold">
+                        <Brojac vrijednost={r.kolicina} />
+                        <span className="ml-1 text-[14px] text-tekst-3">{RADOVI[r.v].jedinica}</span>
+                      </div>
+                      <div className="mt-1.5 text-[12.5px] text-tekst-2">{RADOVI[r.v].naziv}</div>
+                      <div className="text-[11.5px] text-tekst-3">{r.puta}× u razdoblju</div>
+                    </div>
+                  ))}
+                </div>
+                {p.mjesta.length ? (
+                  <div className="mt-3 grid gap-1.5">
+                    {p.mjesta.map(({ t, z }) => {
+                      const n = z ? danaOd(z.datum) : null;
+                      return (
+                        <button key={t.id} onClick={() => otvori({ tip: "tocka", id: t.id })} className="flex items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-povrsina-2">
+                          <span className="grid size-8 shrink-0 place-items-center rounded-lg text-[12.5px] font-bold text-black/75" style={{ background: TIPOVI_TOCAKA[t.tip].boja }}>
+                            {TIPOVI_TOCAKA[t.tip].slovo}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[14px] font-medium">{t.naziv}</span>
+                            <span className="block truncate text-[12px] text-tekst-3">{nazivLovista(baza, t.lovisteId) ?? TIPOVI_TOCAKA[t.tip].naziv}</span>
+                          </span>
+                          <span className={cx("shrink-0 text-right text-[12.5px]", n == null || n > 14 ? "text-opasnost" : "text-tekst-2")}>
+                            {z ? (
+                              <>
+                                {opisDana(n!)}
+                                {z.kolicina ? <span className="block text-tekst-3">{z.kolicina} {RADOVI[z.vrsta].jedinica}</span> : null}
+                              </>
+                            ) : (
+                              "nije dopunjeno"
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-tekst-3">Dodajte hranilišta i solišta na karti (Točka → Hranilište / Solište), pa ih označite u izlasku.</p>
                 )}
               </Okvir>
 

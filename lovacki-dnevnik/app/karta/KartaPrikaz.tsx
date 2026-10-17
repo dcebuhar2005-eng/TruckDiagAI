@@ -22,16 +22,17 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { DIVLJAC_PRIJELAZA, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza, opisUsjeva } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
+import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, TipTocke, Tocka } from "@/lib/types";
 import { beaufort, smjerVjetra, usePrognoza, type SatnaPrognoza } from "@/lib/vrijeme";
-import { OCJENE, imaVjetrove, zaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
+import { OCJENE, imaTip, imaVjetrove, tockaZaVjetar, vrsteTocke, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const MAKS_ZOOM = 21;
@@ -183,6 +184,13 @@ function ikonaTocke(t: Tocka, odabrana: boolean) {
     html: `<div class="oznaka-karte" style="position:relative;width:34px;height:42px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))${odabrana ? ";transform:scale(1.18) translateY(-4px)" : ""}">
       <svg width="34" height="42" viewBox="0 0 34 42"><path d="M17 41s14-13.5 14-24A14 14 0 0 0 3 17c0 10.5 14 24 14 24z" fill="${info.boja}" stroke="${odabrana ? "#fff" : "rgba(0,0,0,.35)"}" stroke-width="${odabrana ? 2.5 : 1}"/></svg>
       <span style="position:absolute;top:7px;left:0;right:0;text-align:center;font:700 12px/20px system-ui;color:rgba(0,0,0,.78)">${info.slovo}</span>
+      ${vrsteTocke(t)
+        .slice(1, 4)
+        .map(
+          (x, k) =>
+            `<span style="position:absolute;top:${-4 + k * 15}px;right:-9px;width:16px;height:16px;border-radius:99px;background:${TIPOVI_TOCAKA[x].boja};border:1.5px solid #fff;font:700 8.5px/13px system-ui;text-align:center;color:rgba(0,0,0,.8)">${TIPOVI_TOCAKA[x].slovo}</span>`,
+        )
+        .join("")}
     </div>`,
   });
 }
@@ -573,6 +581,15 @@ export default function KartaPrikaz() {
     if (granicaParam) router.replace("/karta");
   };
 
+  const ukloniGranicu = () => {
+    if (!lovisteZaGranicu) return;
+    db.uredi("lovista", lovisteZaGranicu, { granica: undefined, povrsinaHa: undefined });
+    obavijest("Granica lovišta je uklonjena");
+    setNacin("pregled");
+    setCrtez([]);
+    if (granicaParam) router.replace("/karta");
+  };
+
   const gps = () => {
     if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
     setPratim(true);
@@ -605,7 +622,7 @@ export default function KartaPrikaz() {
   const odabranaTocka = odabir?.tip === "tocka" ? baza.tocke.find((t) => t.id === odabir.id) : undefined;
   const odabraniOdstrel = odabir?.tip === "odstrel" ? baza.odstrel.find((o) => o.id === odabir.id) : undefined;
   const odabranoLoviste = odabir?.tip === "loviste" ? baza.lovista.find((l) => l.id === odabir.id) : undefined;
-  const ceke = baza.tocke.filter((t) => zaVjetar(t.tip));
+  const ceke = baza.tocke.filter((t) => tockaZaVjetar(t));
   const zaMiris = odabranaTocka ? [odabranaTocka] : ceke;
 
   return (
@@ -664,7 +681,8 @@ export default function KartaPrikaz() {
           baza.lovista.map((l) =>
             l.granica && l.granica.length > 2 && !(nacin === "granica" && l.id === lovisteZaGranicu) ? (
               <Polygon
-                key={l.id}
+                // interactive se čita samo pri stvaranju sloja – novi ključ kad se mijenja način rada
+                key={`${l.id}-${nacin === "pregled"}`}
                 positions={l.granica}
                 pathOptions={{
                   color: l.boja,
@@ -672,6 +690,8 @@ export default function KartaPrikaz() {
                   fillOpacity: odabir?.id === l.id ? 0.18 : 0.08,
                   dashArray: "8 6",
                 }}
+                // Dok se crta (granica, mjerenje, točka) lovište ne smije „pojesti” dodir – inače se točka ne doda.
+                interactive={nacin === "pregled"}
                 bubblingMouseEvents={false}
                 eventHandlers={{
                   click: () => nacin === "pregled" && setOdabir({ tip: "loviste", id: l.id }),
@@ -773,12 +793,25 @@ export default function KartaPrikaz() {
         {(nacin === "granica" || nacin === "mjerenje") && crtez.length > 0 && (
           <>
             {nacin === "granica" && crtez.length > 2 ? (
-              <Polygon positions={crtez} pathOptions={{ color: "#e8a947", weight: 3, fillOpacity: 0.15 }} />
+              <Polygon positions={crtez} interactive={false} pathOptions={{ color: "#e8a947", weight: 3, fillOpacity: 0.15 }} />
             ) : (
-              <Polyline positions={crtez} pathOptions={{ color: "#e8a947", weight: 3, dashArray: nacin === "mjerenje" ? "6 6" : undefined }} />
+              <Polyline positions={crtez} interactive={false} pathOptions={{ color: "#e8a947", weight: 3, dashArray: nacin === "mjerenje" ? "6 6" : undefined }} />
             )}
             {crtez.map((p, i) => (
-              <Marker key={i} position={p} icon={ikonaVrha} />
+              // Vrh se može povući na pravo mjesto, a dodir na vrh ga briše (ne samo zadnjeg).
+              <Marker
+                key={`${i}-${p[0]}-${p[1]}`}
+                position={p}
+                icon={ikonaVrha}
+                draggable
+                eventHandlers={{
+                  click: () => setCrtez((c) => c.filter((_, j) => j !== i)),
+                  dragend: (e) => {
+                    const ll = (e.target as L.Marker).getLatLng();
+                    setCrtez((c) => c.map((x, j) => (j === i ? [ll.lat, ll.lng] : x)));
+                  },
+                }}
+              />
             ))}
           </>
         )}
@@ -990,16 +1023,33 @@ export default function KartaPrikaz() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{odabranaTocka.naziv}</div>
                   <div className="text-[13px] text-white/60">
-                    {TIPOVI_TOCAKA[odabranaTocka.tip].naziv}
+                    {vrsteTocke(odabranaTocka)
+                      .map((x) => TIPOVI_TOCAKA[x].naziv)
+                      .join(" · ")}
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>
                   {odabranaTocka.tip === "prijelaz" && (
                     <p className="mt-1 text-[13px] text-[#d6b25e]">Prelazi: {opisPrijelaza(odabranaTocka.divljac)}</p>
                   )}
+                  {odabranaTocka.tip === "remiza" && odabranaTocka.usjevi?.length ? (
+                    <p className="mt-1 text-[13px] text-[#9fd08f]">Posijano: {opisUsjeva(odabranaTocka.usjevi)}</p>
+                  ) : null}
                   {odabranaTocka.napomena && <p className="mt-1 line-clamp-2 text-[13px] text-white/75">{odabranaTocka.napomena}</p>}
-                  {zaVjetar(odabranaTocka.tip) && (
+                  {tockaZaVjetar(odabranaTocka) && (
                     <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />
                   )}
+                  {(imaTip(odabranaTocka, "hraniliste") || imaTip(odabranaTocka, "soliste") || imaTip(odabranaTocka, "pojiliste")) &&
+                    (() => {
+                      const z = zadnjeDopune(baza).get(odabranaTocka.id);
+                      const n = z ? danaOd(z.datum) : null;
+                      return (
+                        <p className={cx("mt-1 text-[13px]", n == null || n > 14 ? "text-[#f0a08a]" : "text-[#9fd99f]")}>
+                          {z
+                            ? `Zadnja dopuna ${opisDana(n!)} (${datumKratki(z.datum)})${z.kolicina ? ` · ${z.kolicina} ${RADOVI[z.vrsta].jedinica}` : ""}`
+                            : "Još nije zabilježena dopuna – upišite je u izlazak"}
+                        </p>
+                      );
+                    })()}
                   <div className="mt-1 text-[12px] text-white/50">
                     {baza.izlasci.filter((i) => i.tockaId === odabranaTocka.id).length} izlazaka s ove točke
                   </div>
@@ -1080,6 +1130,7 @@ export default function KartaPrikaz() {
               <p className="brojke mb-3 text-[13px] text-white/60">
                 {crtez.length < 3 ? `Dodirnite kartu za vrhove (${crtez.length}/3+)` : `${crtez.length} vrhova · ${Math.round(povrsinaHa(crtez)).toLocaleString("hr-HR")} ha`}
               </p>
+              <p className="-mt-2 mb-3 text-[12px] text-white/45">Pogrešan vrh: povucite ga na pravo mjesto ili ga dodirnite da se obriše.</p>
               <div className="flex gap-2">
                 <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez((c) => c.slice(0, -1))} disabled={!crtez.length}>
                   Poništi
@@ -1087,9 +1138,15 @@ export default function KartaPrikaz() {
                 <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez([])} disabled={!crtez.length}>
                   Očisti
                 </Gumb>
-                <Gumb velicina="sm" vrsta="primarni" ikona="kvacica" className="flex-1" onClick={spremiGranicu} disabled={crtez.length < 3}>
-                  Spremi
-                </Gumb>
+                {crtez.length === 0 && baza.lovista.find((l) => l.id === lovisteZaGranicu)?.granica?.length ? (
+                  <Gumb velicina="sm" vrsta="opasni" ikona="smece" className="flex-1" onClick={ukloniGranicu}>
+                    Ukloni granicu
+                  </Gumb>
+                ) : (
+                  <Gumb velicina="sm" vrsta="primarni" ikona="kvacica" className="flex-1" onClick={spremiGranicu} disabled={crtez.length < 3}>
+                    Spremi
+                  </Gumb>
+                )}
               </div>
             </Panel>
           )}

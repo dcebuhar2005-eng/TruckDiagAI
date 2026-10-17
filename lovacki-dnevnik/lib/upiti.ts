@@ -1,6 +1,6 @@
 import { lovnaGodina } from "./astro";
 import { danaDo, izIso } from "./format";
-import type { Baza, Dozvola, Kvota, Odstrel } from "./types";
+import type { Baza, Dozvola, Kvota, Odstrel, VrstaRada } from "./types";
 
 export function centarLovista(b: Baza, lovisteId?: string) {
   const l = b.lovista.find((x) => x.id === lovisteId);
@@ -62,4 +62,29 @@ export function sortirajPoDatumu<T extends { datum: string; createdAt: number }>
     }
     return b.createdAt - a.createdAt;
   });
+}
+
+/** Zadnja dopuna po točki (hranilište, solište, pojilište): datum, vrsta i količina iz izlazaka. */
+export function zadnjeDopune(b: Baza) {
+  const m = new Map<string, { datum: string; vrsta: VrstaRada; kolicina?: number }>();
+  for (const i of b.izlasci)
+    for (const r of i.radovi ?? []) {
+      if (!r.tockaId) continue;
+      const z = m.get(r.tockaId);
+      if (!z || i.datum > z.datum) m.set(r.tockaId, { datum: i.datum, vrsta: r.vrsta, kolicina: r.kolicina });
+    }
+  return m;
+}
+
+/** Koliko je dana prošlo od datuma (GGGG-MM-DD) do danas. */
+export function danaOd(datum: string) {
+  const [g, mj, d] = datum.split("-").map(Number);
+  const danas = new Date();
+  return Math.round((Date.UTC(danas.getFullYear(), danas.getMonth(), danas.getDate()) - Date.UTC(g, mj - 1, d)) / 864e5);
+}
+
+export function opisDana(n: number) {
+  if (n <= 0) return "danas";
+  if (n === 1) return "jučer";
+  return `prije ${n} dana`;
 }

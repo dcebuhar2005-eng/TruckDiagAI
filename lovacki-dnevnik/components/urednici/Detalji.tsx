@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { mjesec, suncevaVremena } from "@/lib/astro";
-import { NACINI_LOVA, TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
+import { NACINI_LOVA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
 import { danUTjednu, datumDugi, izIso, sat, trajanjeIzlaska } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
@@ -288,12 +288,34 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
                 {o.vrsta}
                 {o.spol && <span className="text-tekst-3"> · {nazivSpola(o.vrsta, o.spol)}</span>}
               </span>
+              {o.fotoId && <MalaSlika id={o.fotoId} />}
               <span className="brojke font-semibold">× {o.broj}</span>
             </div>
           ))}
         </div>
       ) : (
         <p className="text-sm text-tekst-3">Bez zabilježenih opažanja.</p>
+      )}
+
+      {i.radovi && i.radovi.length > 0 && (
+        <>
+          <h3 className="mt-6 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Prihrana i solišta</h3>
+          <div className="grid gap-1.5">
+            {i.radovi.map((r, k) => (
+              <div key={k} className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3.5 py-2.5">
+                <span className="flex-1 text-[15px]">
+                  {RADOVI[r.vrsta].naziv}
+                  {r.tockaId && <span className="text-tekst-3"> · {baza.tocke.find((t) => t.id === r.tockaId)?.naziv ?? "točka"}</span>}
+                </span>
+                {r.kolicina != null && (
+                  <span className="brojke font-semibold">
+                    {r.kolicina} {RADOVI[r.vrsta].jedinica}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {odstrel.length > 0 && (
@@ -389,4 +411,19 @@ function TrakaFotografija({ ids }: { ids: string[] }) {
       </AnimatePresence>
     </>
   );
+}
+
+/** Sličica uz opažanje (fotografija se učitava s uređaja ili iz oblaka). */
+function MalaSlika({ id }: { id: string }) {
+  const [url, setUrl] = useState<string | undefined>();
+  useEffect(() => {
+    let ziv = true;
+    dohvatiFoto(id).then((u) => ziv && setUrl(u));
+    return () => {
+      ziv = false;
+    };
+  }, [id]);
+  if (!url) return <Ikona ime="kamera" velicina={16} className="text-tekst-3" />;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt="" className="size-10 rounded-lg object-cover" />;
 }
