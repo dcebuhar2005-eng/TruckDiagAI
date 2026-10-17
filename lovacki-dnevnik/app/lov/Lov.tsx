@@ -21,6 +21,7 @@ import {
   dodajFotografiju,
   dodajOpazanje,
   dodajTrag,
+  promijeniBrojOpazanja,
   duljinaTraga,
   kreniULov,
   ukloniOpazanje,
@@ -247,13 +248,23 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
   const vidjeno = i.opazanja.reduce((s, o) => s + o.broj, 0);
   const prijedeno = duljinaTraga(i.trag);
 
-  const dogadaji = [
+  type Dogadaj = {
+    vrijeme: string;
+    ikona: ImeIkone;
+    tekst: string;
+    boja: string;
+    ukloni?: () => void;
+    otvori?: () => void;
+    broj?: { n: number; promijeni: (za: number) => void };
+  };
+  const dogadaji: Dogadaj[] = [
     { vrijeme: i.od, ikona: "nisan" as ImeIkone, tekst: "Početak lova", boja: "var(--naglasak)" },
     ...i.opazanja.map((o, k) => ({
       vrijeme: o.vrijeme ?? "",
       ikona: "oko" as ImeIkone,
-      tekst: `${o.vrsta} × ${o.broj}${o.spol ? ` · ${nazivSpola(o.vrsta, o.spol)}` : ""}${o.fotoId ? " · 📷" : ""}`,
+      tekst: `${o.vrsta}${o.spol ? ` · ${nazivSpola(o.vrsta, o.spol)}` : ""}${o.fotoId ? " · 📷" : ""}`,
       boja: bojaVrste(o.vrsta),
+      broj: { n: o.broj, promijeni: (za: number) => promijeniBrojOpazanja(i.id, k, za) },
       ukloni: () => ukloniOpazanje(i.id, k),
     })),
     ...(i.tragovi ?? []).map((t, k) => ({
@@ -371,6 +382,26 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
                   </button>
                 ) : (
                   <span className="min-w-0 flex-1 text-[14.5px]">{e.tekst}</span>
+                )}
+                {e.broj && (
+                  <span className="flex shrink-0 items-center rounded-full border border-rub bg-povrsina-2">
+                    <button
+                      onClick={() => e.broj?.promijeni(-1)}
+                      disabled={e.broj.n <= 1}
+                      className="grid size-8 place-items-center text-[18px] text-tekst-2 disabled:opacity-30"
+                      aria-label="Jedno manje"
+                    >
+                      −
+                    </button>
+                    <span className="brojke min-w-5 text-center text-[14.5px] font-semibold">{e.broj.n}</span>
+                    <button
+                      onClick={() => (e.broj?.promijeni(1), navigator.vibrate?.(20))}
+                      className="grid size-8 place-items-center text-[18px] text-naglasak"
+                      aria-label="Još jedno"
+                    >
+                      +
+                    </button>
+                  </span>
                 )}
                 {"ukloni" in e && e.ukloni && (
                   <button onClick={e.ukloni} className="p-1.5 text-tekst-3 hover:text-opasnost" aria-label="Ukloni opažanje">

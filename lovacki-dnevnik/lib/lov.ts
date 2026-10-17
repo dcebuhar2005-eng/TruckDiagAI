@@ -161,6 +161,13 @@ export function ukloniTrag(id: string, indeks: number) {
   if (i) db.uredi("izlasci", id, { tragovi: (i.tragovi ?? []).filter((_, k) => k !== indeks) });
 }
 
+/** Isto opažanje još jednom (ili jedno manje) – izravno iz tijeka lova. */
+export function promijeniBrojOpazanja(id: string, indeks: number, za: number) {
+  const i = db.dohvati().izlasci.find((x) => x.id === id);
+  if (!i) return;
+  db.uredi("izlasci", id, { opazanja: i.opazanja.map((o, k) => (k === indeks ? { ...o, broj: Math.max(1, o.broj + za) } : o)) });
+}
+
 export function ukloniOpazanje(id: string, indeks: number) {
   const i = db.dohvati().izlasci.find((x) => x.id === id);
   if (i) db.uredi("izlasci", id, { opazanja: i.opazanja.filter((_, k) => k !== indeks) });
