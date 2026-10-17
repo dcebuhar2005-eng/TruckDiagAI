@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import Ikona from "../Ikona";
 import { cx, obavijest, opruga } from "../ui";
+import { useZoomSnimki } from "@/lib/snimke";
 import type { Tocka2D } from "@/lib/types";
 
 /** Udaljenost u metrima (dovoljno točno za par kilometara). */
@@ -104,9 +105,7 @@ export default function KartaOdabira({
       transition={opruga}
     >
       <MapContainer center={[pocetak.lat, pocetak.lng]} zoom={15} maxZoom={20} zoomControl={false} className="karta-odabira h-full w-full">
-        {PODLOGE[podloga].map((s) => (
-          <TileLayer key={s.url} url={s.url} attribution={s.attr} detectRetina={s.retina} maxNativeZoom={podloga === "topo" ? 17 : 19} maxZoom={20} />
-        ))}
+        <Podloga slojevi={PODLOGE[podloga]} topo={podloga === "topo"} />
         <Pracenje onPomak={(c) => (setCentar(c), setMice(false))} onPocetak={() => setMice(true)} />
         <Prelet cilj={cilj} />
       </MapContainer>
@@ -183,5 +182,26 @@ export default function KartaOdabira({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function Podloga({ slojevi, topo }: { slojevi: readonly { url: string; attr: string; retina: boolean }[]; topo: boolean }) {
+  const zoomSnimki = useZoomSnimki(!topo);
+  return (
+    <>
+      {slojevi.map((s) => {
+        const snimke = s.url.includes("World_Imagery");
+        return (
+          <TileLayer
+            key={snimke ? `${s.url}-${zoomSnimki}` : s.url}
+            url={s.url}
+            attribution={s.attr}
+            detectRetina={s.retina}
+            maxNativeZoom={topo ? 17 : snimke ? zoomSnimki : 19}
+            maxZoom={20}
+          />
+        );
+      })}
+    </>
   );
 }

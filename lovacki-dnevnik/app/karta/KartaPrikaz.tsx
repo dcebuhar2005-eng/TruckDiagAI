@@ -28,6 +28,7 @@ import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
+import { useZoomSnimki } from "@/lib/snimke";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, TipTocke, Tocka } from "@/lib/types";
@@ -132,12 +133,15 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
   const greske = useRef(0);
   const uspjesi = useRef(0);
   const slojevi = varijanta === 0 ? PODLOGE[podloga].slojevi : (PODLOGE[podloga].rezerve?.[varijanta - 1] ?? PODLOGE[podloga].slojevi);
+  const imaSnimke = slojevi.some((sl) => sl.url.includes("World_Imagery"));
+  const zoomSnimki = useZoomSnimki(imaSnimke);
   return (
     <>
       {slojevi.map((sl, i) => {
+        const snimke = sl.url.includes("World_Imagery");
         const zajednicko = {
           attribution: sl.attr,
-          maxNativeZoom: sl.nativni,
+          maxNativeZoom: snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni,
           maxZoom: MAKS_ZOOM,
           keepBuffer: 2,
           updateWhenZooming: false,
@@ -155,7 +159,7 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
           <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={parametriWms(sl.wms.layers, sl.wms.format)} {...zajednicko} />
         ) : (
           <TileLayer
-            key={`${podloga}-${i}`}
+            key={`${podloga}-${i}${snimke ? `-${zoomSnimki}` : ""}`}
             url={sl.url}
             detectRetina={sl.retina}
             {...zajednicko}
