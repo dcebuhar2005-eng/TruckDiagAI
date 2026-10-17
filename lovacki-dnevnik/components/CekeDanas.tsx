@@ -8,7 +8,7 @@ import { otvori } from "./urednici/kontroler";
 import { cx } from "./ui";
 import { sat } from "@/lib/format";
 import type { Baza } from "@/lib/types";
-import { OCJENE, imaVjetrove, zaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
+import { OCJENE, imaVjetrove, tockaZaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 import { smjerVjetra, type Prognoza } from "@/lib/vrijeme";
 
 const REDOSLIJED = { dobar: 0, rubno: 1, nestalan: 2, los: 3, nepoznato: 4 } as const;
@@ -16,7 +16,7 @@ const REDOSLIJED = { dobar: 0, rubno: 1, nestalan: 2, los: 3, nepoznato: 4 } as 
 /** Koje čeke danas odgovaraju vjetru (HuntStand „Hunt Area“ na naš način). */
 export default function CekeDanas({ baza, p }: { baza: Baza; p: Prognoza | null }) {
   const [sada] = useState(() => Date.now());
-  const ceke = baza.tocke.filter((t) => zaVjetar(t.tip));
+  const ceke = baza.tocke.filter((t) => tockaZaVjetar(t));
   if (!ceke.length) return null;
 
   const smjer = p?.trenutno.vjetarSmjer;

@@ -32,7 +32,7 @@ import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, TipTocke, Tocka } from "@/lib/types";
 import { beaufort, smjerVjetra, usePrognoza, type SatnaPrognoza } from "@/lib/vrijeme";
-import { OCJENE, imaVjetrove, zaVjetar, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
+import { OCJENE, imaTip, imaVjetrove, tockaZaVjetar, vrsteTocke, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 const MAKS_ZOOM = 21;
@@ -184,6 +184,13 @@ function ikonaTocke(t: Tocka, odabrana: boolean) {
     html: `<div class="oznaka-karte" style="position:relative;width:34px;height:42px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))${odabrana ? ";transform:scale(1.18) translateY(-4px)" : ""}">
       <svg width="34" height="42" viewBox="0 0 34 42"><path d="M17 41s14-13.5 14-24A14 14 0 0 0 3 17c0 10.5 14 24 14 24z" fill="${info.boja}" stroke="${odabrana ? "#fff" : "rgba(0,0,0,.35)"}" stroke-width="${odabrana ? 2.5 : 1}"/></svg>
       <span style="position:absolute;top:7px;left:0;right:0;text-align:center;font:700 12px/20px system-ui;color:rgba(0,0,0,.78)">${info.slovo}</span>
+      ${vrsteTocke(t)
+        .slice(1, 4)
+        .map(
+          (x, k) =>
+            `<span style="position:absolute;top:${-4 + k * 15}px;right:-9px;width:16px;height:16px;border-radius:99px;background:${TIPOVI_TOCAKA[x].boja};border:1.5px solid #fff;font:700 8.5px/13px system-ui;text-align:center;color:rgba(0,0,0,.8)">${TIPOVI_TOCAKA[x].slovo}</span>`,
+        )
+        .join("")}
     </div>`,
   });
 }
@@ -615,7 +622,7 @@ export default function KartaPrikaz() {
   const odabranaTocka = odabir?.tip === "tocka" ? baza.tocke.find((t) => t.id === odabir.id) : undefined;
   const odabraniOdstrel = odabir?.tip === "odstrel" ? baza.odstrel.find((o) => o.id === odabir.id) : undefined;
   const odabranoLoviste = odabir?.tip === "loviste" ? baza.lovista.find((l) => l.id === odabir.id) : undefined;
-  const ceke = baza.tocke.filter((t) => zaVjetar(t.tip));
+  const ceke = baza.tocke.filter((t) => tockaZaVjetar(t));
   const zaMiris = odabranaTocka ? [odabranaTocka] : ceke;
 
   return (
@@ -1016,17 +1023,19 @@ export default function KartaPrikaz() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{odabranaTocka.naziv}</div>
                   <div className="text-[13px] text-white/60">
-                    {TIPOVI_TOCAKA[odabranaTocka.tip].naziv}
+                    {vrsteTocke(odabranaTocka)
+                      .map((x) => TIPOVI_TOCAKA[x].naziv)
+                      .join(" · ")}
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>
                   {odabranaTocka.tip === "prijelaz" && (
                     <p className="mt-1 text-[13px] text-[#d6b25e]">Prelazi: {opisPrijelaza(odabranaTocka.divljac)}</p>
                   )}
                   {odabranaTocka.napomena && <p className="mt-1 line-clamp-2 text-[13px] text-white/75">{odabranaTocka.napomena}</p>}
-                  {zaVjetar(odabranaTocka.tip) && (
+                  {tockaZaVjetar(odabranaTocka) && (
                     <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />
                   )}
-                  {(odabranaTocka.tip === "hraniliste" || odabranaTocka.tip === "soliste" || odabranaTocka.tip === "pojiliste") &&
+                  {(imaTip(odabranaTocka, "hraniliste") || imaTip(odabranaTocka, "soliste") || imaTip(odabranaTocka, "pojiliste")) &&
                     (() => {
                       const z = zadnjeDopune(baza).get(odabranaTocka.id);
                       const n = z ? danaOd(z.datum) : null;

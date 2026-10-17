@@ -30,7 +30,7 @@ import { pracenjeUgaseno } from "@/lib/nativno";
 import { useBaza } from "@/lib/store";
 import type { Baza, Izlazak, Spol, VrstaLova } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
-import { OCJENE, ocjenaVjetra, zaVjetar } from "@/lib/vjetarCeke";
+import { OCJENE, ocjenaVjetra, tockaZaVjetar, zaVjetar } from "@/lib/vjetarCeke";
 import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
 
 export default function Lov() {
@@ -76,7 +76,7 @@ function Pokretanje({ baza }: { baza: Baza }) {
         const l = baza.lovista.find((x) => x.granica && x.granica.length > 2 && uPoligonu([t.lat, t.lng], x.granica));
         if (l) setLoviste(l.id);
         const najbliza = baza.tocke
-          .filter((x) => zaVjetar(x.tip))
+          .filter((x) => tockaZaVjetar(x))
           .map((x) => ({ x, m: udaljenostM(x, t) }))
           .sort((a, b) => a.m - b.m)[0];
         if (najbliza && najbliza.m < 250) {
@@ -95,7 +95,7 @@ function Pokretanje({ baza }: { baza: Baza }) {
   const brzina = prognoza.podaci?.trenutno.vjetarBrzina;
   const red = { dobar: 0, rubno: 1, nestalan: 2, nepoznato: 3, los: 4 } as const;
   const tocke = baza.tocke
-    .filter((t) => zaVjetar(t.tip) && (!lovisteId || t.lovisteId === lovisteId))
+    .filter((t) => tockaZaVjetar(t) && (!lovisteId || t.lovisteId === lovisteId))
     .map((t) => ({ t, o: ocjenaVjetra(t, smjer, brzina), m: poz ? udaljenostM(t, poz) : null }))
     .sort((a, b) => red[a.o] - red[b.o] || (a.m ?? 0) - (b.m ?? 0));
 

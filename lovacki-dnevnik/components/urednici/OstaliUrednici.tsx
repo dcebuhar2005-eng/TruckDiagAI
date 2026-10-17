@@ -12,7 +12,7 @@ import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import OdabirVjetrova from "./OdabirVjetrova";
-import { zaVjetar } from "@/lib/vjetarCeke";
+import { tockaZaVjetar } from "@/lib/vjetarCeke";
 import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
 
 const ZUPANIJE = [
@@ -310,14 +310,17 @@ export function TockaUrednik({
   const [napomena, setNapomena] = useState(p?.napomena ?? "");
   const [vjetrovi, setVjetrovi] = useState<number[]>(p?.vjetrovi ?? []);
   const [divljac, setDivljac] = useState<string[]>(p?.divljac ?? []);
+  const [dodatno, setDodatno] = useState<TipTocke[]>(p?.dodatno ?? []);
+  const dodatnoBez = dodatno.filter((x) => x !== tip);
   const potvrda = usePotvrda();
-  const imaVjetar = zaVjetar(tip);
+  const imaVjetar = tockaZaVjetar({ tip, dodatno: dodatnoBez });
 
   const spremi = () => {
     const podaci = {
       tip,
       vjetrovi: imaVjetar && vjetrovi.length ? vjetrovi : undefined,
       divljac: tip === "prijelaz" && divljac.length ? divljac : undefined,
+      dodatno: dodatnoBez.length ? dodatnoBez : undefined,
       naziv:
         naziv.trim() ||
         (tip === "prijelaz" && divljac.length
@@ -423,6 +426,33 @@ export function TockaUrednik({
               </motion.div>
             )}
           </AnimatePresence>
+          <div className="mt-4 mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Na istom mjestu još</div>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(TIPOVI_TOCAKA) as TipTocke[])
+              .filter((t) => t !== tip && t !== "prijelaz")
+              .map((t) => {
+                const on = dodatno.includes(t);
+                return (
+                  <motion.button
+                    key={t}
+                    type="button"
+                    whileTap={{ scale: 0.94 }}
+                    aria-pressed={on}
+                    onClick={() => setDodatno(on ? dodatno.filter((x) => x !== t) : [...dodatno, t])}
+                    className={cx(
+                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13.5px] transition-colors",
+                      on ? "border-naglasak bg-naglasak-meki font-medium" : "border-rub bg-povrsina-2 text-tekst-2",
+                    )}
+                  >
+                    <span className="grid size-5 place-items-center rounded-full text-[9.5px] font-bold text-black/75" style={{ background: TIPOVI_TOCAKA[t].boja }}>
+                      {on ? "✓" : TIPOVI_TOCAKA[t].slovo}
+                    </span>
+                    {TIPOVI_TOCAKA[t].naziv}
+                  </motion.button>
+                );
+              })}
+          </div>
+          <p className="mt-2 text-[12.5px] text-tekst-3">Npr. čeka uz hranilište i kameru – sve na jednoj oznaci.</p>
           {tip === "zasjeda" && (
             <p className="mt-3 rounded-xl bg-povrsina-2 p-3 text-[13px] text-tekst-2">
               Zasjeda je mjesto na kojem čekate na tlu – sa štapom ili tronošcem. Označite dobre vjetrove pa ćete na karti i

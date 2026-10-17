@@ -10,6 +10,7 @@ import { isoDatum, isoVrijeme } from "@/lib/format";
 import { db, noviId } from "@/lib/store";
 import type { Baza, Izlazak, Opazanje, Rad, Tocka2D, VrstaLova, VrstaRada, Vrijeme } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
+import { imaTip } from "@/lib/vjetarCeke";
 import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
@@ -85,7 +86,7 @@ export default function IzlazakUrednik({
 
   const tocke = baza.tocke.filter((t) => !lovisteId || t.lovisteId === lovisteId);
   /** Hranilišta / solišta / pojilišta za odabranu vrstu rada (iz lovišta izlaska). */
-  const mjestaRada = (v: VrstaRada) => tocke.filter((t) => t.tip === RADOVI[v].tocka);
+  const mjestaRada = (v: VrstaRada) => tocke.filter((t) => imaTip(t, RADOVI[v].tocka));
   const dodajRad = (v: VrstaRada) => {
     const m = mjestaRada(v);
     const tocka = m.find((t) => t.id === tockaId) ?? m[0];

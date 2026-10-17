@@ -26,6 +26,13 @@ export const OCJENE: Record<OcjenaVjetra, { naziv: string; boja: string }> = {
 /** Točke na kojima se čeka divljač – za njih se računa vjetar (čeka, zaklon, zasjeda s tronošcem). */
 export const zaVjetar = (tip: TipTocke) => tip === "ceka" || tip === "zaklon" || tip === "zasjeda";
 
+/** Sve vrste točke: glavna i dodatne na istom mjestu. */
+export const vrsteTocke = (t: Pick<Tocka, "tip" | "dodatno">) => [t.tip, ...(t.dodatno ?? []).filter((x) => x !== t.tip)];
+/** Je li točka (glavnom ili dodatnom vrstom) zadane vrste – npr. čeka koja je i hranilište. */
+export const imaTip = (t: Pick<Tocka, "tip" | "dodatno">, tip: TipTocke) => vrsteTocke(t).includes(tip);
+/** Čeka, zaklon ili zasjeda (i kao dodatna vrsta) – za nju se računa vjetar. */
+export const tockaZaVjetar = (t: Pick<Tocka, "tip" | "dodatno">) => vrsteTocke(t).some(zaVjetar);
+
 /** Ima li točka zadane dobre vjetrove. */
 export const imaVjetrove = (t: Tocka) => Boolean(t.vjetrovi?.length);
 

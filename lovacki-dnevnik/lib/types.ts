@@ -44,6 +44,8 @@ export interface Tocka {
   divljac?: string[];
   /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */
   vjetrovi?: number[];
+  /** Na istom mjestu još (npr. čeka s hranilištem i kamerom). */
+  dodatno?: TipTocke[];
   createdAt: number;
 }
 

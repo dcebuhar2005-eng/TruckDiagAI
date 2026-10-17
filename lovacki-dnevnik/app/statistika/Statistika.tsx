@@ -12,6 +12,7 @@ import { MJESECI_KRATKO, datumKratki, izIso, trajanjeIzlaska } from "@/lib/forma
 import { useBaza } from "@/lib/store";
 import type { Baza, VrstaLova, VrstaRada } from "@/lib/types";
 import { danaOd, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
+import { imaTip } from "@/lib/vjetarCeke";
 
 const SMJEROVI8 = ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"];
 // Mjeseci lovne godine: travanj → ožujak
@@ -89,7 +90,7 @@ export default function Statistika() {
     }));
     const dopune = zadnjeDopune(baza);
     const mjesta = baza.tocke
-      .filter((t) => t.tip === "hraniliste" || t.tip === "soliste" || t.tip === "pojiliste")
+      .filter((t) => imaTip(t, "hraniliste") || imaTip(t, "soliste") || imaTip(t, "pojiliste"))
       .map((t) => ({ t, z: dopune.get(t.id) }))
       .sort((a, b) => (a.z?.datum ?? "").localeCompare(b.z?.datum ?? ""));
     return { izlasci, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, mjesta };
