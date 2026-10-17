@@ -22,9 +22,10 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { DIVLJAC_PRIJELAZA, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
+import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
@@ -1000,6 +1001,18 @@ export default function KartaPrikaz() {
                   {zaVjetar(odabranaTocka.tip) && (
                     <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />
                   )}
+                  {(odabranaTocka.tip === "hraniliste" || odabranaTocka.tip === "soliste" || odabranaTocka.tip === "pojiliste") &&
+                    (() => {
+                      const z = zadnjeDopune(baza).get(odabranaTocka.id);
+                      const n = z ? danaOd(z.datum) : null;
+                      return (
+                        <p className={cx("mt-1 text-[13px]", n == null || n > 14 ? "text-[#f0a08a]" : "text-[#9fd99f]")}>
+                          {z
+                            ? `Zadnja dopuna ${opisDana(n!)} (${datumKratki(z.datum)})${z.kolicina ? ` · ${z.kolicina} ${RADOVI[z.vrsta].jedinica}` : ""}`
+                            : "Još nije zabilježena dopuna – upišite je u izlazak"}
+                        </p>
+                      );
+                    })()}
                   <div className="mt-1 text-[12px] text-white/50">
                     {baza.izlasci.filter((i) => i.tockaId === odabranaTocka.id).length} izlazaka s ove točke
                   </div>

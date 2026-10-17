@@ -66,7 +66,19 @@ export type VrstaLova =
   | "skupni"
   | "pogon"
   | "s psom"
+  | "obilazak"
   | "ostalo";
+
+/** Rad u lovištu tijekom izlaska: prihrana, dopuna solišta ili pojilišta. */
+export type VrstaRada = "prihrana" | "sol" | "voda";
+
+export interface Rad {
+  vrsta: VrstaRada;
+  /** kg (prihrana, sol) ili litre (voda) */
+  kolicina?: number;
+  /** Hranilište, solište ili pojilište koje je dopunjeno. */
+  tockaId?: ID;
+}
 
 export interface Opazanje {
   vrsta: string;
@@ -92,6 +104,7 @@ export interface Izlazak {
   vrijeme?: Vrijeme;
   pratitelji?: string;
   opazanja: Opazanje[];
+  radovi?: Rad[];
   ocjena?: number;
   napomena?: string;
   /** Lov je u tijeku (pokrenut gumbom „Kreni u lov”). */

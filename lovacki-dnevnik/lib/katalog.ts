@@ -1,4 +1,4 @@
-import type { Spol, TipDozvole, TipTocke, VrstaLova } from "./types";
+import type { Spol, TipDozvole, TipTocke, VrstaLova, VrstaRada } from "./types";
 
 export type Skupina = "krupna" | "sitna-dlakava" | "pernata" | "grabezljivci";
 
@@ -110,7 +110,15 @@ export const NACINI_LOVA: Record<VrstaLova, string> = {
   skupni: "Skupni lov",
   pogon: "Pogon",
   "s psom": "Lov s psom",
+  obilazak: "Obilazak / prihrana",
   ostalo: "Ostalo",
+};
+
+/** Radovi u lovištu: što se dopunjuje, jedinica i koja vrsta točke se dopunjuje. */
+export const RADOVI: Record<VrstaRada, { naziv: string; jedinica: string; tocka: TipTocke }> = {
+  prihrana: { naziv: "Prihrana", jedinica: "kg", tocka: "hraniliste" },
+  sol: { naziv: "Sol", jedinica: "kg", tocka: "soliste" },
+  voda: { naziv: "Voda", jedinica: "l", tocka: "pojiliste" },
 };
 
 export const TIPOVI_DOZVOLA: Record<TipDozvole, string> = {

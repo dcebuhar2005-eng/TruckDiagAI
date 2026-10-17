@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { dohvatiFoto, obrisiFoto, spremiFoto } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
 import Fotografije, { type Slika } from "./Fotografije";
-import { NACINI_LOVA } from "@/lib/katalog";
+import { NACINI_LOVA, RADOVI } from "@/lib/katalog";
 import { isoDatum, isoVrijeme } from "@/lib/format";
 import { db, noviId } from "@/lib/store";
-import type { Baza, Izlazak, Opazanje, Tocka2D, VrstaLova, Vrijeme } from "@/lib/types";
+import type { Baza, Izlazak, Opazanje, Rad, Tocka2D, VrstaLova, VrstaRada, Vrijeme } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
 import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona from "../Ikona";
@@ -60,6 +60,7 @@ export default function IzlazakUrednik({
   const [nacin, setNacin] = useState<VrstaLova>(p.nacin ?? "cekanje");
   const [vrijeme, setVrijeme] = useState<Vrijeme>(p.vrijeme ?? {});
   const [opazanja, setOpazanja] = useState<Opazanje[]>(p.opazanja ?? []);
+  const [radovi, setRadovi] = useState<Rad[]>(p.radovi ?? []);
   const [pratitelji, setPratitelji] = useState(p.pratitelji ?? "");
   const [ocjena, setOcjena] = useState(p.ocjena ?? 0);
   const [napomena, setNapomena] = useState(p.napomena ?? "");
@@ -83,6 +84,14 @@ export default function IzlazakUrednik({
   }, [kljucFoto]);
 
   const tocke = baza.tocke.filter((t) => !lovisteId || t.lovisteId === lovisteId);
+  /** Hranilišta / solišta / pojilišta za odabranu vrstu rada (iz lovišta izlaska). */
+  const mjestaRada = (v: VrstaRada) => tocke.filter((t) => t.tip === RADOVI[v].tocka);
+  const dodajRad = (v: VrstaRada) => {
+    const m = mjestaRada(v);
+    const tocka = m.find((t) => t.id === tockaId) ?? m[0];
+    setRadovi([...radovi, { vrsta: v, tockaId: tocka?.id }]);
+  };
+  const urediRad = (i: number, x: Partial<Rad>) => setRadovi(radovi.map((r, j) => (j === i ? { ...r, ...x } : r)));
 
   const preuzmiVrijeme = async () => {
     setUcitavam(true);
@@ -131,6 +140,7 @@ export default function IzlazakUrednik({
       nacin,
       vrijeme: Object.values(vrijeme).some((v) => v != null) ? vrijeme : undefined,
       opazanja: opazanja.filter((o) => o.broj > 0),
+      radovi: radovi.length ? radovi : undefined,
       pratitelji: tekst(pratitelji),
       ocjena: ocjena || undefined,
       napomena: tekst(napomena),
@@ -330,6 +340,67 @@ export default function IzlazakUrednik({
             ))}
           </AnimatePresence>
           {!opazanja.length && <p className="text-sm text-tekst-3">Još nema opažanja.</p>}
+        </Odjeljak>
+
+        <Odjeljak naslov="Prihrana i solišta">
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(RADOVI) as VrstaRada[]).map((v) => (
+              <Gumb key={v} velicina="sm" ikona="plus" onClick={() => dodajRad(v)}>
+                {RADOVI[v].naziv}
+              </Gumb>
+            ))}
+          </div>
+          <AnimatePresence initial={false}>
+            {radovi.map((r, i) => {
+              const m = mjestaRada(r.vrsta);
+              return (
+                <motion.div
+                  key={i}
+                  layout
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 12, height: 0 }}
+                  className="grid gap-2 rounded-2xl bg-povrsina-2 p-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 pl-1 text-[14.5px] font-medium">{RADOVI[r.vrsta].naziv}</span>
+                    <div className="relative w-[110px] shrink-0">
+                      <input
+                        inputMode="decimal"
+                        className="unos brojke pr-9"
+                        placeholder="0"
+                        value={r.kolicina ?? ""}
+                        onChange={(e) => urediRad(i, { kolicina: broj(e.target.value) })}
+                        aria-label={`Količina (${RADOVI[r.vrsta].jedinica})`}
+                      />
+                      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-[13px] text-tekst-3">{RADOVI[r.vrsta].jedinica}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="grid size-10 shrink-0 place-items-center rounded-xl text-tekst-3 hover:bg-opasnost-meka hover:text-opasnost"
+                      onClick={() => setRadovi(radovi.filter((_, j) => j !== i))}
+                      aria-label="Ukloni"
+                    >
+                      <Ikona ime="x" velicina={16} />
+                    </button>
+                  </div>
+                  <select className="unos" value={r.tockaId ?? ""} onChange={(e) => urediRad(i, { tockaId: e.target.value || undefined })}>
+                    <option value="">
+                      {m.length
+                        ? "— Bez točke —"
+                        : `Nema ${RADOVI[r.vrsta].tocka === "soliste" ? "solišta" : RADOVI[r.vrsta].tocka === "pojiliste" ? "pojilišta" : "hranilišta"} na karti`}
+                    </option>
+                    {m.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.naziv}
+                      </option>
+                    ))}
+                  </select>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+          {!radovi.length && <p className="text-sm text-tekst-3">Prihranili ste divljač ili dopunili solište? Dodajte ovdje.</p>}
         </Odjeljak>
 
         <Odjeljak naslov="Fotografije">
