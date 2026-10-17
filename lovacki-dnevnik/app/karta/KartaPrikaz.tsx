@@ -22,7 +22,7 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza, opisUsjeva } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
@@ -1031,6 +1031,9 @@ export default function KartaPrikaz() {
                   {odabranaTocka.tip === "prijelaz" && (
                     <p className="mt-1 text-[13px] text-[#d6b25e]">Prelazi: {opisPrijelaza(odabranaTocka.divljac)}</p>
                   )}
+                  {odabranaTocka.tip === "remiza" && odabranaTocka.usjevi?.length ? (
+                    <p className="mt-1 text-[13px] text-[#9fd08f]">Posijano: {opisUsjeva(odabranaTocka.usjevi)}</p>
+                  ) : null}
                   {odabranaTocka.napomena && <p className="mt-1 line-clamp-2 text-[13px] text-white/75">{odabranaTocka.napomena}</p>}
                   {tockaZaVjetar(odabranaTocka) && (
                     <StanjeVjetra t={odabranaTocka} smjer={vjetarSmjer} brzina={vjetarBrzina} satno={satno} />

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, TIPOVI_DOZVOLA, TIPOVI_TOCAKA } from "@/lib/katalog";
+import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, TIPOVI_DOZVOLA, TIPOVI_TOCAKA, USJEVI, opisUsjeva } from "@/lib/katalog";
 import { povrsinaHa } from "@/lib/format";
 import { db } from "@/lib/store";
 import type { Baza, Kvota, Loviste, Spol, Tocka, Tocka2D, TipDozvole, TipTocke } from "@/lib/types";
@@ -310,6 +310,7 @@ export function TockaUrednik({
   const [napomena, setNapomena] = useState(p?.napomena ?? "");
   const [vjetrovi, setVjetrovi] = useState<number[]>(p?.vjetrovi ?? []);
   const [divljac, setDivljac] = useState<string[]>(p?.divljac ?? []);
+  const [usjevi, setUsjevi] = useState<string[]>(p?.usjevi ?? []);
   const [dodatno, setDodatno] = useState<TipTocke[]>(p?.dodatno ?? []);
   const dodatnoBez = dodatno.filter((x) => x !== tip);
   const potvrda = usePotvrda();
@@ -320,12 +321,15 @@ export function TockaUrednik({
       tip,
       vjetrovi: imaVjetar && vjetrovi.length ? vjetrovi : undefined,
       divljac: tip === "prijelaz" && divljac.length ? divljac : undefined,
+      usjevi: tip === "remiza" && usjevi.length ? usjevi : undefined,
       dodatno: dodatnoBez.length ? dodatnoBez : undefined,
       naziv:
         naziv.trim() ||
         (tip === "prijelaz" && divljac.length
           ? `Prijelaz – ${DIVLJAC_PRIJELAZA.filter((d) => divljac.includes(d.k)).map((d) => d.naziv.toLowerCase()).join(", ")}`
-          : TIPOVI_TOCAKA[tip].naziv),
+          : tip === "remiza" && usjevi.length
+            ? `Remiza – ${opisUsjeva(usjevi)}`
+            : TIPOVI_TOCAKA[tip].naziv),
       lovisteId,
       lat: lok!.lat,
       lng: lok!.lng,
@@ -423,6 +427,40 @@ export function TockaUrednik({
                   })}
                 </div>
                 <p className="mt-2 text-[12.5px] text-tekst-3">Možete odabrati više vrsta i promijeniti ih kasnije.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {tip === "remiza" && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Što je posijano?</div>
+                <div className="flex flex-wrap gap-2">
+                  {USJEVI.map((u) => {
+                    const on = usjevi.includes(u.k);
+                    return (
+                      <motion.button
+                        key={u.k}
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        aria-pressed={on}
+                        onClick={() => setUsjevi(on ? usjevi.filter((x) => x !== u.k) : [...usjevi, u.k])}
+                        className={cx(
+                          "rounded-full border px-3.5 py-2 text-[14px] transition-colors",
+                          on ? "border-naglasak bg-naglasak-meki font-medium" : "border-rub bg-povrsina-2 text-tekst-2",
+                        )}
+                      >
+                        {on && "✓ "}
+                        {u.naziv}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[12.5px] text-tekst-3">Nešto drugo? Upišite u napomenu.</p>
               </motion.div>
             )}
           </AnimatePresence>

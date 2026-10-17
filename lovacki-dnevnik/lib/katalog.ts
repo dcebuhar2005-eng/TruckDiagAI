@@ -79,7 +79,7 @@ export const TIPOVI_TOCAKA: Record<TipTocke, { naziv: string; boja: string; slov
   kaljuziste: { naziv: "Kaljužište", boja: "#a1887f", slovo: "Ka" },
   pojiliste: { naziv: "Pojilište", boja: "#4fb3bf", slovo: "P" },
   zaklon: { naziv: "Zaklon", boja: "#9c8ade", slovo: "Z" },
-  remiza: { naziv: "Remiza", boja: "#6fa86a", slovo: "R" },
+  remiza: { naziv: "Remiza / usjev", boja: "#6fa86a", slovo: "R" },
   zasjeda: { naziv: "Zasjeda", boja: "#e07a4f", slovo: "T" },
   prijelaz: { naziv: "Prijelaz divljači", boja: "#d6b25e", slovo: "Pr" },
   parking: { naziv: "Parking", boja: "#90a4ae", slovo: "P" },
@@ -98,6 +98,26 @@ export const DIVLJAC_PRIJELAZA: { k: string; naziv: string; slovo: string; boja:
   { k: "sitna", naziv: "Sitna divljač", slovo: "Si", boja: "#c5b358" },
   { k: "grabezljivci", naziv: "Lisica / čagalj", slovo: "Li", boja: "#e0864a" },
 ];
+
+/** Što se sije u lovištu za divljač (remize, krmne njive). */
+export const USJEVI: { k: string; naziv: string }[] = [
+  { k: "kukuruz", naziv: "Kukuruz" },
+  { k: "suncokret", naziv: "Suncokret" },
+  { k: "djetelina", naziv: "Djetelina" },
+  { k: "lucerna", naziv: "Lucerna" },
+  { k: "zob", naziv: "Zob" },
+  { k: "psenica", naziv: "Pšenica" },
+  { k: "jecam", naziv: "Ječam" },
+  { k: "proso", naziv: "Proso" },
+  { k: "heljda", naziv: "Heljda" },
+  { k: "repa", naziv: "Stočna repa" },
+  { k: "krumpir", naziv: "Krumpir" },
+  { k: "kupus", naziv: "Kupusnjače" },
+];
+
+export function opisUsjeva(usjevi?: string[]) {
+  return USJEVI.filter((u) => usjevi?.includes(u.k)).map((u) => u.naziv.toLowerCase()).join(", ");
+}
 
 export function opisPrijelaza(divljac?: string[]) {
   const n = DIVLJAC_PRIJELAZA.filter((d) => divljac?.includes(d.k)).map((d) => d.naziv.toLowerCase());

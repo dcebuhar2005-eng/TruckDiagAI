@@ -43,6 +43,8 @@ export interface Tocka {
   napomena?: string;
   /** Za prijelaz divljači: koja divljač njime prelazi (ključevi iz DIVLJAC_PRIJELAZA). */
   divljac?: string[];
+  /** Za remizu: što je posijano (ključevi iz USJEVI). */
+  usjevi?: string[];
   /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */
   vjetrovi?: number[];
   /** Na istom mjestu još (npr. čeka s hranilištem i kamerom). */
