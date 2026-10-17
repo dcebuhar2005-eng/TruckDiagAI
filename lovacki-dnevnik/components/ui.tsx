@@ -276,6 +276,17 @@ export function Ploca({
   const kontrole = useDragControls();
   const y = useMotionValue(0);
   const prozirnost = useTransform(y, [0, 400], [1, 0]);
+  // Ako animacija zatvaranja zapne (npr. povlačenje i zatvaranje u istom dodiru na nekim
+  // Android mobitelima), ploča se nakon kratkog vremena ipak ukloni – inače ostane „mrtva”
+  // preko aplikacije i ne reagira ni na X ni na tipku natrag.
+  const [ugasena, setUgasena] = useState(!otvorena);
+  if (otvorena && ugasena) setUgasena(false);
+  useEffect(() => {
+    if (otvorena) return;
+    y.stop();
+    const t = setTimeout(() => setUgasena(true), 700);
+    return () => clearTimeout(t);
+  }, [otvorena, y]);
 
   useEffect(() => {
     if (!otvorena) return;
@@ -294,7 +305,7 @@ export function Ploca({
     return () => window.removeEventListener("keydown", tipka);
   }, [otvorena, zatvori]);
 
-  if (!klijent) return null;
+  if (!klijent || ugasena) return null;
 
   return createPortal(
     <AnimatePresence>
@@ -329,7 +340,8 @@ export function Ploca({
           >
             <div
               className="shrink-0 touch-none cursor-grab active:cursor-grabbing px-5 pt-3 pb-3 md:pt-5"
-              onPointerDown={(e) => !desktop && kontrole.start(e)}
+              // Povlačenje prema dolje samo za zaglavlje, ne kad se dodirne gumb (X).
+              onPointerDown={(e) => !desktop && !(e.target as HTMLElement).closest("button") && kontrole.start(e)}
             >
               <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-rub-jaki md:hidden" />
               <div className="flex items-start gap-3">
