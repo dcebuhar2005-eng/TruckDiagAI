@@ -574,6 +574,15 @@ export default function KartaPrikaz() {
     if (granicaParam) router.replace("/karta");
   };
 
+  const ukloniGranicu = () => {
+    if (!lovisteZaGranicu) return;
+    db.uredi("lovista", lovisteZaGranicu, { granica: undefined, povrsinaHa: undefined });
+    obavijest("Granica lovišta je uklonjena");
+    setNacin("pregled");
+    setCrtez([]);
+    if (granicaParam) router.replace("/karta");
+  };
+
   const gps = () => {
     if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
     setPratim(true);
@@ -665,7 +674,8 @@ export default function KartaPrikaz() {
           baza.lovista.map((l) =>
             l.granica && l.granica.length > 2 && !(nacin === "granica" && l.id === lovisteZaGranicu) ? (
               <Polygon
-                key={l.id}
+                // interactive se čita samo pri stvaranju sloja – novi ključ kad se mijenja način rada
+                key={`${l.id}-${nacin === "pregled"}`}
                 positions={l.granica}
                 pathOptions={{
                   color: l.boja,
@@ -673,6 +683,8 @@ export default function KartaPrikaz() {
                   fillOpacity: odabir?.id === l.id ? 0.18 : 0.08,
                   dashArray: "8 6",
                 }}
+                // Dok se crta (granica, mjerenje, točka) lovište ne smije „pojesti” dodir – inače se točka ne doda.
+                interactive={nacin === "pregled"}
                 bubblingMouseEvents={false}
                 eventHandlers={{
                   click: () => nacin === "pregled" && setOdabir({ tip: "loviste", id: l.id }),
@@ -774,12 +786,25 @@ export default function KartaPrikaz() {
         {(nacin === "granica" || nacin === "mjerenje") && crtez.length > 0 && (
           <>
             {nacin === "granica" && crtez.length > 2 ? (
-              <Polygon positions={crtez} pathOptions={{ color: "#e8a947", weight: 3, fillOpacity: 0.15 }} />
+              <Polygon positions={crtez} interactive={false} pathOptions={{ color: "#e8a947", weight: 3, fillOpacity: 0.15 }} />
             ) : (
-              <Polyline positions={crtez} pathOptions={{ color: "#e8a947", weight: 3, dashArray: nacin === "mjerenje" ? "6 6" : undefined }} />
+              <Polyline positions={crtez} interactive={false} pathOptions={{ color: "#e8a947", weight: 3, dashArray: nacin === "mjerenje" ? "6 6" : undefined }} />
             )}
             {crtez.map((p, i) => (
-              <Marker key={i} position={p} icon={ikonaVrha} />
+              // Vrh se može povući na pravo mjesto, a dodir na vrh ga briše (ne samo zadnjeg).
+              <Marker
+                key={`${i}-${p[0]}-${p[1]}`}
+                position={p}
+                icon={ikonaVrha}
+                draggable
+                eventHandlers={{
+                  click: () => setCrtez((c) => c.filter((_, j) => j !== i)),
+                  dragend: (e) => {
+                    const ll = (e.target as L.Marker).getLatLng();
+                    setCrtez((c) => c.map((x, j) => (j === i ? [ll.lat, ll.lng] : x)));
+                  },
+                }}
+              />
             ))}
           </>
         )}
@@ -1093,6 +1118,7 @@ export default function KartaPrikaz() {
               <p className="brojke mb-3 text-[13px] text-white/60">
                 {crtez.length < 3 ? `Dodirnite kartu za vrhove (${crtez.length}/3+)` : `${crtez.length} vrhova · ${Math.round(povrsinaHa(crtez)).toLocaleString("hr-HR")} ha`}
               </p>
+              <p className="-mt-2 mb-3 text-[12px] text-white/45">Pogrešan vrh: povucite ga na pravo mjesto ili ga dodirnite da se obriše.</p>
               <div className="flex gap-2">
                 <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez((c) => c.slice(0, -1))} disabled={!crtez.length}>
                   Poništi
@@ -1100,9 +1126,15 @@ export default function KartaPrikaz() {
                 <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez([])} disabled={!crtez.length}>
                   Očisti
                 </Gumb>
-                <Gumb velicina="sm" vrsta="primarni" ikona="kvacica" className="flex-1" onClick={spremiGranicu} disabled={crtez.length < 3}>
-                  Spremi
-                </Gumb>
+                {crtez.length === 0 && baza.lovista.find((l) => l.id === lovisteZaGranicu)?.granica?.length ? (
+                  <Gumb velicina="sm" vrsta="opasni" ikona="smece" className="flex-1" onClick={ukloniGranicu}>
+                    Ukloni granicu
+                  </Gumb>
+                ) : (
+                  <Gumb velicina="sm" vrsta="primarni" ikona="kvacica" className="flex-1" onClick={spremiGranicu} disabled={crtez.length < 3}>
+                    Spremi
+                  </Gumb>
+                )}
               </div>
             </Panel>
           )}
