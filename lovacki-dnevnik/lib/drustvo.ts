@@ -536,9 +536,14 @@ export function pokreniDrustvo() {
   setInterval(() => {
     otkucaj++;
     if (stanje.dijelim && Date.now() > stanje.dijelim.do) zaustaviDijeljenje().catch(() => {});
-    // U Android aplikaciji se i sa skrivenom aplikacijom osvježava dok dijelim (alarm blizine radi i u džepu).
-    const vidljivo = document.visibilityState === "visible" || (uAplikaciji() && stanje.dijelim);
-    if (stanje.sesija && vidljivo && (stanje.dijelim || otkucaj % 2 === 0)) osvjezi();
+    if (!stanje.sesija) return;
+    if (document.visibilityState === "visible") {
+      if (stanje.dijelim || otkucaj % 2 === 0) osvjezi();
+      return;
+    }
+    // U Android aplikaciji se i sa skrivenom aplikacijom osvježava dok dijelim (alarm blizine radi i u džepu),
+    // ali svakih 10 s samo kad je netko od prijatelja blizu; inače jednom u minuti (štedi bateriju).
+    if (uAplikaciji() && stanje.dijelim && (prijateljBlizu() || otkucaj % 6 === 0)) osvjezi();
   }, 10000);
 
   // Zvuk alarma smije se pripremiti tek nakon dodira korisnika.
@@ -554,6 +559,14 @@ export function pokreniDrustvo() {
       if (stanje.pozicija) posaljiPoziciju(stanje.pozicija, true).catch(() => {});
     }
   });
+}
+
+/** Netko od prijatelja u lovu je unutar trostruke zone upozorenja (najmanje 1 km). */
+function prijateljBlizu() {
+  const ja = stanje.pozicija;
+  if (!ja) return true;
+  const granica = Math.max(1000, postavkeBlizine().granica * 3);
+  return stanje.lokacije.some((l) => udaljenostM(ja, l) < granica);
 }
 
 /** Prijatelji u lovu blizu mene (za upozorenje). */

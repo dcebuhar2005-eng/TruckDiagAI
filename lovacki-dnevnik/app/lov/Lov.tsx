@@ -228,7 +228,8 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
   const kamera = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const t = setInterval(() => setSad(Date.now()), 1000);
+    // Sat lova se osvježava samo dok se vidi (u džepu bez nepotrebnog crtanja).
+    const t = setInterval(() => document.visibilityState === "visible" && setSad(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 

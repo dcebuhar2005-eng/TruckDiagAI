@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/zakrpaj-gps.mjs"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
