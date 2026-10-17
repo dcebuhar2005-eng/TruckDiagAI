@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
@@ -153,30 +154,35 @@ export default function Lovista() {
         </motion.div>
       )}
 
-      <AnimatePresence>
-        {l && (
-          <>
-            <motion.div
-              key="zastor"
-              className="fixed inset-0 z-[1500] bg-black/55 backdrop-blur-[3px]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOdabrano(null)}
-            />
-            <div className="pointer-events-none fixed inset-0 z-[1501] flex items-end justify-center md:items-center md:p-6">
-              <motion.div
-                layoutId={`loviste-${l.id}`}
-                transition={mekaOpruga}
-                className="pointer-events-auto flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden border border-rub bg-povrsina shadow-jaka"
-                style={{ borderRadius: 28 }}
-              >
-                <DetaljLovista baza={baza} l={l} zatvori={() => setOdabrano(null)} />
-              </motion.div>
-            </div>
-          </>
+      {/* Preko donje navigacije: <main> ima vlastiti z-index, pa prozor ide izravno u body. */}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {l && (
+              <>
+                <motion.div
+                  key="zastor"
+                  className="fixed inset-0 z-[1500] bg-black/55 backdrop-blur-[3px]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setOdabrano(null)}
+                />
+                <div className="pointer-events-none fixed inset-0 z-[1501] flex items-end justify-center md:items-center md:p-6">
+                  <motion.div
+                    layoutId={`loviste-${l.id}`}
+                    transition={mekaOpruga}
+                    className="pointer-events-auto flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden border border-rub bg-povrsina shadow-jaka"
+                    style={{ borderRadius: 28 }}
+                  >
+                    <DetaljLovista baza={baza} l={l} zatvori={() => setOdabrano(null)} />
+                  </motion.div>
+                </div>
+              </>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </div>
   );
 }
