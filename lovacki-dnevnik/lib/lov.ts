@@ -8,7 +8,7 @@ import { isoDatum, isoVrijeme, udaljenostM } from "./format";
 import { spremiFoto } from "./foto";
 import { pratiLokaciju } from "./nativno";
 import { db, noviId } from "./store";
-import type { Baza, Izlazak, Spol, VrstaLova } from "./types";
+import type { Baza, Izlazak, Spol, Trag, VrstaLova } from "./types";
 import { dohvatiPrognozu } from "./vrijeme";
 
 export const aktivniLov = (b: Baza | null) => b?.izlasci.find((i) => i.uTijeku);
@@ -140,6 +140,25 @@ export async function dodajOpazanje(id: string, o: { vrsta: string; broj: number
     // Slika opažanja je i među fotografijama izlaska.
     ...(fotoId ? { fotoIds: [...(i.fotoIds ?? []), fotoId] } : {}),
   });
+}
+
+export async function dodajTrag(id: string, t: Pick<Trag, "divljac" | "znak" | "svjez">, slika?: string) {
+  let fotoId: string | undefined;
+  if (slika) {
+    fotoId = noviId();
+    await spremiFoto(fotoId, slika);
+  }
+  const i = db.dohvati().izlasci.find((x) => x.id === id);
+  if (!i) return;
+  db.uredi("izlasci", id, {
+    tragovi: [...(i.tragovi ?? []), { ...t, vrijeme: sada(), lat: pozicija?.lat, lng: pozicija?.lng, fotoId }],
+    ...(fotoId ? { fotoIds: [...(i.fotoIds ?? []), fotoId] } : {}),
+  });
+}
+
+export function ukloniTrag(id: string, indeks: number) {
+  const i = db.dohvati().izlasci.find((x) => x.id === id);
+  if (i) db.uredi("izlasci", id, { tragovi: (i.tragovi ?? []).filter((_, k) => k !== indeks) });
 }
 
 export function ukloniOpazanje(id: string, indeks: number) {

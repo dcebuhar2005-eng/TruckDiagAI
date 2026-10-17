@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { mjesec, suncevaVremena } from "@/lib/astro";
-import { NACINI_LOVA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola } from "@/lib/katalog";
+import { NACINI_LOVA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, znakTraga } from "@/lib/katalog";
 import { danUTjednu, datumDugi, izIso, sat, trajanjeIzlaska } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
@@ -295,6 +295,29 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
         </div>
       ) : (
         <p className="text-sm text-tekst-3">Bez zabilježenih opažanja.</p>
+      )}
+
+      {!!i.tragovi?.length && (
+        <>
+          <h3 className="mt-6 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Tragovi</h3>
+          <div className="grid gap-1.5">
+            {i.tragovi.map((t, k) => (
+              <div key={k} className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3.5 py-2.5">
+                {t.vrijeme && <span className="brojke w-11 text-[13px] text-tekst-3">{t.vrijeme}</span>}
+                <span className="size-2 rounded-full" style={{ background: divljacTraga(t.divljac).boja }} />
+                <span className="flex-1 text-[15px]">
+                  {divljacTraga(t.divljac).naziv}
+                  <span className="text-tekst-3">
+                    {" "}
+                    · {znakTraga(t.znak).toLowerCase()}
+                    {t.svjez != null && (t.svjez ? " · svjež" : " · star")}
+                  </span>
+                </span>
+                {t.fotoId && <MalaSlika id={t.fotoId} />}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {i.radovi && i.radovi.length > 0 && (

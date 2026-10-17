@@ -119,6 +119,29 @@ export function opisUsjeva(usjevi?: string[]) {
   return USJEVI.filter((u) => usjevi?.includes(u.k)).map((u) => u.naziv.toLowerCase()).join(", ");
 }
 
+/** Divljač po tragu – kao kod prijelaza, uz vuka i risa. */
+export const DIVLJAC_TRAGA = [
+  ...DIVLJAC_PRIJELAZA,
+  { k: "vuk", naziv: "Vuk", slovo: "V", boja: "#9e9e9e" },
+  { k: "ris", naziv: "Ris", slovo: "R", boja: "#c9a26b" },
+];
+
+export const ZNAKOVI_TRAGA: { k: string; naziv: string }[] = [
+  { k: "otisak", naziv: "Otisak" },
+  { k: "izmet", naziv: "Izmet" },
+  { k: "lezaj", naziv: "Ležaj" },
+  { k: "rovanje", naziv: "Rovanje" },
+  { k: "guljenje", naziv: "Guljenje / struganje" },
+  { k: "kaljuzanje", naziv: "Kaljužanje" },
+  { k: "staza", naziv: "Staza" },
+  { k: "plijen", naziv: "Ostaci plijena" },
+];
+
+export const divljacTraga = (k: string) => DIVLJAC_TRAGA.find((d) => d.k === k) ?? { k, naziv: k, slovo: "?", boja: "#bdbdbd" };
+export const znakTraga = (k: string) => ZNAKOVI_TRAGA.find((z) => z.k === k)?.naziv ?? k;
+export const opisTraga = (t: { divljac: string; znak: string; svjez?: boolean }) =>
+  `${znakTraga(t.znak)} · ${divljacTraga(t.divljac).naziv.toLowerCase()}${t.svjez == null ? "" : t.svjez ? " · svjež" : " · star"}`;
+
 export function opisPrijelaza(divljac?: string[]) {
   const n = DIVLJAC_PRIJELAZA.filter((d) => divljac?.includes(d.k)).map((d) => d.naziv.toLowerCase());
   return n.length ? n.join(", ") : "divljač nije odabrana";

@@ -22,7 +22,7 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza, opisUsjeva } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
@@ -168,7 +168,7 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
 }
 
 type Nacin = "pregled" | "tocka" | "granica" | "mjerenje";
-type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { tip: "loviste"; id: string } | null;
+type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { tip: "loviste"; id: string } | { tip: "trag"; id: string; k: number } | null;
 
 function ikonaTocke(t: Tocka, odabrana: boolean) {
   const info = { ...TIPOVI_TOCAKA[t.tip] };
@@ -202,6 +202,16 @@ function ikonaOdstrela(boja: string) {
     iconAnchor: [11, 11],
     html: `<div class="oznaka-karte" style="width:22px;height:22px;display:grid;place-items:center;border-radius:999px;background:${boja};border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45)">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>`,
+  });
+}
+
+function ikonaTraga(boja: string, svjez?: boolean) {
+  return L.divIcon({
+    className: "",
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    html: `<div class="oznaka-karte" style="width:20px;height:20px;display:grid;place-items:center;border-radius:6px;transform:rotate(45deg);background:${boja};border:2px solid ${svjez ? "#fff" : "rgba(255,255,255,.55)"};box-shadow:0 3px 8px rgba(0,0,0,.45);opacity:${svjez === false ? 0.7 : 1}">
+      <svg style="transform:rotate(-45deg)" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round"><path d="M8.5 3C6.8 3 5.5 5.7 5.5 9s1.3 6 3 6 2.5-2.3 2.5-5-.8-7-2.5-7zM15.5 3C13.8 3 13 7.3 13 10s.8 5 2.5 5 3-2.7 3-6-1.3-6-3-6z"/></svg></div>`,
   });
 }
 
@@ -400,7 +410,7 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
-  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -621,6 +631,8 @@ export default function KartaPrikaz() {
   const duljinaMjerenja = crtez.reduce((s, p, i) => (i ? s + udaljenostM({ lat: crtez[i - 1][0], lng: crtez[i - 1][1] }, { lat: p[0], lng: p[1] }) : 0), 0);
   const odabranaTocka = odabir?.tip === "tocka" ? baza.tocke.find((t) => t.id === odabir.id) : undefined;
   const odabraniOdstrel = odabir?.tip === "odstrel" ? baza.odstrel.find((o) => o.id === odabir.id) : undefined;
+  const odabraniTrag = odabir?.tip === "trag" ? baza.izlasci.find((i) => i.id === odabir.id)?.tragovi?.[odabir.k] : undefined;
+  const izlazakTraga = odabir?.tip === "trag" ? baza.izlasci.find((i) => i.id === odabir.id) : undefined;
   const odabranoLoviste = odabir?.tip === "loviste" ? baza.lovista.find((l) => l.id === odabir.id) : undefined;
   const ceke = baza.tocke.filter((t) => tockaZaVjetar(t));
   const zaMiris = odabranaTocka ? [odabranaTocka] : ceke;
@@ -745,6 +757,22 @@ export default function KartaPrikaz() {
                 eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "odstrel", id: o.id }) }}
               />
             ))}
+
+        {slojevi.tragovi &&
+          baza.izlasci.flatMap((i) =>
+            (i.tragovi ?? []).flatMap((t, k) =>
+              t.lat != null && t.lng != null
+                ? [
+                    <Marker
+                      key={`t-${i.id}-${k}`}
+                      position={[t.lat, t.lng]}
+                      icon={ikonaTraga(divljacTraga(t.divljac).boja, t.svjez)}
+                      eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "trag", id: i.id, k }) }}
+                    />,
+                  ]
+                : [],
+            ),
+          )}
 
         {slojevi.lovci &&
           drustvo.lokacije.map((l) => (
@@ -931,6 +959,7 @@ export default function KartaPrikaz() {
                 ["lovista", "Moja lovišta"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
+                ["tragovi", "Tragovi divljači"],
                 ["miris", "Zona mirisa (vjetar)"],
                 ["lovci", "Prijatelji u lovu"],
               ] as [keyof typeof slojevi, string][]
@@ -1082,6 +1111,28 @@ export default function KartaPrikaz() {
                 </div>
                 <Gumb velicina="sm" vrsta="primarni" onClick={() => otvori({ tip: "detalj-odstrel", id: odabraniOdstrel.id })}>
                   Detalji
+                </Gumb>
+              </div>
+            </Panel>
+          )}
+          {nacin === "pregled" && odabraniTrag && izlazakTraga && (
+            <Panel key={`t-${izlazakTraga.id}-${odabir?.tip === "trag" ? odabir.k : 0}`}>
+              <div className="flex items-center gap-3">
+                <span className="grid size-11 place-items-center rounded-xl" style={{ background: `${divljacTraga(odabraniTrag.divljac).boja}33`, color: divljacTraga(odabraniTrag.divljac).boja }}>
+                  <Ikona ime="trag" />
+                </span>
+                <div className="flex-1">
+                  <div className="font-semibold">
+                    {znakTraga(odabraniTrag.znak)} · {divljacTraga(odabraniTrag.divljac).naziv.toLowerCase()}
+                  </div>
+                  <div className="text-[13px] text-white/60">
+                    {opisDana(danaOd(izlazakTraga.datum))} · {datumKratki(izlazakTraga.datum)}
+                    {odabraniTrag.vrijeme ? ` u ${odabraniTrag.vrijeme}` : ""}
+                    {odabraniTrag.svjez != null && (odabraniTrag.svjez ? " · svjež" : " · star")}
+                  </div>
+                </div>
+                <Gumb velicina="sm" vrsta="primarni" onClick={() => otvori({ tip: "detalj-izlazak", id: izlazakTraga.id })}>
+                  Izlazak
                 </Gumb>
               </div>
             </Panel>

@@ -97,6 +97,19 @@ export interface Opazanje {
   fotoId?: string;
 }
 
+/** Trag divljači pronađen u lovištu (otisak, izmet, ležaj…). */
+export interface Trag {
+  /** Ključ iz DIVLJAC_TRAGA. */
+  divljac: string;
+  /** Ključ iz ZNAKOVI_TRAGA. */
+  znak: string;
+  svjez?: boolean;
+  vrijeme?: string;
+  lat?: number;
+  lng?: number;
+  fotoId?: string;
+}
+
 export interface Izlazak {
   id: ID;
   datum: string;
@@ -111,6 +124,7 @@ export interface Izlazak {
   vrijeme?: Vrijeme;
   pratitelji?: string;
   opazanja: Opazanje[];
+  tragovi?: Trag[];
   radovi?: Rad[];
   ocjena?: number;
   napomena?: string;

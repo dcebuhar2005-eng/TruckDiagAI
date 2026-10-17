@@ -11,7 +11,7 @@ import { Koracnik, OdabirLovista } from "@/components/urednici/zajednicko";
 import { Cipovi, Gumb, Naslov, Ploca, Polje, Segmenti, cx, obavijest, opruga, usePotvrda } from "@/components/ui";
 import { suncevaVremena } from "@/lib/astro";
 import { konfigurirano, pokreniDijeljenje, useDrustvo, zaustaviDijeljenje } from "@/lib/drustvo";
-import { NACINI_LOVA, TIPOVI_TOCAKA, VRSTE, bojaVrste, nazivSpola } from "@/lib/katalog";
+import { DIVLJAC_TRAGA, NACINI_LOVA, TIPOVI_TOCAKA, VRSTE, ZNAKOVI_TRAGA, bojaVrste, divljacTraga, nazivSpola, opisTraga } from "@/lib/katalog";
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { dohvatiFoto, smanjiSliku } from "@/lib/foto";
 import {
@@ -20,9 +20,11 @@ import {
   dodajBiljesku,
   dodajFotografiju,
   dodajOpazanje,
+  dodajTrag,
   duljinaTraga,
   kreniULov,
   ukloniOpazanje,
+  ukloniTrag,
   useLovPozicija,
   zavrsiLov,
 } from "@/lib/lov";
@@ -222,7 +224,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
   const poz = useLovPozicija();
   const potvrda = usePotvrda();
   const [sad, setSad] = useState(() => Date.now());
-  const [ploca, setPloca] = useState<"opazanje" | "biljeska" | null>(null);
+  const [ploca, setPloca] = useState<"opazanje" | "trag" | "biljeska" | null>(null);
   const kamera = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -252,6 +254,13 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
       tekst: `${o.vrsta} × ${o.broj}${o.spol ? ` · ${nazivSpola(o.vrsta, o.spol)}` : ""}${o.fotoId ? " · 📷" : ""}`,
       boja: bojaVrste(o.vrsta),
       ukloni: () => ukloniOpazanje(i.id, k),
+    })),
+    ...(i.tragovi ?? []).map((t, k) => ({
+      vrijeme: t.vrijeme ?? "",
+      ikona: "trag" as ImeIkone,
+      tekst: `Trag: ${opisTraga(t)}${t.fotoId ? " · 📷" : ""}`,
+      boja: divljacTraga(t.divljac).boja,
+      ukloni: () => ukloniTrag(i.id, k),
     })),
     ...odstrel.map((o) => ({
       vrijeme: o.vrijeme,
@@ -313,6 +322,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
       {/* Brze radnje */}
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Radnja ikona="oko" oznaka="Vidio sam" opis="Opažanje divljači" onClick={() => setPloca("opazanje")} istaknuto />
+        <Radnja ikona="trag" oznaka="Trag" opis="Otisak, izmet, ležaj…" onClick={() => setPloca("trag")} />
         <Radnja
           ikona="meta"
           oznaka="Odstrel"
@@ -325,7 +335,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
           }
         />
         <Radnja ikona="kamera" oznaka="Fotografija" opis={`${i.fotoIds?.length ?? 0} snimljeno`} onClick={() => kamera.current?.click()} />
-        <Radnja ikona="uredi" oznaka="Bilješka" opis="Kratki zapis" onClick={() => setPloca("biljeska")} />
+        <Radnja ikona="uredi" oznaka="Bilješka" opis="Kratki zapis" onClick={() => setPloca("biljeska")} siroko />
       </div>
       <input ref={kamera} type="file" accept="image/*" capture="environment" hidden onChange={(e) => (fotografiraj(e.target.files?.[0]), (e.target.value = ""))} />
 
@@ -384,6 +394,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
       </div>
 
       <PlocaOpazanja otvorena={ploca === "opazanje"} zatvori={() => setPloca(null)} baza={baza} id={i.id} />
+      <PlocaTraga otvorena={ploca === "trag"} zatvori={() => setPloca(null)} id={i.id} />
       <PlocaBiljeske otvorena={ploca === "biljeska"} zatvori={() => setPloca(null)} id={i.id} />
       {potvrda.element}
     </motion.div>
@@ -419,13 +430,14 @@ function Mala({ oznaka, vrijednost, dodatak, boja }: { oznaka: string; vrijednos
   );
 }
 
-function Radnja({ ikona, oznaka, opis, onClick, istaknuto }: { ikona: ImeIkone; oznaka: string; opis: string; onClick: () => void; istaknuto?: boolean }) {
+function Radnja({ ikona, oznaka, opis, onClick, istaknuto, siroko }: { ikona: ImeIkone; oznaka: string; opis: string; onClick: () => void; istaknuto?: boolean; siroko?: boolean }) {
   return (
     <motion.button
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       className={cx(
         "flex min-h-[92px] flex-col items-start justify-between rounded-3xl border p-4 text-left",
+        siroko && "col-span-2 min-h-0 flex-row items-center justify-start gap-3",
         istaknuto ? "border-naglasak/50 bg-naglasak text-[#17130a]" : "border-rub bg-povrsina hover:bg-povrsina-2",
       )}
     >
@@ -572,6 +584,120 @@ function PlocaOpazanja({ otvorena, zatvori, baza, id }: { otvorena: boolean; zat
         )}
         <input
           ref={kameraOpazanja}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => (slikaj(e.target.files?.[0]), (e.target.value = ""))}
+        />
+      </div>
+    </Ploca>
+  );
+}
+
+function PlocaTraga({ otvorena, zatvori, id }: { otvorena: boolean; zatvori: () => void; id: string }) {
+  const [divljac, setDivljac] = useState(DIVLJAC_TRAGA[2].k);
+  const [znak, setZnak] = useState(ZNAKOVI_TRAGA[0].k);
+  const [svjez, setSvjez] = useState<"" | "da" | "ne">("");
+  const [slika, setSlika] = useState<string | null>(null);
+  const kameraTraga = useRef<HTMLInputElement>(null);
+
+  const slikaj = async (f?: File) => {
+    if (!f) return;
+    try {
+      setSlika(await smanjiSliku(f));
+    } catch {
+      obavijest("Fotografija nije učitana", "greska");
+    }
+  };
+
+  const dodaj = () => {
+    const t = { divljac, znak, svjez: svjez ? svjez === "da" : undefined };
+    dodajTrag(id, t, slika ?? undefined).catch(() => obavijest("Fotografija traga nije spremljena", "greska"));
+    navigator.vibrate?.(40);
+    obavijest(`Trag zabilježen: ${opisTraga(t)}`);
+    setSvjez("");
+    setSlika(null);
+    zatvori();
+  };
+
+  return (
+    <Ploca
+      otvorena={otvorena}
+      zatvori={zatvori}
+      naslov="Trag divljači"
+      podnaslov="Sprema se s vremenom i mjestom – na karti vidite kuda divljač prolazi"
+      podnozje={
+        <Gumb vrsta="primarni" ikona="plus" className="w-full" onClick={dodaj}>
+          Zabilježi trag
+        </Gumb>
+      }
+    >
+      <div className="mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Čiji trag?</div>
+      <div className="flex flex-wrap gap-2">
+        {DIVLJAC_TRAGA.map((d) => (
+          <motion.button
+            key={d.k}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => setDivljac(d.k)}
+            className={cx(
+              "flex items-center gap-2 rounded-full border px-3.5 py-2 text-[14px]",
+              d.k === divljac ? "border-naglasak bg-naglasak-meki font-medium" : "border-rub bg-povrsina-2",
+            )}
+          >
+            <span className="size-2 rounded-full" style={{ background: d.boja }} />
+            {d.naziv}
+          </motion.button>
+        ))}
+      </div>
+      <div className="mt-5 mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Što ste našli?</div>
+      <div className="flex flex-wrap gap-2">
+        {ZNAKOVI_TRAGA.map((z) => (
+          <motion.button
+            key={z.k}
+            whileTap={{ scale: 0.94 }}
+            onClick={() => setZnak(z.k)}
+            className={cx(
+              "rounded-full border px-3.5 py-2 text-[14px]",
+              z.k === znak ? "border-naglasak bg-naglasak-meki font-medium" : "border-rub bg-povrsina-2",
+            )}
+          >
+            {z.naziv}
+          </motion.button>
+        ))}
+      </div>
+      <div className="mt-5">
+        <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Svježina</div>
+        <Segmenti
+          vrijednost={svjez}
+          promjena={setSvjez}
+          opcije={[
+            { vrijednost: "" as const, oznaka: "Ne znam" },
+            { vrijednost: "da" as const, oznaka: "Svjež" },
+            { vrijednost: "ne" as const, oznaka: "Star" },
+          ]}
+        />
+      </div>
+      <div className="mt-5">
+        <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Slika (neobavezno)</div>
+        {slika ? (
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={slika} alt="" className="size-20 rounded-2xl object-cover" />
+            <Gumb velicina="sm" ikona="kamera" onClick={() => kameraTraga.current?.click()}>
+              Druga slika
+            </Gumb>
+            <Gumb velicina="sm" vrsta="tihi" ikona="x" onClick={() => setSlika(null)}>
+              Ukloni
+            </Gumb>
+          </div>
+        ) : (
+          <Gumb velicina="sm" ikona="kamera" onClick={() => kameraTraga.current?.click()}>
+            Slikaj trag
+          </Gumb>
+        )}
+        <input
+          ref={kameraTraga}
           type="file"
           accept="image/*"
           capture="environment"
