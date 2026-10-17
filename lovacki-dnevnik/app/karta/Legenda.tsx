@@ -16,7 +16,7 @@ function Stavka({ uzorak, naziv, opis }: { uzorak: React.ReactNode; naziv: strin
 }
 
 export default function Legenda() {
-  const tocke: TipTocke[] = ["ceka", "zasjeda", "prijelaz", "hraniliste", "soliste", "kamera", "kaljuziste", "pojiliste"];
+  const tocke: TipTocke[] = ["ceka", "zasjeda", "prijelaz", "hraniliste", "soliste", "kamera", "kaljuziste", "pojiliste", "remiza"];
   return (
     <div className="max-h-[60dvh] overflow-y-auto pr-1">
       <div className="mb-1 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Oznake</div>

@@ -79,6 +79,7 @@ export const TIPOVI_TOCAKA: Record<TipTocke, { naziv: string; boja: string; slov
   kaljuziste: { naziv: "Kaljužište", boja: "#a1887f", slovo: "Ka" },
   pojiliste: { naziv: "Pojilište", boja: "#4fb3bf", slovo: "P" },
   zaklon: { naziv: "Zaklon", boja: "#9c8ade", slovo: "Z" },
+  remiza: { naziv: "Remiza", boja: "#6fa86a", slovo: "R" },
   zasjeda: { naziv: "Zasjeda", boja: "#e07a4f", slovo: "T" },
   prijelaz: { naziv: "Prijelaz divljači", boja: "#d6b25e", slovo: "Pr" },
   parking: { naziv: "Parking", boja: "#90a4ae", slovo: "P" },
