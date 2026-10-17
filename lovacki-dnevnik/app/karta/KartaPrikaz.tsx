@@ -151,7 +151,7 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
           },
         };
         return sl.wms ? (
-          <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={{ layers: sl.wms.layers, format: sl.wms.format, transparent: false, version: "1.1.1" }} {...zajednicko} />
+          <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={parametriWms(sl.wms.layers, sl.wms.format)} {...zajednicko} />
         ) : (
           <TileLayer
             key={`${podloga}-${i}`}
@@ -250,16 +250,19 @@ function Dogadaji({
   onPomak,
   onPovlacenje,
   onGranice,
+  onZum,
 }: {
   onKlik: (ll: L.LatLng) => void;
   onDugiDodir: (ll: L.LatLng) => void;
   onPomak: (c: L.LatLng) => void;
   onPovlacenje: () => void;
   onGranice?: (g: Granice) => void;
+  onZum?: (z: number) => void;
 }) {
   const javiGranice = (m: L.Map) => {
     const b = m.getBounds();
     onGranice?.({ j: b.getSouth(), s: b.getNorth(), z: b.getWest(), i: b.getEast() });
+    onZum?.(m.getZoom());
   };
   const map = useMapEvents({
     click: (e) => onKlik(e.latlng),
@@ -410,6 +413,7 @@ export default function KartaPrikaz() {
     }
   };
   const [nacin, setNacin] = useState<Nacin>("pregled");
+  const [zum, setZum] = useState(13);
   const [dodajNa, setDodajNa] = useState<{ lat: number; lng: number } | null>(null);
   const [sluzbeno, setSluzbeno] = useState<{ k: number; stanje: "trazim" | "nema" | "greska" | "ok"; podaci?: Record<string, unknown> } | null>(null);
   const [odabir, setOdabir] = useState<Odabir>(null);
@@ -630,7 +634,7 @@ export default function KartaPrikaz() {
             setPodloga("hibrid");
           }}
         />
-        <Dogadaji onKlik={klik} onDugiDodir={dugiDodir} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} onGranice={setGranice} />
+        <Dogadaji onKlik={klik} onDugiDodir={dugiDodir} onPomak={(c) => setCentar({ lat: c.lat, lng: c.lng })} onPovlacenje={() => setPratim(false)} onGranice={setGranice} onZum={setZum} />
         <Okvir g={okvir} />
         {offlinePanel &&
           offlinePodrucja.map((p) => (
@@ -649,10 +653,10 @@ export default function KartaPrikaz() {
         {slojevi.sluzbena && (
           <WMSTileLayer
             url="https://geoportal.mps.hr/geocluster/am2/wms"
-            params={{ layers: "ForestManagementArea", styles: "", format: "image/png", transparent: true, version: "1.1.1" }}
+            params={PARAMETRI_SLUZBENIH}
             opacity={0.6}
             zIndex={5}
-            minZoom={7}
+            minZoom={ZUM_SLUZBENIH}
             attribution="Granice lovišta: Ministarstvo poljoprivrede, šumarstva i ribarstva"
           />
         )}
@@ -1105,6 +1109,15 @@ export default function KartaPrikaz() {
             </Panel>
           )}
 
+          {slojevi.sluzbena && zum < ZUM_SLUZBENIH && (
+            <Panel key="sluzbena-zum">
+              <div className="flex items-center gap-2.5 text-[14px]">
+                <Ikona ime="pretraga" velicina={17} className="text-[#8fdc8f]" />
+                Približite kartu da se pokažu službene granice lovišta
+              </div>
+            </Panel>
+          )}
+
           {nacin === "pregled" && sluzbeno && (
             <Panel key={`sluzbeno-${sluzbeno.k}`}>
               <div className="flex items-start gap-3">
@@ -1237,6 +1250,21 @@ function StanjeVjetra({ t, smjer, brzina, satno }: { t: Tocka; smjer?: number; b
     </div>
   );
 }
+
+/*
+ * Parametri WMS slojeva moraju biti isti objekt pri svakom iscrtavanju: react-leaflet na svaki
+ * novi objekt zove setParams() i ponovno učita sve pločice – sloj tada trepće.
+ */
+const PARAMETRI_SLUZBENIH = { layers: "ForestManagementArea", styles: "", format: "image/png", transparent: true, version: "1.1.1" };
+const parametriPodloga = new Map<string, { layers: string; format: string; transparent: boolean; version: string }>();
+function parametriWms(layers: string, format: string) {
+  const k = `${layers}|${format}`;
+  if (!parametriPodloga.has(k)) parametriPodloga.set(k, { layers, format, transparent: false, version: "1.1.1" });
+  return parametriPodloga.get(k)!;
+}
+
+/** Od kojeg zuma se crtaju službene granice (pri manjem bi servis Ministarstva crtao pola države po pločici). */
+const ZUM_SLUZBENIH = 6;
 
 /** Podaci službenog lovišta s WMS-a Ministarstva: „VIII/19 - RISNJAK”, status „državno”/„privatno”. */
 function OpisSluzbenog({ podaci }: { podaci: Record<string, unknown> }) {

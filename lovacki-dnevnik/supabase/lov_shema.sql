@@ -481,3 +481,55 @@ begin
 end $$;
 revoke all on function public.lov_admin_lovovi_testiranja() from public, anon;
 grant execute on function public.lov_admin_lovovi_testiranja() to authenticated;
+
+-- Pronalaženje kolega: županija i mjesto u profilu (neobavezno), pretraga i prijedlozi „Možda poznajete”.
+alter table public.lov_profili add column if not exists zupanija text check (zupanija is null or char_length(zupanija) <= 40);
+alter table public.lov_profili add column if not exists mjesto text check (mjesto is null or char_length(mjesto) <= 60);
+
+create or replace function public.lov_trazi_lovce_v2(upit text)
+returns table (id uuid, korisnicko_ime text, ime text, drustvo text, zupanija text, mjesto text)
+language sql stable security invoker set search_path = '' as $$
+  with rijeci as (
+    select w from unnest(string_to_array(trim(regexp_replace(public.lov_normaliziraj(left(upit, 60)), '[@%_\\,()]+', ' ', 'g')), ' ')) w
+    where length(w) > 0
+  )
+  select p.id, p.korisnicko_ime, p.ime, p.drustvo, p.zupanija, p.mjesto
+  from public.lov_profili p
+  where p.id <> (select auth.uid())
+    and exists (select 1 from rijeci)
+    and not exists (
+      select 1 from rijeci r
+      where position(r.w in public.lov_normaliziraj(p.ime || ' ' || p.korisnicko_ime || ' ' || coalesce(p.drustvo, '') || ' ' || coalesce(p.zupanija, '') || ' ' || coalesce(p.mjesto, ''))) = 0
+    )
+  order by (public.lov_normaliziraj(p.korisnicko_ime) = (select string_agg(w, '') from rijeci)) desc, p.ime
+  limit 30
+$$;
+revoke all on function public.lov_trazi_lovce_v2(text) from public, anon;
+grant execute on function public.lov_trazi_lovce_v2(text) to authenticated;
+
+-- Naziv LD-a bez „LD”, „lovačko društvo” itd. – „LD Srnjak Bukovac” i „Lovačko društvo Srnjak Bukovac” su isto društvo.
+create or replace function public.lov_ld_kljuc(t text)
+returns text language sql immutable set search_path = '' as $$
+  select nullif(regexp_replace(regexp_replace(public.lov_normaliziraj(coalesce(t, '')), '\m(ld|lu|lovacko|lovacka|drustvo|udruga|lovaca)\M', ' ', 'g'), '[^a-z0-9]+', '', 'g'), '')
+$$;
+
+create or replace function public.lov_predlozeni_lovci()
+returns table (id uuid, korisnicko_ime text, ime text, drustvo text, zupanija text, mjesto text, razlog text)
+language sql stable security invoker set search_path = '' as $$
+  with ja as (select * from public.lov_profili where id = (select auth.uid())),
+  k as (
+    select p.*,
+      case when length(public.lov_ld_kljuc(p.drustvo)) >= 3 and public.lov_ld_kljuc(p.drustvo) = public.lov_ld_kljuc(ja.drustvo) then 'ld'
+           when p.mjesto is not null and ja.mjesto is not null and public.lov_normaliziraj(p.mjesto) = public.lov_normaliziraj(ja.mjesto) then 'mjesto'
+           when p.zupanija is not null and p.zupanija = ja.zupanija then 'zupanija' end as razlog
+    from public.lov_profili p, ja
+    where p.id <> ja.id
+      and not exists (select 1 from public.lov_prijateljstva f where (f.od = ja.id and f.za = p.id) or (f.za = ja.id and f.od = p.id))
+  )
+  select k.id, k.korisnicko_ime, k.ime, k.drustvo, k.zupanija, k.mjesto, k.razlog
+  from k where k.razlog is not null
+  order by (k.razlog = 'ld') desc, (k.razlog = 'mjesto') desc, k.ime
+  limit 20
+$$;
+revoke all on function public.lov_predlozeni_lovci() from public, anon;
+grant execute on function public.lov_predlozeni_lovci() to authenticated;
