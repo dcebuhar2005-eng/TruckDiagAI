@@ -288,6 +288,7 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
                 {o.vrsta}
                 {o.spol && <span className="text-tekst-3"> · {nazivSpola(o.vrsta, o.spol)}</span>}
               </span>
+              {o.fotoId && <MalaSlika id={o.fotoId} />}
               <span className="brojke font-semibold">× {o.broj}</span>
             </div>
           ))}
@@ -410,4 +411,19 @@ function TrakaFotografija({ ids }: { ids: string[] }) {
       </AnimatePresence>
     </>
   );
+}
+
+/** Sličica uz opažanje (fotografija se učitava s uređaja ili iz oblaka). */
+function MalaSlika({ id }: { id: string }) {
+  const [url, setUrl] = useState<string | undefined>();
+  useEffect(() => {
+    let ziv = true;
+    dohvatiFoto(id).then((u) => ziv && setUrl(u));
+    return () => {
+      ziv = false;
+    };
+  }, [id]);
+  if (!url) return <Ikona ime="kamera" velicina={16} className="text-tekst-3" />;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt="" className="size-10 rounded-lg object-cover" />;
 }

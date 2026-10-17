@@ -127,11 +127,18 @@ export function kreniULov(p: { lovisteId?: string; tockaId?: string; nacin: Vrst
 
 const sada = () => isoVrijeme(new Date());
 
-export function dodajOpazanje(id: string, o: { vrsta: string; broj: number; spol?: Spol }) {
+export async function dodajOpazanje(id: string, o: { vrsta: string; broj: number; spol?: Spol }, slika?: string) {
+  let fotoId: string | undefined;
+  if (slika) {
+    fotoId = noviId();
+    await spremiFoto(fotoId, slika);
+  }
   const i = db.dohvati().izlasci.find((x) => x.id === id);
   if (!i) return;
   db.uredi("izlasci", id, {
-    opazanja: [...i.opazanja, { ...o, vrijeme: sada(), lat: pozicija?.lat, lng: pozicija?.lng }],
+    opazanja: [...i.opazanja, { ...o, vrijeme: sada(), lat: pozicija?.lat, lng: pozicija?.lng, fotoId }],
+    // Slika opažanja je i među fotografijama izlaska.
+    ...(fotoId ? { fotoIds: [...(i.fotoIds ?? []), fotoId] } : {}),
   });
 }
 

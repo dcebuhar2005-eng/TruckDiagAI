@@ -90,6 +90,8 @@ export interface Opazanje {
   spol?: Spol;
   lat?: number;
   lng?: number;
+  /** Fotografija opažene divljači (id u spremištu fotografija; nalazi se i u fotoIds izlaska). */
+  fotoId?: string;
 }
 
 export interface Izlazak {

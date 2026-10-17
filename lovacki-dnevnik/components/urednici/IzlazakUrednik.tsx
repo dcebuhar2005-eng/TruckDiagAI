@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { dohvatiFoto, obrisiFoto, spremiFoto } from "@/lib/foto";
+import { useEffect, useRef, useState } from "react";
+import { dohvatiFoto, obrisiFoto, smanjiSliku, spremiFoto } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
 import Fotografije, { type Slika } from "./Fotografije";
 import { NACINI_LOVA, RADOVI } from "@/lib/katalog";
@@ -14,7 +14,7 @@ import { imaTip } from "@/lib/vjetarCeke";
 import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
-import { Cipovi, Gumb, Ploca, Polje, obavijest, usePotvrda } from "../ui";
+import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
 import {
   Koracnik,
@@ -60,7 +60,19 @@ export default function IzlazakUrednik({
   const [lok, setLok] = useState<Tocka2D | undefined>(p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : undefined);
   const [nacin, setNacin] = useState<VrstaLova>(p.nacin ?? "cekanje");
   const [vrijeme, setVrijeme] = useState<Vrijeme>(p.vrijeme ?? {});
-  const [opazanja, setOpazanja] = useState<Opazanje[]>(p.opazanja ?? []);
+  // _slika: nova fotografija opažanja (sprema se tek pri spremanju izlaska)
+  const [opazanja, setOpazanja] = useState<(Opazanje & { _slika?: string })[]>(p.opazanja ?? []);
+  const [slikaZa, setSlikaZa] = useState<number | null>(null);
+  const kameraOpazanja = useRef<HTMLInputElement>(null);
+  const slikajOpazanje = async (f?: File) => {
+    if (!f || slikaZa == null) return;
+    try {
+      const url = await smanjiSliku(f);
+      setOpazanja((o) => o.map((x, j) => (j === slikaZa ? { ...x, _slika: url } : x)));
+    } catch {
+      obavijest("Fotografija nije učitana", "greska");
+    }
+  };
   const [radovi, setRadovi] = useState<Rad[]>(p.radovi ?? []);
   const [pratitelji, setPratitelji] = useState(p.pratitelji ?? "");
   const [ocjena, setOcjena] = useState(p.ocjena ?? 0);
@@ -129,6 +141,23 @@ export default function IzlazakUrednik({
         }
       }
     }
+    // Nove slike opažanja: spremaju se i dodaju među fotografije izlaska.
+    const gotovaOpazanja: Opazanje[] = [];
+    for (const { _slika, ...o } of opazanja.filter((x) => x.broj > 0)) {
+      if (_slika) {
+        const fid = noviId();
+        try {
+          await spremiFoto(fid, _slika);
+          fotoIds.push(fid);
+          gotovaOpazanja.push({ ...o, fotoId: fid });
+          continue;
+        } catch {
+          obavijest("Slika opažanja nije spremljena", "greska");
+        }
+      }
+      // Slika obrisana iz fotografija izlaska – ne veže se više uz opažanje.
+      gotovaOpazanja.push(o.fotoId && !fotoIds.includes(o.fotoId) ? { ...o, fotoId: undefined } : o);
+    }
     const podaci = {
       fotoIds: fotoIds.length ? fotoIds : undefined,
       datum,
@@ -140,7 +169,7 @@ export default function IzlazakUrednik({
       lng: tockaId ? undefined : lok?.lng,
       nacin,
       vrijeme: Object.values(vrijeme).some((v) => v != null) ? vrijeme : undefined,
-      opazanja: opazanja.filter((o) => o.broj > 0),
+      opazanja: gotovaOpazanja,
       radovi: radovi.length ? radovi : undefined,
       pratitelji: tekst(pratitelji),
       ocjena: ocjena || undefined,
@@ -331,6 +360,25 @@ export default function IzlazakUrednik({
                 />
                 <button
                   type="button"
+                  className={cx(
+                    "grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl",
+                    o._slika || o.fotoId ? "bg-naglasak-meki text-naglasak" : "text-tekst-3 hover:bg-povrsina-2",
+                  )}
+                  onClick={() => {
+                    setSlikaZa(i);
+                    kameraOpazanja.current?.click();
+                  }}
+                  aria-label="Slika opažanja"
+                >
+                  {o._slika ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={o._slika} alt="" className="size-full object-cover" />
+                  ) : (
+                    <Ikona ime="kamera" velicina={17} />
+                  )}
+                </button>
+                <button
+                  type="button"
                   className="grid size-10 place-items-center rounded-xl text-tekst-3 hover:bg-opasnost-meka hover:text-opasnost"
                   onClick={() => setOpazanja(opazanja.filter((_, j) => j !== i))}
                   aria-label="Ukloni"
@@ -341,6 +389,14 @@ export default function IzlazakUrednik({
             ))}
           </AnimatePresence>
           {!opazanja.length && <p className="text-sm text-tekst-3">Još nema opažanja.</p>}
+          <input
+            ref={kameraOpazanja}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(e) => (slikajOpazanje(e.target.files?.[0]), (e.target.value = ""))}
+          />
         </Odjeljak>
 
         <Odjeljak naslov="Prihrana i solišta">

@@ -30,7 +30,7 @@ import { pracenjeUgaseno } from "@/lib/nativno";
 import { useBaza } from "@/lib/store";
 import type { Baza, Izlazak, Spol, VrstaLova } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
-import { OCJENE, ocjenaVjetra, tockaZaVjetar, zaVjetar } from "@/lib/vjetarCeke";
+import { OCJENE, ocjenaVjetra, tockaZaVjetar } from "@/lib/vjetarCeke";
 import { smjerVjetra, usePrognoza } from "@/lib/vrijeme";
 
 export default function Lov() {
@@ -249,7 +249,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
     ...i.opazanja.map((o, k) => ({
       vrijeme: o.vrijeme ?? "",
       ikona: "oko" as ImeIkone,
-      tekst: `${o.vrsta} × ${o.broj}${o.spol ? ` · ${nazivSpola(o.vrsta, o.spol)}` : ""}`,
+      tekst: `${o.vrsta} × ${o.broj}${o.spol ? ` · ${nazivSpola(o.vrsta, o.spol)}` : ""}${o.fotoId ? " · 📷" : ""}`,
       boja: bojaVrste(o.vrsta),
       ukloni: () => ukloniOpazanje(i.id, k),
     })),
@@ -478,13 +478,27 @@ function PlocaOpazanja({ otvorena, zatvori, baza, id }: { otvorena: boolean; zat
   const [broj, setBroj] = useState(1);
   const [spol, setSpol] = useState<Spol | "">("");
   const [svi, setSvi] = useState(false);
+  const [slika, setSlika] = useState<string | null>(null);
+  const kameraOpazanja = useRef<HTMLInputElement>(null);
+
+  const slikaj = async (f?: File) => {
+    if (!f) return;
+    try {
+      setSlika(await smanjiSliku(f));
+    } catch {
+      obavijest("Fotografija nije učitana", "greska");
+    }
+  };
 
   const dodaj = () => {
-    dodajOpazanje(id, { vrsta, broj, spol: spol || undefined });
+    dodajOpazanje(id, { vrsta, broj, spol: spol || undefined }, slika ?? undefined).catch(() =>
+      obavijest("Fotografija opažanja nije spremljena", "greska"),
+    );
     navigator.vibrate?.(40);
-    obavijest(`${vrsta} × ${broj} zabilježeno`);
+    obavijest(`${vrsta} × ${broj} zabilježeno${slika ? " sa slikom" : ""}`);
     setBroj(1);
     setSpol("");
+    setSlika(null);
     zatvori();
   };
 
@@ -537,6 +551,33 @@ function PlocaOpazanja({ otvorena, zatvori, baza, id }: { otvorena: boolean; zat
             ]}
           />
         </div>
+      </div>
+      <div className="mt-5">
+        <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Slika (neobavezno)</div>
+        {slika ? (
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={slika} alt="" className="size-20 rounded-2xl object-cover" />
+            <Gumb velicina="sm" ikona="kamera" onClick={() => kameraOpazanja.current?.click()}>
+              Druga slika
+            </Gumb>
+            <Gumb velicina="sm" vrsta="tihi" ikona="x" onClick={() => setSlika(null)}>
+              Ukloni
+            </Gumb>
+          </div>
+        ) : (
+          <Gumb velicina="sm" ikona="kamera" onClick={() => kameraOpazanja.current?.click()}>
+            Slikaj divljač
+          </Gumb>
+        )}
+        <input
+          ref={kameraOpazanja}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => (slikaj(e.target.files?.[0]), (e.target.value = ""))}
+        />
       </div>
     </Ploca>
   );
