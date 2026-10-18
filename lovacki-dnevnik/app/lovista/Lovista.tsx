@@ -13,6 +13,7 @@ import { datumKratki, povrsinaHa } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, Loviste } from "@/lib/types";
 import { sortirajPoDatumu } from "@/lib/upiti";
+import { PodijeliLoviste, PrimljenaLovista } from "./Podijeli";
 
 function Obris({ l, tocke, velicina = 120 }: { l: Loviste; tocke?: Baza["tocke"]; velicina?: number }) {
   const g = l.granica ?? [];
@@ -103,6 +104,7 @@ export default function Lovista() {
           </Gumb>
         }
       />
+      <PrimljenaLovista />
 
       {baza.lovista.length === 0 ? (
         <PraznoStanje
@@ -204,6 +206,7 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
     odstrel.reduce<Record<string, number>>((a, o) => ({ ...a, [o.vrsta]: (a[o.vrsta] ?? 0) + 1 }), {}),
   ).sort((a, b) => b[1] - a[1]);
   const ha = l.povrsinaHa ?? (l.granica ? Math.round(povrsinaHa(l.granica)) : undefined);
+  const [dijeli, setDijeli] = useState(false);
 
   return (
     <>
@@ -239,6 +242,19 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
           <Akcija ikona="lokacija" oznaka="Dodaj točku" onClick={() => otvori({ tip: "tocka", pocetno: { lovisteId: l.id } })} />
           <Akcija ikona="dnevnik" oznaka="Izlazak" onClick={() => otvori({ tip: "izlazak", pocetno: { lovisteId: l.id } })} />
         </div>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setDijeli(true)}
+          className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-rub bg-povrsina-2 px-4 py-3 text-left transition-colors hover:border-naglasak"
+        >
+          <Ikona ime="korisnik" className="text-naglasak" />
+          <span className="flex-1">
+            <span className="block text-[14.5px] font-medium">Podijeli s lovcem</span>
+            <span className="block text-[12.5px] text-tekst-3">Granica i točke na kartu prijatelja iz LD-a</span>
+          </span>
+          <Ikona ime="desno" velicina={16} className="text-tekst-3" />
+        </motion.button>
+        <PodijeliLoviste key={String(dijeli)} otvorena={dijeli} zatvori={() => setDijeli(false)} l={l} tocke={tocke} />
 
         <h3 className="mt-7 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Točke u lovištu</h3>
         {tocke.length ? (
