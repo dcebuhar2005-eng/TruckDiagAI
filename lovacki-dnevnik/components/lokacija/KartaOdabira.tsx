@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import L from "leaflet";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import Ikona from "../Ikona";
 import { cx, obavijest, opruga } from "../ui";
@@ -197,7 +198,8 @@ function Podloga({ slojevi, topo }: { slojevi: readonly { url: string; attr: str
             url={s.url}
             attribution={s.attr}
             detectRetina={s.retina}
-            maxNativeZoom={topo ? 17 : snimke ? zoomSnimki : 19}
+            // Retina: Leaflet traži zoom više od maxNativeZoom, pa jedan manje.
+            maxNativeZoom={(topo ? 17 : snimke ? zoomSnimki : 19) - (s.retina && L.Browser.retina ? 1 : 0)}
             maxZoom={20}
           />
         );

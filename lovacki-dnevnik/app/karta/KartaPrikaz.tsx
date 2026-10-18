@@ -144,7 +144,8 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
         const snimke = sl.url.includes("World_Imagery");
         const zajednicko = {
           attribution: sl.attr,
-          maxNativeZoom: snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni,
+          // Na oštrim (retina) ekranima Leaflet traži pločice zoom više od maxNativeZoom – zato jedan manje.
+          maxNativeZoom: (snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni) - (sl.retina && L.Browser.retina ? 1 : 0),
           maxZoom: MAKS_ZOOM,
           keepBuffer: 2,
           updateWhenZooming: false,
