@@ -105,6 +105,9 @@ export default function OdstrelUrednik({
 
   const krupna = nadiVrstu(v.vrsta)?.skupina === "krupna";
   const izlasciDana = baza.izlasci.filter((i) => i.datum === v.datum);
+  // „Tko je odstrijelio” samo u skupnom lovu i pogonu (ili kad je zapis već označen kao tuđi).
+  const nacinIzlaska = baza.izlasci.find((i) => i.id === v.izlazakId)?.nacin;
+  const skupni = nacinIzlaska === "skupni" || nacinIzlaska === "pogon" || v.tudji;
 
   const spremi = async () => {
     // Obriši uklonjene, spremi nove fotografije; redoslijed određuje naslovnu.
@@ -189,36 +192,38 @@ export default function OdstrelUrednik({
           <Fotografije slike={slike} promjena={setSlike} />
         </Odjeljak>
 
-        <Odjeljak naslov="Tko je odstrijelio">
-          <Segmenti
-            vrijednost={v.tudji ? "drugi" : "ja"}
-            promjena={(x) => postaviV("tudji", x === "drugi")}
-            opcije={[
-              { vrijednost: "ja" as const, oznaka: "Ja" },
-              { vrijednost: "drugi" as const, oznaka: "Drugi lovac" },
-            ]}
-          />
-          <AnimatePresence initial={false}>
-            {v.tudji && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                <div className="mt-3 flex flex-wrap items-end gap-3">
-                  <Polje oznaka="Ime lovca (neobavezno)" className="min-w-0 flex-1">
-                    <input className="unos" value={v.strijelac} onChange={(e) => postaviV("strijelac", e.target.value)} placeholder="npr. Ivo, ili „društvo”" />
-                  </Polje>
-                  {!postojeci && (
-                    <div>
-                      <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Grla</div>
-                      <Koracnik vrijednost={komada} min={1} promjena={setKomada} />
-                    </div>
-                  )}
-                </div>
-                <p className="mt-2 text-[12.5px] text-tekst-3">
-                  Zapisuje se u izlazak i lovište, ali se ne broji u vaš odstrel, uspješnost ni kvotu dozvole.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Odjeljak>
+        {skupni && (
+          <Odjeljak naslov="Tko je odstrijelio">
+            <Segmenti
+              vrijednost={v.tudji ? "drugi" : "ja"}
+              promjena={(x) => postaviV("tudji", x === "drugi")}
+              opcije={[
+                { vrijednost: "ja" as const, oznaka: "Ja" },
+                { vrijednost: "drugi" as const, oznaka: "Drugi lovac" },
+              ]}
+            />
+            <AnimatePresence initial={false}>
+              {v.tudji && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <div className="mt-3 flex flex-wrap items-end gap-3">
+                    <Polje oznaka="Ime lovca (neobavezno)" className="min-w-0 flex-1">
+                      <input className="unos" value={v.strijelac} onChange={(e) => postaviV("strijelac", e.target.value)} placeholder="npr. Ivo, ili „društvo”" />
+                    </Polje>
+                    {!postojeci && (
+                      <div>
+                        <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Grla</div>
+                        <Koracnik vrijednost={komada} min={1} promjena={setKomada} />
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-[12.5px] text-tekst-3">
+                    Zapisuje se u izlazak i lovište, ali se ne broji u vaš odstrel, uspješnost ni kvotu dozvole.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Odjeljak>
+        )}
 
         <Odjeljak naslov="Divljač">
           <Polje oznaka="Vrsta">
