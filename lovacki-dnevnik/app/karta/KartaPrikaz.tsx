@@ -1,6 +1,8 @@
 "use client";
 
 import L from "leaflet";
+// Rotacija karte s dva prsta (kao Google karte); mora se učitati prije stvaranja karte.
+import "leaflet-rotate";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -416,6 +418,9 @@ export default function KartaPrikaz() {
     } catch {}
   };
   const [dijeliLoviste, setDijeliLoviste] = useState<string | null>(null);
+  /** Zakret karte u stupnjevima (0 = sjever gore). */
+  const [okret, setOkret] = useState(0);
+  const [karta, setKarta] = useState<L.Map | null>(null);
   const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
@@ -654,7 +659,10 @@ export default function KartaPrikaz() {
         preferCanvas
         className="h-full w-full"
         attributionControl
+        {...ROTACIJA}
+        ref={setKarta}
       >
+        <PratiOkret onOkret={setOkret} />
         <SlojeviPodloge
           key={`${podloga}-${varijanta}`}
           podloga={podloga}
@@ -808,7 +816,7 @@ export default function KartaPrikaz() {
         {moja && (
           <>
             <Circle center={[moja.lat, moja.lng]} radius={moja.tocnost} interactive={false} pathOptions={{ color: "#4ea1ff", weight: 1, fillOpacity: 0.1 }} />
-            <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer)} interactive={false} zIndexOffset={2000} />
+            <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer != null ? moja.smjer + okret : null)} interactive={false} zIndexOffset={2000} />
           </>
         )}
         {dodajNa && <Marker position={[dodajNa.lat, dodajNa.lng]} icon={ikonaVrha} interactive={false} zIndexOffset={2500} />}
@@ -865,7 +873,7 @@ export default function KartaPrikaz() {
                 width="24"
                 height="24"
                 viewBox="0 0 24 24"
-                animate={{ rotate: (vjetarSmjer + 180) % 360 }}
+                animate={{ rotate: vjetarSmjer + 180 + okret }}
                 transition={{ type: "spring", stiffness: 80, damping: 14 }}
                 className="text-[#e8a947]"
               >
@@ -912,6 +920,26 @@ export default function KartaPrikaz() {
             }}
           />
           <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
+          <AnimatePresence>
+            {Math.abs(okret) > 0.5 && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => (karta as RotirajucaKarta | null)?.setBearing(0)}
+                aria-label="Sjever gore"
+                title="Sjever gore"
+                className="grid size-12 place-items-center rounded-2xl border border-white/10 bg-[#0d130e]/80 text-white shadow-jaka backdrop-blur-xl"
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" style={{ transform: `rotate(${okret}deg)` }} aria-hidden="true">
+                  <path d="M12 2.5 8.5 12h7z" fill="#e5533d" />
+                  <path d="M12 21.5 8.5 12h7z" fill="currentColor" opacity=".7" />
+                  <text x="12" y="9.6" textAnchor="middle" fontSize="5.2" fontWeight="700" fill="#fff">S</text>
+                </svg>
+              </motion.button>
+            )}
+          </AnimatePresence>
           <KartaGumb
             ikona="preuzmi"
             oznaka="Karta bez signala"
@@ -1415,6 +1443,23 @@ function Panel({ children }: { children: React.ReactNode }) {
       {children}
     </motion.div>
   );
+}
+
+type RotirajucaKarta = L.Map & { getBearing(): number; setBearing(stupnjevi: number): void };
+
+/** Rotacija dva prsta (leaflet-rotate); gumb kompasa vraća sjever gore. */
+const ROTACIJA = { rotate: true, touchRotate: true, shiftKeyRotate: true, rotateControl: false, bearing: 0 } as Record<string, unknown>;
+
+function PratiOkret({ onOkret }: { onOkret: (stupnjevi: number) => void }) {
+  const map = useMap() as RotirajucaKarta;
+  useEffect(() => {
+    const f = () => onOkret(map.getBearing());
+    map.on("rotate", f);
+    return () => {
+      map.off("rotate", f);
+    };
+  }, [map, onOkret]);
+  return null;
 }
 
 function KartaGumb({ ikona, oznaka, onClick, aktivan }: { ikona: ImeIkone; oznaka: string; onClick: () => void; aktivan?: boolean }) {

@@ -18,6 +18,7 @@
     "@supabase/supabase-js": "^2.117.3",
     "framer-motion": "^12.42.2",
     "leaflet": "^1.9.4",
+    "leaflet-rotate": "^0.2.8",
     "next": "16.2.9",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.4",
