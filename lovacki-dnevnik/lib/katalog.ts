@@ -146,12 +146,20 @@ export const PODVRSTE: Partial<Record<TipTocke, { k: string; naziv: string }[]>>
   ],
 };
 
-export const nazivPodvrste = (tip: TipTocke, k?: string) => (k ? PODVRSTE[tip]?.find((p) => p.k === k)?.naziv : undefined);
+/** Odabrane pobliže vrste (novi zapis `podvrste`, stari `podvrsta`), samo one koje postoje za tu vrstu. */
+export function podvrsteTocke(t: { tip: TipTocke; podvrsta?: string; podvrste?: string[] }) {
+  const k = t.podvrste ?? (t.podvrsta ? [t.podvrsta] : []);
+  return k.filter((x) => PODVRSTE[t.tip]?.some((p) => p.k === x));
+}
 
-/** „Čeka · visoka zatvorena” – vrsta s pobližim opisom ako je odabran. */
-export function opisVrsteTocke(t: { tip: TipTocke; podvrsta?: string }) {
-  const p = nazivPodvrste(t.tip, t.podvrsta);
-  return p ? `${TIPOVI_TOCAKA[t.tip].naziv} · ${p.toLowerCase()}` : TIPOVI_TOCAKA[t.tip].naziv;
+/** „automatska hranilica, za divlje svinje” */
+export const opisPodvrsta = (tip: TipTocke, k: string[]) =>
+  k.map((x) => PODVRSTE[tip]?.find((p) => p.k === x)?.naziv.toLowerCase()).filter(Boolean).join(", ");
+
+/** „Hranilište · automatska hranilica, za divlje svinje” – vrsta s pobližim opisom ako je odabran. */
+export function opisVrsteTocke(t: { tip: TipTocke; podvrsta?: string; podvrste?: string[] }) {
+  const p = opisPodvrsta(t.tip, podvrsteTocke(t));
+  return p ? `${TIPOVI_TOCAKA[t.tip].naziv} · ${p}` : TIPOVI_TOCAKA[t.tip].naziv;
 }
 
 /** Što se sije u lovištu za divljač (remize, krmne njive). */
