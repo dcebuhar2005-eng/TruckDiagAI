@@ -22,7 +22,7 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisVrsteTocke, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
@@ -1059,7 +1059,7 @@ export default function KartaPrikaz() {
                   <div className="truncate font-semibold">{odabranaTocka.naziv}</div>
                   <div className="text-[13px] text-white/60">
                     {vrsteTocke(odabranaTocka)
-                      .map((x) => TIPOVI_TOCAKA[x].naziv)
+                      .map((x) => (x === odabranaTocka.tip ? opisVrsteTocke(odabranaTocka) : TIPOVI_TOCAKA[x].naziv))
                       .join(" · ")}
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>

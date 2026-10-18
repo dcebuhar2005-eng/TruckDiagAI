@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import Ikona from "@/components/Ikona";
 import { Gumb, Ploca, cx, obavijest } from "@/components/ui";
-import { TIPOVI_TOCAKA } from "@/lib/katalog";
+import { TIPOVI_TOCAKA, opisVrsteTocke } from "@/lib/katalog";
 import { konfigurirano, useDrustvo } from "@/lib/drustvo";
 import { datumKratki } from "@/lib/format";
 import { useBaza } from "@/lib/store";
@@ -113,7 +113,7 @@ export function PodijeliLoviste({ otvorena, zatvori, l, tocke }: { otvorena: boo
             boja={TIPOVI_TOCAKA[t.tip].boja}
             slovo={TIPOVI_TOCAKA[t.tip].slovo}
             naziv={t.naziv}
-            opis={TIPOVI_TOCAKA[t.tip].naziv}
+            opis={opisVrsteTocke(t)}
           />
         ))}
         {!imaGranicu && !tocke.length && <p className="text-sm text-tekst-3">U ovom lovištu još nema granice ni točaka.</p>}

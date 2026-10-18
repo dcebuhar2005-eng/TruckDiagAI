@@ -99,6 +99,58 @@ export const DIVLJAC_PRIJELAZA: { k: string; naziv: string; slovo: string; boja:
   { k: "grabezljivci", naziv: "Lisica / čagalj", slovo: "Li", boja: "#e0864a" },
 ];
 
+/** Pobliže vrste točaka (odabir jednim dodirom ispod vrste). */
+export const PODVRSTE: Partial<Record<TipTocke, { k: string; naziv: string }[]>> = {
+  ceka: [
+    { k: "visoka-otvorena", naziv: "Visoka otvorena" },
+    { k: "visoka-zatvorena", naziv: "Visoka zatvorena" },
+    { k: "niska", naziv: "Niska" },
+    { k: "prizemna", naziv: "Prizemna (zaklon)" },
+    { k: "prijenosna", naziv: "Prijenosna" },
+    { k: "na-stablu", naziv: "Na stablu" },
+  ],
+  hraniliste: [
+    { k: "automatska", naziv: "Automatska hranilica" },
+    { k: "jelensko", naziv: "Jelensko (jasle)" },
+    { k: "srnece", naziv: "Srneće" },
+    { k: "svinje", naziv: "Za divlje svinje" },
+    { k: "sitna", naziv: "Za fazane / sitnu divljač" },
+    { k: "repa", naziv: "Repa / sočna hrana" },
+  ],
+  soliste: [
+    { k: "stol", naziv: "Stol za sol" },
+    { k: "panj", naziv: "Na panju" },
+    { k: "kolac", naziv: "Kamen soli na kolcu" },
+    { k: "zemlja", naziv: "U zemlji" },
+  ],
+  kamera: [
+    { k: "obicna", naziv: "Bez slanja (kartica)" },
+    { k: "4g", naziv: "Šalje slike (4G)" },
+  ],
+  kaljuziste: [
+    { k: "prirodno", naziv: "Prirodno" },
+    { k: "uredeno", naziv: "Uređeno" },
+  ],
+  pojiliste: [
+    { k: "izvor", naziv: "Izvor / potok" },
+    { k: "lokva", naziv: "Lokva" },
+    { k: "spremnik", naziv: "Kada / spremnik" },
+  ],
+  zaklon: [
+    { k: "prirodni", naziv: "Prirodni" },
+    { k: "mreza", naziv: "Maskirna mreža" },
+    { k: "sator", naziv: "Šator" },
+  ],
+};
+
+export const nazivPodvrste = (tip: TipTocke, k?: string) => (k ? PODVRSTE[tip]?.find((p) => p.k === k)?.naziv : undefined);
+
+/** „Čeka · visoka zatvorena” – vrsta s pobližim opisom ako je odabran. */
+export function opisVrsteTocke(t: { tip: TipTocke; podvrsta?: string }) {
+  const p = nazivPodvrste(t.tip, t.podvrsta);
+  return p ? `${TIPOVI_TOCAKA[t.tip].naziv} · ${p.toLowerCase()}` : TIPOVI_TOCAKA[t.tip].naziv;
+}
+
 /** Što se sije u lovištu za divljač (remize, krmne njive). */
 export const USJEVI: { k: string; naziv: string }[] = [
   { k: "kukuruz", naziv: "Kukuruz" },

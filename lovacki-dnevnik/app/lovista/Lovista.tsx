@@ -8,7 +8,7 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, Naslov, PraznoStanje, Znacka, cx, djeteListe, mekaOpruga, roditeljListe } from "@/components/ui";
-import { TIPOVI_TOCAKA, bojaVrste } from "@/lib/katalog";
+import { TIPOVI_TOCAKA, bojaVrste, opisVrsteTocke } from "@/lib/katalog";
 import { datumKratki, povrsinaHa } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, Loviste } from "@/lib/types";
@@ -271,7 +271,7 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14px]">{t.naziv}</span>
-                  <span className="block text-[11.5px] text-tekst-3">{TIPOVI_TOCAKA[t.tip].naziv}</span>
+                  <span className="block text-[11.5px] text-tekst-3">{opisVrsteTocke(t)}</span>
                 </span>
                 <span className="brojke text-[12px] text-tekst-3">{baza.izlasci.filter((i) => i.tockaId === t.id).length}×</span>
               </button>
