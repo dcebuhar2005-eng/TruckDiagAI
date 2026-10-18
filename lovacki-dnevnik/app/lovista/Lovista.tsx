@@ -13,7 +13,7 @@ import { datumKratki, povrsinaHa } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, Loviste } from "@/lib/types";
 import { sortirajPoDatumu } from "@/lib/upiti";
-import { PodijeliLoviste, PrimljenaLovista } from "./Podijeli";
+import { KarticaPodijeli, PodijeliLoviste, PrimljenaLovista } from "./Podijeli";
 
 function Obris({ l, tocke, velicina = 120 }: { l: Loviste; tocke?: Baza["tocke"]; velicina?: number }) {
   const g = l.granica ?? [];
@@ -104,6 +104,11 @@ export default function Lovista() {
           </Gumb>
         }
       />
+      {baza.lovista.length > 0 && (
+        <div className="mb-5">
+          <KarticaPodijeli />
+        </div>
+      )}
       <PrimljenaLovista />
 
       {baza.lovista.length === 0 ? (

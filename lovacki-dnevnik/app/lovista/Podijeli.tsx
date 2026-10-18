@@ -7,6 +7,7 @@ import { Gumb, Ploca, cx, obavijest } from "@/components/ui";
 import { TIPOVI_TOCAKA } from "@/lib/katalog";
 import { konfigurirano, useDrustvo } from "@/lib/drustvo";
 import { datumKratki } from "@/lib/format";
+import { useBaza } from "@/lib/store";
 import { napraviPaket, odbaciPrimljeno, posaljiLoviste, prihvatiPrimljeno, usePrimljenaLovista } from "@/lib/dijeljenjeLovista";
 import type { Loviste, Tocka } from "@/lib/types";
 
@@ -201,5 +202,66 @@ export function PrimljenaLovista() {
         );
       })}
     </div>
+  );
+}
+
+/** Podjela s bilo kojeg mjesta: najprije odabir lovišta (ako nije zadano), zatim slanje. */
+export function PodijeliOdabrano({ otvorena, zatvori, lovisteId }: { otvorena: boolean; zatvori: () => void; lovisteId?: string }) {
+  const baza = useBaza();
+  const [odabrano, setOdabrano] = useState<string | undefined>(lovisteId);
+  const lovista = baza?.lovista ?? [];
+  const id = lovisteId ?? odabrano ?? (lovista.length === 1 ? lovista[0].id : undefined);
+  const l = lovista.find((x) => x.id === id);
+  const kraj = () => {
+    setOdabrano(undefined);
+    zatvori();
+  };
+  if (l && baza)
+    return <PodijeliLoviste key={l.id} otvorena={otvorena} zatvori={kraj} l={l} tocke={baza.tocke.filter((t) => t.lovisteId === l.id)} />;
+  return (
+    <Ploca otvorena={otvorena} zatvori={kraj} naslov="Podijeli lovište" podnaslov="Koje lovište šaljete prijatelju?">
+      {lovista.length ? (
+        <div className="grid gap-1.5">
+          {lovista.map((x) => (
+            <button key={x.id} onClick={() => setOdabrano(x.id)} className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3.5 py-3 text-left hover:bg-povrsina-3">
+              <span className="size-3 rounded-full" style={{ background: x.boja }} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-medium">{x.naziv}</span>
+                <span className="block text-[12px] text-tekst-3">
+                  {(x.granica?.length ?? 0) >= 3 ? "granica + " : ""}
+                  {baza!.tocke.filter((t) => t.lovisteId === x.id).length} točaka
+                </span>
+              </span>
+              <Ikona ime="desno" velicina={16} className="text-tekst-3" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-tekst-3">Još nemate lovište. Dodajte ga u Lovištima pa ga možete poslati prijatelju.</p>
+      )}
+    </Ploca>
+  );
+}
+
+/** Istaknuta kartica (Lovci): podijeli svoje lovište s prijateljem iz LD-a. */
+export function KarticaPodijeli() {
+  const [otvoreno, setOtvoreno] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOtvoreno(true)}
+        className="kartica flex w-full items-center gap-3.5 border-naglasak/40 p-4 text-left transition-colors hover:border-naglasak"
+      >
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+          <Ikona ime="karta" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">Podijeli lovište s prijateljem</span>
+          <span className="block text-[13px] text-tekst-2">Pošalji granicu, čeke i hranilišta kolegi iz LD-a – ne mora sve ucrtavati ispočetka.</span>
+        </span>
+        <Ikona ime="desno" velicina={18} className="text-naglasak" />
+      </button>
+      <PodijeliOdabrano otvorena={otvoreno} zatvori={() => setOtvoreno(false)} />
+    </>
   );
 }

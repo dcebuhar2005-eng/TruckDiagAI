@@ -28,6 +28,7 @@ import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
+import { PodijeliOdabrano } from "../lovista/Podijeli";
 import { useZoomSnimki } from "@/lib/snimke";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
@@ -414,6 +415,7 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
+  const [dijeliLoviste, setDijeliLoviste] = useState<string | null>(null);
   const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
@@ -1153,6 +1155,9 @@ export default function KartaPrikaz() {
                     {Math.round(povrsinaHa(odabranoLoviste.granica ?? [])).toLocaleString("hr-HR")} ha · {baza.tocke.filter((t) => t.lovisteId === odabranoLoviste.id).length} točaka
                   </div>
                 </div>
+                <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" ikona="korisnik" onClick={() => setDijeliLoviste(odabranoLoviste.id)}>
+                  Podijeli
+                </Gumb>
                 <Link href="/lovista" transitionTypes={["naprijed"]}>
                   <Gumb velicina="sm" vrsta="primarni">
                     Otvori
@@ -1335,6 +1340,7 @@ export default function KartaPrikaz() {
           />
         </motion.div>
       </div>
+      {dijeliLoviste && <PodijeliOdabrano key={dijeliLoviste} otvorena zatvori={() => setDijeliLoviste(null)} lovisteId={dijeliLoviste} />}
     </div>
   );
 }
