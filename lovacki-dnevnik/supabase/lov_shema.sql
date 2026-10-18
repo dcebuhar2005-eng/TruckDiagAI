@@ -533,3 +533,22 @@ language sql stable security invoker set search_path = '' as $$
 $$;
 revoke all on function public.lov_predlozeni_lovci() from public, anon;
 grant execute on function public.lov_predlozeni_lovci() to authenticated;
+
+-- Lovište poslano prijatelju (kopija granice i točaka; primatelj ga doda na svoju kartu ili odbaci).
+create table if not exists public.lov_poslana_lovista (
+  id bigint generated always as identity primary key,
+  od uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  za uuid not null references auth.users(id) on delete cascade,
+  naziv text not null check (char_length(naziv) <= 200),
+  podaci jsonb not null check (pg_column_size(podaci) < 600000),
+  created_at timestamptz not null default now()
+);
+create index if not exists lov_poslana_lovista_za on public.lov_poslana_lovista (za, created_at desc);
+alter table public.lov_poslana_lovista enable row level security;
+create policy lov_poslana_slanje on public.lov_poslana_lovista for insert
+  with check (od = (select auth.uid()) and lov_privatno.su_prijatelji((select auth.uid()), za));
+create policy lov_poslana_citanje on public.lov_poslana_lovista for select
+  using (za = (select auth.uid()) or od = (select auth.uid()));
+create policy lov_poslana_brisanje on public.lov_poslana_lovista for delete
+  using (za = (select auth.uid()) or od = (select auth.uid()));
+grant select, insert, delete on public.lov_poslana_lovista to authenticated;

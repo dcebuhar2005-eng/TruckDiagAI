@@ -12,7 +12,7 @@ import type { Baza, Oruzje } from "@/lib/types";
 export default function MojeOruzje({ baza }: { baza: Baza }) {
   const [uredi, setUredi] = useState<Oruzje | "novo" | null>(null);
   const oruzje = baza.oruzje ?? [];
-  const brojOdstrela = (o: Oruzje) => baza.odstrel.filter((x) => x.oruzje === o.naziv).length;
+  const brojOdstrela = (o: Oruzje) => baza.odstrel.filter((x) => x.oruzje === o.naziv && !x.tudji).length;
   return (
     <section className="mt-10">
       <div className="mb-3 flex items-center justify-between gap-3">

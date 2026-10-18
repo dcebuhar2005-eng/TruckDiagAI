@@ -11,7 +11,7 @@ import { NACINI_LOVA, RADOVI, SKUPINE, TIPOVI_TOCAKA, bojaVrste, nazivSpola, vrs
 import { MJESECI_KRATKO, datumKratki, izIso, trajanjeIzlaska } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, VrstaLova, VrstaRada } from "@/lib/types";
-import { danaOd, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
+import { danaOd, mojOdstrel, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { imaTip } from "@/lib/vjetarCeke";
 
 const SMJEROVI8 = ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"];
@@ -20,7 +20,7 @@ const REDOSLIJED = [3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2];
 
 function izvoziCsv(baza: Baza) {
   const zaglavlje = ["Datum", "Vrijeme", "Vrsta", "Spol", "Dob", "Masa (kg)", "Trofej (CIC)", "Opis trofeja", "Lovište", "Markica", "Oružje", "Kalibar", "Udaljenost (m)", "Geo. širina", "Geo. dužina", "Napomena"];
-  const redovi = baza.odstrel.map((o) => [
+  const redovi = baza.odstrel.filter(mojOdstrel).map((o) => [
     o.datum, o.vrijeme, o.vrsta, nazivSpola(o.vrsta, o.spol), o.dob, o.masa, o.trofejCic, o.trofejOpis,
     nazivLovista(baza, o.lovisteId), o.markica, o.oruzje, o.kalibar, o.udaljenost, o.lat, o.lng, o.napomena,
   ]);
@@ -49,7 +49,7 @@ export default function Statistika() {
     if (!baza) return null;
     const uGodini = (datum: string) => godina === "sve" || lovnaGodina(izIso(datum)).pocetna === Number(godina);
     const izlasci = baza.izlasci.filter((i) => uGodini(i.datum));
-    const odstrel = baza.odstrel.filter((o) => uGodini(o.datum));
+    const odstrel = baza.odstrel.filter((o) => uGodini(o.datum) && mojOdstrel(o));
     const minuta = izlasci.reduce((s, i) => s + (trajanjeIzlaska(i.od, i.do) ?? 0), 0);
     const masa = odstrel.reduce((s, o) => s + (o.masa ?? 0), 0);
 
@@ -67,14 +67,14 @@ export default function Statistika() {
 
     const ruza = SMJEROVI8.map((_, k) => {
       const svi = izlasci.filter((i) => i.vrijeme?.vjetarSmjer != null && Math.round(i.vrijeme.vjetarSmjer / 45) % 8 === k);
-      return { svi: svi.length, uspjesni: svi.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id)).length };
+      return { svi: svi.length, uspjesni: svi.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id && mojOdstrel(o))).length };
     });
 
     const poNacinu = (Object.keys(NACINI_LOVA) as VrstaLova[])
       .filter((n) => n !== "obilazak")
       .map((n) => {
         const s = izlasci.filter((i) => i.nacin === n);
-        const u = s.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id)).length;
+        const u = s.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id && mojOdstrel(o))).length;
         return { n, ukupno: s.length, uspjesni: u };
       })
       .filter((x) => x.ukupno > 0)

@@ -13,7 +13,7 @@ import type { Baza, Odstrel, Spol } from "@/lib/types";
 import Ikona from "../Ikona";
 import { Ploca, Polje, Segmenti, cx, obavijest, usePotvrda } from "../ui";
 import { zatvori } from "./kontroler";
-import { OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
+import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
 
 export default function OdstrelUrednik({
   baza,
@@ -55,7 +55,11 @@ export default function OdstrelUrednik({
     kalibar: p.kalibar ?? "",
     markica: p.markica ?? "",
     napomena: p.napomena ?? "",
+    tudji: p.tudji ?? false,
+    strijelac: p.strijelac ?? "",
   });
+  /** Za odstrel drugih lovaca (pogon): više istih grla odjednom. */
+  const [komada, setKomada] = useState(1);
   const [lok, setLok] = useState<{ lat: number; lng: number } | undefined>(
     p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : undefined,
   );
@@ -101,6 +105,9 @@ export default function OdstrelUrednik({
 
   const krupna = nadiVrstu(v.vrsta)?.skupina === "krupna";
   const izlasciDana = baza.izlasci.filter((i) => i.datum === v.datum);
+  // „Tko je odstrijelio” samo u skupnom lovu i pogonu (ili kad je zapis već označen kao tuđi).
+  const nacinIzlaska = baza.izlasci.find((i) => i.id === v.izlazakId)?.nacin;
+  const skupni = nacinIzlaska === "skupni" || nacinIzlaska === "pogon" || v.tudji;
 
   const spremi = async () => {
     // Obriši uklonjene, spremi nove fotografije; redoslijed određuje naslovnu.
@@ -143,10 +150,16 @@ export default function OdstrelUrednik({
       lng: lok?.lng,
       fotoId: undefined,
       fotoIds,
+      tudji: v.tudji || undefined,
+      strijelac: v.tudji ? tekst(v.strijelac) : undefined,
     };
     if (postojeci) {
       db.uredi("odstrel", postojeci.id, podaci);
       obavijest("Odstrel je ažuriran");
+    } else if (v.tudji) {
+      const n = Math.max(1, komada);
+      for (let k = 0; k < n; k++) db.dodaj("odstrel", { ...podaci, fotoIds: k === 0 ? fotoIds : [] });
+      obavijest(`Upisano u odstrel lova: ${v.vrsta} × ${n}${v.strijelac.trim() ? ` (${v.strijelac.trim()})` : ""}`);
     } else {
       db.dodaj("odstrel", podaci);
       obavijest(`Dobra kob! ${v.vrsta} je upisan.`);
@@ -178,6 +191,39 @@ export default function OdstrelUrednik({
         <Odjeljak naslov="Fotografije">
           <Fotografije slike={slike} promjena={setSlike} />
         </Odjeljak>
+
+        {skupni && (
+          <Odjeljak naslov="Tko je odstrijelio">
+            <Segmenti
+              vrijednost={v.tudji ? "drugi" : "ja"}
+              promjena={(x) => postaviV("tudji", x === "drugi")}
+              opcije={[
+                { vrijednost: "ja" as const, oznaka: "Ja" },
+                { vrijednost: "drugi" as const, oznaka: "Drugi lovac" },
+              ]}
+            />
+            <AnimatePresence initial={false}>
+              {v.tudji && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <div className="mt-3 flex flex-wrap items-end gap-3">
+                    <Polje oznaka="Ime lovca (neobavezno)" className="min-w-0 flex-1">
+                      <input className="unos" value={v.strijelac} onChange={(e) => postaviV("strijelac", e.target.value)} placeholder="npr. Ivo, ili „društvo”" />
+                    </Polje>
+                    {!postojeci && (
+                      <div>
+                        <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Grla</div>
+                        <Koracnik vrijednost={komada} min={1} promjena={setKomada} />
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-[12.5px] text-tekst-3">
+                    Zapisuje se u izlazak i lovište, ali se ne broji u vaš odstrel, uspješnost ni kvotu dozvole.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Odjeljak>
+        )}
 
         <Odjeljak naslov="Divljač">
           <Polje oznaka="Vrsta">

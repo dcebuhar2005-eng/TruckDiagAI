@@ -8,11 +8,12 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, Naslov, PraznoStanje, Znacka, cx, djeteListe, mekaOpruga, roditeljListe } from "@/components/ui";
-import { TIPOVI_TOCAKA, bojaVrste } from "@/lib/katalog";
+import { TIPOVI_TOCAKA, bojaVrste, opisVrsteTocke } from "@/lib/katalog";
 import { datumKratki, povrsinaHa } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, Loviste } from "@/lib/types";
-import { sortirajPoDatumu } from "@/lib/upiti";
+import { mojOdstrel, sortirajPoDatumu } from "@/lib/upiti";
+import { KarticaPodijeli, PodijeliLoviste, PrimljenaLovista } from "./Podijeli";
 
 function Obris({ l, tocke, velicina = 120 }: { l: Loviste; tocke?: Baza["tocke"]; velicina?: number }) {
   const g = l.granica ?? [];
@@ -103,6 +104,12 @@ export default function Lovista() {
           </Gumb>
         }
       />
+      {baza.lovista.length > 0 && (
+        <div className="mb-5">
+          <KarticaPodijeli />
+        </div>
+      )}
+      <PrimljenaLovista />
 
       {baza.lovista.length === 0 ? (
         <PraznoStanje
@@ -115,7 +122,7 @@ export default function Lovista() {
         <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {baza.lovista.map((x) => {
             const izl = baza.izlasci.filter((i) => i.lovisteId === x.id).length;
-            const ods = baza.odstrel.filter((o) => o.lovisteId === x.id).length;
+            const ods = baza.odstrel.filter((o) => o.lovisteId === x.id && mojOdstrel(o)).length;
             const tck = baza.tocke.filter((t) => t.lovisteId === x.id);
             const ha = x.povrsinaHa ?? (x.granica ? Math.round(povrsinaHa(x.granica)) : undefined);
             return (
@@ -199,11 +206,12 @@ function Stat({ v, o }: { v: number | string; o: string }) {
 function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: () => void }) {
   const tocke = baza.tocke.filter((t) => t.lovisteId === l.id);
   const izlasci = sortirajPoDatumu(baza.izlasci.filter((i) => i.lovisteId === l.id));
-  const odstrel = baza.odstrel.filter((o) => o.lovisteId === l.id);
+  const odstrel = baza.odstrel.filter((o) => o.lovisteId === l.id && mojOdstrel(o));
   const poVrsti = Object.entries(
     odstrel.reduce<Record<string, number>>((a, o) => ({ ...a, [o.vrsta]: (a[o.vrsta] ?? 0) + 1 }), {}),
   ).sort((a, b) => b[1] - a[1]);
   const ha = l.povrsinaHa ?? (l.granica ? Math.round(povrsinaHa(l.granica)) : undefined);
+  const [dijeli, setDijeli] = useState(false);
 
   return (
     <>
@@ -239,6 +247,19 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
           <Akcija ikona="lokacija" oznaka="Dodaj točku" onClick={() => otvori({ tip: "tocka", pocetno: { lovisteId: l.id } })} />
           <Akcija ikona="dnevnik" oznaka="Izlazak" onClick={() => otvori({ tip: "izlazak", pocetno: { lovisteId: l.id } })} />
         </div>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setDijeli(true)}
+          className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-rub bg-povrsina-2 px-4 py-3 text-left transition-colors hover:border-naglasak"
+        >
+          <Ikona ime="korisnik" className="text-naglasak" />
+          <span className="flex-1">
+            <span className="block text-[14.5px] font-medium">Podijeli s lovcem</span>
+            <span className="block text-[12.5px] text-tekst-3">Granica i točke na kartu prijatelja iz LD-a</span>
+          </span>
+          <Ikona ime="desno" velicina={16} className="text-tekst-3" />
+        </motion.button>
+        <PodijeliLoviste key={String(dijeli)} otvorena={dijeli} zatvori={() => setDijeli(false)} l={l} tocke={tocke} />
 
         <h3 className="mt-7 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Točke u lovištu</h3>
         {tocke.length ? (
@@ -250,7 +271,7 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14px]">{t.naziv}</span>
-                  <span className="block text-[11.5px] text-tekst-3">{TIPOVI_TOCAKA[t.tip].naziv}</span>
+                  <span className="block text-[11.5px] text-tekst-3">{opisVrsteTocke(t)}</span>
                 </span>
                 <span className="brojke text-[12px] text-tekst-3">{baza.izlasci.filter((i) => i.tockaId === t.id).length}×</span>
               </button>

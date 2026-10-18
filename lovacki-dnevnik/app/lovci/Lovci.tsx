@@ -7,6 +7,7 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { ObrazacPrijave } from "@/components/PrijavaZaslon";
 import QrKod from "@/components/QrKod";
+import { KarticaPodijeli, PrimljenaLovista } from "@/app/lovista/Podijeli";
 import { Gumb, Naslov, Ploca, Polje, Segmenti, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
 import {
   drziZaslonUkljucen,
@@ -271,6 +272,7 @@ function Glavno() {
       <MojQr otvorena={qr} zatvori={() => setQr(false)} />
       <UrediProfil key={String(profil)} otvorena={profil} zatvori={() => setProfil(false)} />
       <DodajIzPoveznice />
+      <PrimljenaLovista />
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 lg:grid-cols-2">
         <motion.div variants={djeteListe} className="lg:col-span-2">
@@ -282,6 +284,12 @@ function Glavno() {
         <motion.section variants={djeteListe} className="lg:col-span-2">
           <UloviSam brojPrijatelja={prijatelji.length} />
         </motion.section>
+
+        {prijatelji.length > 0 && (
+          <motion.section variants={djeteListe} className="lg:col-span-2">
+            <KarticaPodijeli />
+          </motion.section>
+        )}
 
         <Sekcija naslov="U lovu sada" ikona="lokacija" broj={d.lokacije.length}>
           {d.lokacije.length ? (

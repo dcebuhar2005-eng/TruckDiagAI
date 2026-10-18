@@ -1,6 +1,8 @@
 "use client";
 
 import L from "leaflet";
+// Rotacija karte s dva prsta (kao Google karte); mora se učitati prije stvaranja karte.
+import "leaflet-rotate";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,12 +24,14 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
-import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, nazivSpola, opisPrijelaza, opisUsjeva } from "@/lib/katalog";
+import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisVrsteTocke, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
 import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
+import { PodijeliOdabrano } from "../lovista/Podijeli";
+import { useZoomSnimki } from "@/lib/snimke";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
 import { type Granice, useOfflinePodrucja } from "@/lib/offline";
 import type { Baza, TipTocke, Tocka } from "@/lib/types";
@@ -132,12 +136,15 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
   const greske = useRef(0);
   const uspjesi = useRef(0);
   const slojevi = varijanta === 0 ? PODLOGE[podloga].slojevi : (PODLOGE[podloga].rezerve?.[varijanta - 1] ?? PODLOGE[podloga].slojevi);
+  const imaSnimke = slojevi.some((sl) => sl.url.includes("World_Imagery"));
+  const zoomSnimki = useZoomSnimki(imaSnimke);
   return (
     <>
       {slojevi.map((sl, i) => {
+        const snimke = sl.url.includes("World_Imagery");
         const zajednicko = {
           attribution: sl.attr,
-          maxNativeZoom: sl.nativni,
+          maxNativeZoom: snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni,
           maxZoom: MAKS_ZOOM,
           keepBuffer: 2,
           updateWhenZooming: false,
@@ -155,7 +162,7 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
           <WMSTileLayer key={`${podloga}-${varijanta}-${i}`} url={sl.url} params={parametriWms(sl.wms.layers, sl.wms.format)} {...zajednicko} />
         ) : (
           <TileLayer
-            key={`${podloga}-${i}`}
+            key={`${podloga}-${i}${snimke ? `-${zoomSnimki}` : ""}`}
             url={sl.url}
             detectRetina={sl.retina}
             {...zajednicko}
@@ -168,7 +175,7 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
 }
 
 type Nacin = "pregled" | "tocka" | "granica" | "mjerenje";
-type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { tip: "loviste"; id: string } | null;
+type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { tip: "loviste"; id: string } | { tip: "trag"; id: string; k: number } | null;
 
 function ikonaTocke(t: Tocka, odabrana: boolean) {
   const info = { ...TIPOVI_TOCAKA[t.tip] };
@@ -202,6 +209,16 @@ function ikonaOdstrela(boja: string) {
     iconAnchor: [11, 11],
     html: `<div class="oznaka-karte" style="width:22px;height:22px;display:grid;place-items:center;border-radius:999px;background:${boja};border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45)">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>`,
+  });
+}
+
+function ikonaTraga(boja: string, svjez?: boolean) {
+  return L.divIcon({
+    className: "",
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    html: `<div class="oznaka-karte" style="width:20px;height:20px;display:grid;place-items:center;border-radius:6px;transform:rotate(45deg);background:${boja};border:2px solid ${svjez ? "#fff" : "rgba(255,255,255,.55)"};box-shadow:0 3px 8px rgba(0,0,0,.45);opacity:${svjez === false ? 0.7 : 1}">
+      <svg style="transform:rotate(-45deg)" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round"><path d="M8.5 3C6.8 3 5.5 5.7 5.5 9s1.3 6 3 6 2.5-2.3 2.5-5-.8-7-2.5-7zM15.5 3C13.8 3 13 7.3 13 10s.8 5 2.5 5 3-2.7 3-6-1.3-6-3-6z"/></svg></div>`,
   });
 }
 
@@ -400,7 +417,11 @@ export default function KartaPrikaz() {
       localStorage.setItem(KLJUC_PODLOGE, p);
     } catch {}
   };
-  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, miris: true, lovci: true });
+  const [dijeliLoviste, setDijeliLoviste] = useState<string | null>(null);
+  /** Zakret karte u stupnjevima (0 = sjever gore). */
+  const [okret, setOkret] = useState(0);
+  const [karta, setKarta] = useState<L.Map | null>(null);
+  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -621,6 +642,8 @@ export default function KartaPrikaz() {
   const duljinaMjerenja = crtez.reduce((s, p, i) => (i ? s + udaljenostM({ lat: crtez[i - 1][0], lng: crtez[i - 1][1] }, { lat: p[0], lng: p[1] }) : 0), 0);
   const odabranaTocka = odabir?.tip === "tocka" ? baza.tocke.find((t) => t.id === odabir.id) : undefined;
   const odabraniOdstrel = odabir?.tip === "odstrel" ? baza.odstrel.find((o) => o.id === odabir.id) : undefined;
+  const odabraniTrag = odabir?.tip === "trag" ? baza.izlasci.find((i) => i.id === odabir.id)?.tragovi?.[odabir.k] : undefined;
+  const izlazakTraga = odabir?.tip === "trag" ? baza.izlasci.find((i) => i.id === odabir.id) : undefined;
   const odabranoLoviste = odabir?.tip === "loviste" ? baza.lovista.find((l) => l.id === odabir.id) : undefined;
   const ceke = baza.tocke.filter((t) => tockaZaVjetar(t));
   const zaMiris = odabranaTocka ? [odabranaTocka] : ceke;
@@ -636,7 +659,10 @@ export default function KartaPrikaz() {
         preferCanvas
         className="h-full w-full"
         attributionControl
+        {...ROTACIJA}
+        ref={setKarta}
       >
+        <PratiOkret onOkret={setOkret} />
         <SlojeviPodloge
           key={`${podloga}-${varijanta}`}
           podloga={podloga}
@@ -736,7 +762,7 @@ export default function KartaPrikaz() {
 
         {slojevi.odstrel &&
           baza.odstrel
-            .filter((o) => o.lat != null && o.lng != null)
+            .filter((o) => o.lat != null && o.lng != null && !o.tudji)
             .map((o) => (
               <Marker
                 key={o.id}
@@ -745,6 +771,22 @@ export default function KartaPrikaz() {
                 eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "odstrel", id: o.id }) }}
               />
             ))}
+
+        {slojevi.tragovi &&
+          baza.izlasci.flatMap((i) =>
+            (i.tragovi ?? []).flatMap((t, k) =>
+              t.lat != null && t.lng != null
+                ? [
+                    <Marker
+                      key={`t-${i.id}-${k}`}
+                      position={[t.lat, t.lng]}
+                      icon={ikonaTraga(divljacTraga(t.divljac).boja, t.svjez)}
+                      eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "trag", id: i.id, k }) }}
+                    />,
+                  ]
+                : [],
+            ),
+          )}
 
         {slojevi.lovci &&
           drustvo.lokacije.map((l) => (
@@ -774,7 +816,7 @@ export default function KartaPrikaz() {
         {moja && (
           <>
             <Circle center={[moja.lat, moja.lng]} radius={moja.tocnost} interactive={false} pathOptions={{ color: "#4ea1ff", weight: 1, fillOpacity: 0.1 }} />
-            <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer)} interactive={false} zIndexOffset={2000} />
+            <Marker position={[moja.lat, moja.lng]} icon={ikonaMoje(moja.smjer != null ? moja.smjer + okret : null)} interactive={false} zIndexOffset={2000} />
           </>
         )}
         {dodajNa && <Marker position={[dodajNa.lat, dodajNa.lng]} icon={ikonaVrha} interactive={false} zIndexOffset={2500} />}
@@ -831,7 +873,7 @@ export default function KartaPrikaz() {
                 width="24"
                 height="24"
                 viewBox="0 0 24 24"
-                animate={{ rotate: (vjetarSmjer + 180) % 360 }}
+                animate={{ rotate: vjetarSmjer + 180 + okret }}
                 transition={{ type: "spring", stiffness: 80, damping: 14 }}
                 className="text-[#e8a947]"
               >
@@ -878,6 +920,26 @@ export default function KartaPrikaz() {
             }}
           />
           <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
+          <AnimatePresence>
+            {Math.abs(okret) > 0.5 && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => (karta as RotirajucaKarta | null)?.setBearing(0)}
+                aria-label="Sjever gore"
+                title="Sjever gore"
+                className="grid size-12 place-items-center rounded-2xl border border-white/10 bg-[#0d130e]/80 text-white shadow-jaka backdrop-blur-xl"
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" style={{ transform: `rotate(${okret}deg)` }} aria-hidden="true">
+                  <path d="M12 2.5 8.5 12h7z" fill="#e5533d" />
+                  <path d="M12 21.5 8.5 12h7z" fill="currentColor" opacity=".7" />
+                  <text x="12" y="9.6" textAnchor="middle" fontSize="5.2" fontWeight="700" fill="#fff">S</text>
+                </svg>
+              </motion.button>
+            )}
+          </AnimatePresence>
           <KartaGumb
             ikona="preuzmi"
             oznaka="Karta bez signala"
@@ -931,6 +993,7 @@ export default function KartaPrikaz() {
                 ["lovista", "Moja lovišta"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
+                ["tragovi", "Tragovi divljači"],
                 ["miris", "Zona mirisa (vjetar)"],
                 ["lovci", "Prijatelji u lovu"],
               ] as [keyof typeof slojevi, string][]
@@ -1024,7 +1087,7 @@ export default function KartaPrikaz() {
                   <div className="truncate font-semibold">{odabranaTocka.naziv}</div>
                   <div className="text-[13px] text-white/60">
                     {vrsteTocke(odabranaTocka)
-                      .map((x) => TIPOVI_TOCAKA[x].naziv)
+                      .map((x) => (x === odabranaTocka.tip ? opisVrsteTocke(odabranaTocka) : TIPOVI_TOCAKA[x].naziv))
                       .join(" · ")}
                     {odabranaTocka.lovisteId ? ` · ${baza.lovista.find((l) => l.id === odabranaTocka.lovisteId)?.naziv ?? ""}` : ""}
                   </div>
@@ -1086,6 +1149,28 @@ export default function KartaPrikaz() {
               </div>
             </Panel>
           )}
+          {nacin === "pregled" && odabraniTrag && izlazakTraga && (
+            <Panel key={`t-${izlazakTraga.id}-${odabir?.tip === "trag" ? odabir.k : 0}`}>
+              <div className="flex items-center gap-3">
+                <span className="grid size-11 place-items-center rounded-xl" style={{ background: `${divljacTraga(odabraniTrag.divljac).boja}33`, color: divljacTraga(odabraniTrag.divljac).boja }}>
+                  <Ikona ime="trag" />
+                </span>
+                <div className="flex-1">
+                  <div className="font-semibold">
+                    {znakTraga(odabraniTrag.znak)} · {divljacTraga(odabraniTrag.divljac).naziv.toLowerCase()}
+                  </div>
+                  <div className="text-[13px] text-white/60">
+                    {opisDana(danaOd(izlazakTraga.datum))} · {datumKratki(izlazakTraga.datum)}
+                    {odabraniTrag.vrijeme ? ` u ${odabraniTrag.vrijeme}` : ""}
+                    {odabraniTrag.svjez != null && (odabraniTrag.svjez ? " · svjež" : " · star")}
+                  </div>
+                </div>
+                <Gumb velicina="sm" vrsta="primarni" onClick={() => otvori({ tip: "detalj-izlazak", id: izlazakTraga.id })}>
+                  Izlazak
+                </Gumb>
+              </div>
+            </Panel>
+          )}
           {nacin === "pregled" && odabranoLoviste && (
             <Panel key={`l-${odabranoLoviste.id}`}>
               <div className="flex items-center gap-3">
@@ -1098,6 +1183,9 @@ export default function KartaPrikaz() {
                     {Math.round(povrsinaHa(odabranoLoviste.granica ?? [])).toLocaleString("hr-HR")} ha · {baza.tocke.filter((t) => t.lovisteId === odabranoLoviste.id).length} točaka
                   </div>
                 </div>
+                <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" ikona="korisnik" onClick={() => setDijeliLoviste(odabranoLoviste.id)}>
+                  Podijeli
+                </Gumb>
                 <Link href="/lovista" transitionTypes={["naprijed"]}>
                   <Gumb velicina="sm" vrsta="primarni">
                     Otvori
@@ -1280,6 +1368,7 @@ export default function KartaPrikaz() {
           />
         </motion.div>
       </div>
+      {dijeliLoviste && <PodijeliOdabrano key={dijeliLoviste} otvorena zatvori={() => setDijeliLoviste(null)} lovisteId={dijeliLoviste} />}
     </div>
   );
 }
@@ -1354,6 +1443,23 @@ function Panel({ children }: { children: React.ReactNode }) {
       {children}
     </motion.div>
   );
+}
+
+type RotirajucaKarta = L.Map & { getBearing(): number; setBearing(stupnjevi: number): void };
+
+/** Rotacija dva prsta (leaflet-rotate); gumb kompasa vraća sjever gore. */
+const ROTACIJA = { rotate: true, touchRotate: true, shiftKeyRotate: true, rotateControl: false, bearing: 0 } as Record<string, unknown>;
+
+function PratiOkret({ onOkret }: { onOkret: (stupnjevi: number) => void }) {
+  const map = useMap() as RotirajucaKarta;
+  useEffect(() => {
+    const f = () => onOkret(map.getBearing());
+    map.on("rotate", f);
+    return () => {
+      map.off("rotate", f);
+    };
+  }, [map, onOkret]);
+  return null;
 }
 
 function KartaGumb({ ikona, oznaka, onClick, aktivan }: { ikona: ImeIkone; oznaka: string; onClick: () => void; aktivan?: boolean }) {

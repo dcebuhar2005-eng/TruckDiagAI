@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, TIPOVI_DOZVOLA, TIPOVI_TOCAKA, USJEVI, opisUsjeva } from "@/lib/katalog";
+import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, PODVRSTE, TIPOVI_DOZVOLA, TIPOVI_TOCAKA, USJEVI, nazivPodvrste, opisUsjeva } from "@/lib/katalog";
 import { povrsinaHa } from "@/lib/format";
 import { db } from "@/lib/store";
 import type { Baza, Kvota, Loviste, Spol, Tocka, Tocka2D, TipDozvole, TipTocke } from "@/lib/types";
@@ -311,6 +311,9 @@ export function TockaUrednik({
   const [vjetrovi, setVjetrovi] = useState<number[]>(p?.vjetrovi ?? []);
   const [divljac, setDivljac] = useState<string[]>(p?.divljac ?? []);
   const [usjevi, setUsjevi] = useState<string[]>(p?.usjevi ?? []);
+  const [podvrsta, setPodvrsta] = useState<string | undefined>(p?.podvrsta);
+  const podvrste = PODVRSTE[tip];
+  const valjanaPodvrsta = podvrste?.some((x) => x.k === podvrsta) ? podvrsta : undefined;
   const [dodatno, setDodatno] = useState<TipTocke[]>(p?.dodatno ?? []);
   const dodatnoBez = dodatno.filter((x) => x !== tip);
   const potvrda = usePotvrda();
@@ -322,6 +325,7 @@ export function TockaUrednik({
       vjetrovi: imaVjetar && vjetrovi.length ? vjetrovi : undefined,
       divljac: tip === "prijelaz" && divljac.length ? divljac : undefined,
       usjevi: tip === "remiza" && usjevi.length ? usjevi : undefined,
+      podvrsta: valjanaPodvrsta,
       dodatno: dodatnoBez.length ? dodatnoBez : undefined,
       naziv:
         naziv.trim() ||
@@ -329,7 +333,9 @@ export function TockaUrednik({
           ? `Prijelaz – ${DIVLJAC_PRIJELAZA.filter((d) => divljac.includes(d.k)).map((d) => d.naziv.toLowerCase()).join(", ")}`
           : tip === "remiza" && usjevi.length
             ? `Remiza – ${opisUsjeva(usjevi)}`
-            : TIPOVI_TOCAKA[tip].naziv),
+            : valjanaPodvrsta
+              ? `${TIPOVI_TOCAKA[tip].naziv} (${nazivPodvrste(tip, valjanaPodvrsta)!.toLowerCase()})`
+              : TIPOVI_TOCAKA[tip].naziv),
       lovisteId,
       lat: lok!.lat,
       lng: lok!.lng,
@@ -394,6 +400,42 @@ export function TockaUrednik({
               );
             })}
           </div>
+          <AnimatePresence initial={false}>
+            {podvrste && (
+              <motion.div
+                key={tip}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 mb-2 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">
+                  Pobliže <span className="font-normal normal-case text-tekst-3">(neobavezno)</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {podvrste.map((x) => {
+                    const on = valjanaPodvrsta === x.k;
+                    return (
+                      <motion.button
+                        key={x.k}
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        aria-pressed={on}
+                        onClick={() => setPodvrsta(on ? undefined : x.k)}
+                        className={cx(
+                          "rounded-full border px-3.5 py-2 text-[14px] transition-colors",
+                          on ? "border-naglasak bg-naglasak-meki font-medium" : "border-rub bg-povrsina-2 text-tekst-2",
+                        )}
+                      >
+                        {on && "✓ "}
+                        {x.naziv}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <AnimatePresence initial={false}>
             {tip === "prijelaz" && (
               <motion.div

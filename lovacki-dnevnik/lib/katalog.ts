@@ -99,6 +99,61 @@ export const DIVLJAC_PRIJELAZA: { k: string; naziv: string; slovo: string; boja:
   { k: "grabezljivci", naziv: "Lisica / čagalj", slovo: "Li", boja: "#e0864a" },
 ];
 
+/** „odstrijelio Ivo” / „drugi lovac” za odstrel u skupnom lovu. */
+export const opisStrijelca = (o: { tudji?: boolean; strijelac?: string }) => (o.tudji ? (o.strijelac ? `odstrijelio ${o.strijelac}` : "drugi lovac") : undefined);
+
+/** Pobliže vrste točaka (odabir jednim dodirom ispod vrste). */
+export const PODVRSTE: Partial<Record<TipTocke, { k: string; naziv: string }[]>> = {
+  ceka: [
+    { k: "visoka-otvorena", naziv: "Visoka otvorena" },
+    { k: "visoka-zatvorena", naziv: "Visoka zatvorena" },
+    { k: "niska", naziv: "Niska" },
+    { k: "prizemna", naziv: "Prizemna (zaklon)" },
+    { k: "prijenosna", naziv: "Prijenosna" },
+    { k: "na-stablu", naziv: "Na stablu" },
+  ],
+  hraniliste: [
+    { k: "automatska", naziv: "Automatska hranilica" },
+    { k: "jelensko", naziv: "Jelensko (jasle)" },
+    { k: "srnece", naziv: "Srneće" },
+    { k: "svinje", naziv: "Za divlje svinje" },
+    { k: "sitna", naziv: "Za fazane / sitnu divljač" },
+    { k: "repa", naziv: "Repa / sočna hrana" },
+  ],
+  soliste: [
+    { k: "stol", naziv: "Stol za sol" },
+    { k: "panj", naziv: "Na panju" },
+    { k: "kolac", naziv: "Kamen soli na kolcu" },
+    { k: "zemlja", naziv: "U zemlji" },
+  ],
+  kamera: [
+    { k: "obicna", naziv: "Bez slanja (kartica)" },
+    { k: "4g", naziv: "Šalje slike (4G)" },
+  ],
+  kaljuziste: [
+    { k: "prirodno", naziv: "Prirodno" },
+    { k: "uredeno", naziv: "Uređeno" },
+  ],
+  pojiliste: [
+    { k: "izvor", naziv: "Izvor / potok" },
+    { k: "lokva", naziv: "Lokva" },
+    { k: "spremnik", naziv: "Kada / spremnik" },
+  ],
+  zaklon: [
+    { k: "prirodni", naziv: "Prirodni" },
+    { k: "mreza", naziv: "Maskirna mreža" },
+    { k: "sator", naziv: "Šator" },
+  ],
+};
+
+export const nazivPodvrste = (tip: TipTocke, k?: string) => (k ? PODVRSTE[tip]?.find((p) => p.k === k)?.naziv : undefined);
+
+/** „Čeka · visoka zatvorena” – vrsta s pobližim opisom ako je odabran. */
+export function opisVrsteTocke(t: { tip: TipTocke; podvrsta?: string }) {
+  const p = nazivPodvrste(t.tip, t.podvrsta);
+  return p ? `${TIPOVI_TOCAKA[t.tip].naziv} · ${p.toLowerCase()}` : TIPOVI_TOCAKA[t.tip].naziv;
+}
+
 /** Što se sije u lovištu za divljač (remize, krmne njive). */
 export const USJEVI: { k: string; naziv: string }[] = [
   { k: "kukuruz", naziv: "Kukuruz" },
@@ -118,6 +173,29 @@ export const USJEVI: { k: string; naziv: string }[] = [
 export function opisUsjeva(usjevi?: string[]) {
   return USJEVI.filter((u) => usjevi?.includes(u.k)).map((u) => u.naziv.toLowerCase()).join(", ");
 }
+
+/** Divljač po tragu – kao kod prijelaza, uz vuka i risa. */
+export const DIVLJAC_TRAGA = [
+  ...DIVLJAC_PRIJELAZA,
+  { k: "vuk", naziv: "Vuk", slovo: "V", boja: "#9e9e9e" },
+  { k: "ris", naziv: "Ris", slovo: "R", boja: "#c9a26b" },
+];
+
+export const ZNAKOVI_TRAGA: { k: string; naziv: string }[] = [
+  { k: "otisak", naziv: "Otisak" },
+  { k: "izmet", naziv: "Izmet" },
+  { k: "lezaj", naziv: "Ležaj" },
+  { k: "rovanje", naziv: "Rovanje" },
+  { k: "guljenje", naziv: "Guljenje / struganje" },
+  { k: "kaljuzanje", naziv: "Kaljužanje" },
+  { k: "staza", naziv: "Staza" },
+  { k: "plijen", naziv: "Ostaci plijena" },
+];
+
+export const divljacTraga = (k: string) => DIVLJAC_TRAGA.find((d) => d.k === k) ?? { k, naziv: k, slovo: "?", boja: "#bdbdbd" };
+export const znakTraga = (k: string) => ZNAKOVI_TRAGA.find((z) => z.k === k)?.naziv ?? k;
+export const opisTraga = (t: { divljac: string; znak: string; svjez?: boolean }) =>
+  `${znakTraga(t.znak)} · ${divljacTraga(t.divljac).naziv.toLowerCase()}${t.svjez == null ? "" : t.svjez ? " · svjež" : " · star"}`;
 
 export function opisPrijelaza(divljac?: string[]) {
   const n = DIVLJAC_PRIJELAZA.filter((d) => divljac?.includes(d.k)).map((d) => d.naziv.toLowerCase());

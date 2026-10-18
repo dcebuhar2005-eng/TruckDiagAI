@@ -43,6 +43,8 @@ export interface Tocka {
   napomena?: string;
   /** Za prijelaz divljači: koja divljač njime prelazi (ključevi iz DIVLJAC_PRIJELAZA). */
   divljac?: string[];
+  /** Pobliže: kakva je čeka, hranilište… (ključ iz PODVRSTE). */
+  podvrsta?: string;
   /** Za remizu: što je posijano (ključevi iz USJEVI). */
   usjevi?: string[];
   /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */
@@ -97,6 +99,19 @@ export interface Opazanje {
   fotoId?: string;
 }
 
+/** Trag divljači pronađen u lovištu (otisak, izmet, ležaj…). */
+export interface Trag {
+  /** Ključ iz DIVLJAC_TRAGA. */
+  divljac: string;
+  /** Ključ iz ZNAKOVI_TRAGA. */
+  znak: string;
+  svjez?: boolean;
+  vrijeme?: string;
+  lat?: number;
+  lng?: number;
+  fotoId?: string;
+}
+
 export interface Izlazak {
   id: ID;
   datum: string;
@@ -111,6 +126,7 @@ export interface Izlazak {
   vrijeme?: Vrijeme;
   pratitelji?: string;
   opazanja: Opazanje[];
+  tragovi?: Trag[];
   radovi?: Rad[];
   ocjena?: number;
   napomena?: string;
@@ -142,6 +158,10 @@ export interface Odstrel {
   oruzje?: string;
   kalibar?: string;
   markica?: string;
+  /** Odstrijelio je drugi lovac (npr. u pogonu) – zapis ostaje, ali se ne broji u moj odstrel. */
+  tudji?: boolean;
+  /** Ime lovca koji je odstrijelio (kad nisam ja). */
+  strijelac?: string;
   /** Stari zapis s jednom fotografijom – novi zapisi koriste `fotoIds`. */
   fotoId?: string;
   fotoIds?: string[];
