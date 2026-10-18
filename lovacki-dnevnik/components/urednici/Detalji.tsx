@@ -9,7 +9,7 @@ import { danUTjednu, datumDugi, izIso, sat, trajanjeIzlaska } from "@/lib/format
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
 import type { Baza } from "@/lib/types";
-import { centarLovista, nazivLovista } from "@/lib/upiti";
+import { centarLovista, mojOdstrel, nazivLovista } from "@/lib/upiti";
 import { opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona, { type ImeIkone } from "../Ikona";
 import { StrelicaVjetra } from "../Vjetar";
@@ -191,7 +191,8 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
   const i = baza.izlasci.find((x) => x.id === id);
   if (!i) return null;
   const tocka = baza.tocke.find((t) => t.id === i.tockaId);
-  const odstrel = baza.odstrel.filter((o) => o.izlazakId === i.id);
+  const odstrel = baza.odstrel.filter((o) => o.izlazakId === i.id && mojOdstrel(o));
+  const skupno = baza.odstrel.filter((o) => o.izlazakId === i.id && !mojOdstrel(o));
   const min = trajanjeIzlaska(i.od, i.do);
   const loc = tocka ?? centarLovista(baza, i.lovisteId);
   const dan = izIso(i.datum);
@@ -346,6 +347,30 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
           <h3 className="mt-6 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Odstrel</h3>
           <div className="grid gap-1.5">
             {odstrel.map((o) => (
+              <button
+                key={o.id}
+                onClick={() => otvori({ tip: "detalj-odstrel", id: o.id })}
+                className="flex items-center gap-3 rounded-xl border border-rub px-3.5 py-2.5 text-left hover:bg-povrsina-2"
+              >
+                <span className="grid size-8 place-items-center rounded-lg" style={{ background: `${bojaVrste(o.vrsta)}22`, color: bojaVrste(o.vrsta) }}>
+                  <Ikona ime="meta" velicina={16} />
+                </span>
+                <span className="flex-1 text-[15px]">
+                  {o.vrsta} <span className="text-tekst-3">· {nazivSpola(o.vrsta, o.spol)}</span>
+                  {o.tudji && <span className="text-tekst-3"> · {opisStrijelca(o)}</span>}
+                </span>
+                <span className="brojke text-sm text-tekst-2">{o.vrijeme}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {skupno.length > 0 && (
+        <>
+          <h3 className="mt-6 mb-2.5 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Odstrel u skupnom lovu</h3>
+          <div className="grid gap-1.5">
+            {skupno.map((o) => (
               <button
                 key={o.id}
                 onClick={() => otvori({ tip: "detalj-odstrel", id: o.id })}

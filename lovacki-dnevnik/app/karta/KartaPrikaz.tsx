@@ -762,7 +762,7 @@ export default function KartaPrikaz() {
 
         {slojevi.odstrel &&
           baza.odstrel
-            .filter((o) => o.lat != null && o.lng != null)
+            .filter((o) => o.lat != null && o.lng != null && !o.tudji)
             .map((o) => (
               <Marker
                 key={o.id}

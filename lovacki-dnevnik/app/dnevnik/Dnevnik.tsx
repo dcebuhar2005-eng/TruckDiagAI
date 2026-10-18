@@ -12,7 +12,7 @@ import { izIso, MJESECI_KRATKO, mnozina, trajanjeIzlaska } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { useBaza } from "@/lib/store";
 import type { Baza, Izlazak, Odstrel } from "@/lib/types";
-import { nazivLovista, sortirajPoDatumu } from "@/lib/upiti";
+import { mojOdstrel, nazivLovista, sortirajPoDatumu } from "@/lib/upiti";
 import { smjerVjetra } from "@/lib/vrijeme";
 
 type Prikaz = "izlasci" | "odstrel";
@@ -58,7 +58,7 @@ export default function Dnevnik() {
   const odstrel = useMemo(() => {
     if (!baza) return [];
     const q = upit.toLowerCase().trim();
-    return sortirajPoDatumu(baza.odstrel, (o) => o.vrijeme).filter((o) => {
+    return sortirajPoDatumu(baza.odstrel.filter(mojOdstrel), (o) => o.vrijeme).filter((o) => {
       if (lovisteFiltar && o.lovisteId !== lovisteFiltar) return false;
       if (!q) return true;
       return [o.vrsta, o.napomena, o.markica, o.kalibar, o.oruzje, o.trofejOpis, nazivLovista(baza, o.lovisteId)]
@@ -96,7 +96,7 @@ export default function Dnevnik() {
             promjena={postaviPrikaz}
             opcije={[
               { vrijednost: "izlasci", oznaka: "Izlasci", broj: baza.izlasci.length },
-              { vrijednost: "odstrel", oznaka: "Odstrel", broj: baza.odstrel.length },
+              { vrijednost: "odstrel", oznaka: "Odstrel", broj: baza.odstrel.filter(mojOdstrel).length },
             ]}
           />
           <div className="flex flex-1 gap-2">
@@ -210,7 +210,8 @@ function DatumBlok({ datum }: { datum: string }) {
 function KarticaIzlaska({ i, baza, red }: { i: Izlazak; baza: Baza; red: number }) {
   const min = trajanjeIzlaska(i.od, i.do);
   const tocka = baza.tocke.find((t) => t.id === i.tockaId);
-  const odstrel = baza.odstrel.filter((o) => o.izlazakId === i.id);
+  const odstrel = baza.odstrel.filter((o) => o.izlazakId === i.id && mojOdstrel(o));
+  const skupno = baza.odstrel.filter((o) => o.izlazakId === i.id && !mojOdstrel(o)).length;
   const opazeno = i.opazanja.reduce((s, o) => s + o.broj, 0);
   return (
     <motion.li {...ulaz(red)}>
@@ -222,6 +223,11 @@ function KarticaIzlaska({ i, baza, red }: { i: Izlazak; baza: Baza; red: number 
             {odstrel.length > 0 && (
               <span className="flex items-center gap-1 rounded-full bg-naglasak-meki px-2 py-0.5 text-[11.5px] font-semibold text-naglasak">
                 <Ikona ime="meta" velicina={12} debljina={2.4} /> {odstrel.length}
+              </span>
+            )}
+            {skupno > 0 && (
+              <span className="shrink-0 rounded-full bg-povrsina-3 px-2 py-0.5 text-[11.5px] text-tekst-2" title="Odstrel drugih lovaca u skupnom lovu">
+                skupno {skupno}
               </span>
             )}
           </div>

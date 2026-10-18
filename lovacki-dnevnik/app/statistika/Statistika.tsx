@@ -19,10 +19,10 @@ const SMJEROVI8 = ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"];
 const REDOSLIJED = [3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2];
 
 function izvoziCsv(baza: Baza) {
-  const zaglavlje = ["Datum", "Vrijeme", "Vrsta", "Spol", "Dob", "Masa (kg)", "Trofej (CIC)", "Opis trofeja", "Lovište", "Markica", "Oružje", "Kalibar", "Udaljenost (m)", "Geo. širina", "Geo. dužina", "Odstrijelio", "Napomena"];
-  const redovi = baza.odstrel.map((o) => [
+  const zaglavlje = ["Datum", "Vrijeme", "Vrsta", "Spol", "Dob", "Masa (kg)", "Trofej (CIC)", "Opis trofeja", "Lovište", "Markica", "Oružje", "Kalibar", "Udaljenost (m)", "Geo. širina", "Geo. dužina", "Napomena"];
+  const redovi = baza.odstrel.filter(mojOdstrel).map((o) => [
     o.datum, o.vrijeme, o.vrsta, nazivSpola(o.vrsta, o.spol), o.dob, o.masa, o.trofejCic, o.trofejOpis,
-    nazivLovista(baza, o.lovisteId), o.markica, o.oruzje, o.kalibar, o.udaljenost, o.lat, o.lng, o.tudji ? o.strijelac || "drugi lovac" : "ja", o.napomena,
+    nazivLovista(baza, o.lovisteId), o.markica, o.oruzje, o.kalibar, o.udaljenost, o.lat, o.lng, o.napomena,
   ]);
   const csv = [zaglavlje, ...redovi]
     .map((r) => r.map((x) => `"${String(x ?? "").replace(/"/g, '""')}"`).join(";"))

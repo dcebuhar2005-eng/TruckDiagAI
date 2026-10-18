@@ -12,7 +12,7 @@ import { TIPOVI_TOCAKA, bojaVrste, opisVrsteTocke } from "@/lib/katalog";
 import { datumKratki, povrsinaHa } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, Loviste } from "@/lib/types";
-import { sortirajPoDatumu } from "@/lib/upiti";
+import { mojOdstrel, sortirajPoDatumu } from "@/lib/upiti";
 import { KarticaPodijeli, PodijeliLoviste, PrimljenaLovista } from "./Podijeli";
 
 function Obris({ l, tocke, velicina = 120 }: { l: Loviste; tocke?: Baza["tocke"]; velicina?: number }) {
@@ -122,7 +122,7 @@ export default function Lovista() {
         <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {baza.lovista.map((x) => {
             const izl = baza.izlasci.filter((i) => i.lovisteId === x.id).length;
-            const ods = baza.odstrel.filter((o) => o.lovisteId === x.id).length;
+            const ods = baza.odstrel.filter((o) => o.lovisteId === x.id && mojOdstrel(o)).length;
             const tck = baza.tocke.filter((t) => t.lovisteId === x.id);
             const ha = x.povrsinaHa ?? (x.granica ? Math.round(povrsinaHa(x.granica)) : undefined);
             return (
@@ -206,7 +206,7 @@ function Stat({ v, o }: { v: number | string; o: string }) {
 function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: () => void }) {
   const tocke = baza.tocke.filter((t) => t.lovisteId === l.id);
   const izlasci = sortirajPoDatumu(baza.izlasci.filter((i) => i.lovisteId === l.id));
-  const odstrel = baza.odstrel.filter((o) => o.lovisteId === l.id);
+  const odstrel = baza.odstrel.filter((o) => o.lovisteId === l.id && mojOdstrel(o));
   const poVrsti = Object.entries(
     odstrel.reduce<Record<string, number>>((a, o) => ({ ...a, [o.vrsta]: (a[o.vrsta] ?? 0) + 1 }), {}),
   ).sort((a, b) => b[1] - a[1]);
