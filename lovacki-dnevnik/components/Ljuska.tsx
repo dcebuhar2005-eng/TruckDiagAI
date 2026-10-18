@@ -16,6 +16,7 @@ import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
 import { zabiljeziDan, zabiljeziVerziju } from "@/lib/verzija";
+import { pratiGreske } from "@/lib/greske";
 import NovaVerzija from "./NovaVerzija";
 import PitanjeMisljenja from "./PitanjeMisljenja";
 import PozivTesterima from "./PozivTesterima";
@@ -26,6 +27,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   const tema = baza?.postavke.tema;
 
   useEffect(() => {
+    pratiGreske();
     pokreniDrustvo();
     registrirajSW();
     // GPS praćenje ostalo od prethodnog učitavanja stranice (nastavlja se ako je lov u tijeku).
