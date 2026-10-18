@@ -269,8 +269,7 @@ export default function Pregled() {
             </Link>
           </div>
           {aktivnost.length ? (
-            <ol className="relative grid gap-1">
-              <span className="absolute top-3 bottom-3 left-[19px] w-px bg-rub" />
+            <ol className="relative grid gap-1 before:absolute before:top-3 before:bottom-3 before:left-[19px] before:w-px before:bg-rub">
               {aktivnost.map((a) =>
                 a.tip === "izlazak" ? (
                   <li key={a.i.id}>

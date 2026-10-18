@@ -751,6 +751,7 @@ export default function KartaPrikaz() {
               key={t.id}
               position={[t.lat, t.lng]}
               icon={ikonaTocke(t, odabir?.id === t.id)}
+              title={t.naziv}
               eventHandlers={{
                 click: () => {
                   if (nacin !== "pregled") return;
@@ -769,6 +770,7 @@ export default function KartaPrikaz() {
                 key={o.id}
                 position={[o.lat!, o.lng!]}
                 icon={ikonaOdstrela(bojaVrste(o.vrsta))}
+                title={`Odstrel: ${o.vrsta}`}
                 eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "odstrel", id: o.id }) }}
               />
             ))}
@@ -782,6 +784,7 @@ export default function KartaPrikaz() {
                       key={`t-${i.id}-${k}`}
                       position={[t.lat, t.lng]}
                       icon={ikonaTraga(divljacTraga(t.divljac).boja, t.svjez)}
+                      title={`Trag: ${znakTraga(t.znak)}`}
                       eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "trag", id: i.id, k }) }}
                     />,
                   ]

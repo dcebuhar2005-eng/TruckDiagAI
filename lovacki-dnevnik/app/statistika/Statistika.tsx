@@ -274,7 +274,7 @@ export default function Statistika() {
 
               <Okvir naslov="Najbolji trofeji" sirina="xl:col-span-6 md:col-span-2">
                 {p.trofeji.length ? (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto" tabIndex={0}>
                     <table className="w-full text-left text-[14px]">
                       <thead className="text-[11.5px] tracking-wide text-tekst-3 uppercase">
                         <tr>
