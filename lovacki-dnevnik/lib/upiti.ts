@@ -18,9 +18,13 @@ export function nazivLovista(b: Baza, id?: string) {
   return b.lovista.find((l) => l.id === id)?.naziv;
 }
 
+/** Odstrel koji sam ja odstrijelio (bez odstrela drugih lovaca u skupnom lovu). */
+export const mojOdstrel = (o: Odstrel) => !o.tudji;
+
 export function odstrelULovnojGodini(b: Baza, d = new Date()) {
   const lg = lovnaGodina(d);
   return b.odstrel.filter((o) => {
+    if (o.tudji) return false;
     const t = izIso(o.datum, o.vrijeme);
     return t >= lg.od && t <= lg.do;
   });
@@ -40,6 +44,7 @@ export function statusDozvole(d: Dozvola): { status: StatusDozvole; dana: number
 /** Koliko je odstrela iskorišteno iz kvote dozvole (u razdoblju valjanosti i lovištu dozvole). */
 export function iskoristenostKvote(b: Baza, d: Dozvola, k: Kvota) {
   return b.odstrel.filter((o: Odstrel) => {
+    if (o.tudji) return false;
     if (o.vrsta !== k.vrsta) return false;
     if (k.spol && o.spol !== k.spol) return false;
     if (d.lovisteId && o.lovisteId !== d.lovisteId) return false;

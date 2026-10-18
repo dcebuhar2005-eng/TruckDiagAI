@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { mjesec, suncevaVremena } from "@/lib/astro";
-import { NACINI_LOVA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, znakTraga } from "@/lib/katalog";
+import { NACINI_LOVA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisStrijelca, znakTraga } from "@/lib/katalog";
 import { danUTjednu, datumDugi, izIso, sat, trajanjeIzlaska } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
@@ -51,7 +51,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
       otvorena={otvorena}
       zatvori={zatvori}
       naslov={o.vrsta}
-      podnaslov={`${nazivSpola(o.vrsta, o.spol)} · ${datumDugi(o.datum)} u ${o.vrijeme}`}
+      podnaslov={`${nazivSpola(o.vrsta, o.spol)} · ${datumDugi(o.datum)} u ${o.vrijeme}${o.tudji ? ` · ${opisStrijelca(o)}` : ""}`}
       podnozje={
         <div className="flex gap-2">
           {o.lat != null && (
@@ -356,6 +356,7 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
                 </span>
                 <span className="flex-1 text-[15px]">
                   {o.vrsta} <span className="text-tekst-3">· {nazivSpola(o.vrsta, o.spol)}</span>
+                  {o.tudji && <span className="text-tekst-3"> · {opisStrijelca(o)}</span>}
                 </span>
                 <span className="brojke text-sm text-tekst-2">{o.vrijeme}</span>
               </button>

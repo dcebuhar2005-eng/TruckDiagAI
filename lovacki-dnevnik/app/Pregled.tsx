@@ -17,7 +17,7 @@ import { datumDugi, datumKratki, danUTjednu, metri, mnozina, sat, trajanje, traj
 import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
 import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza } from "@/lib/types";
-import { nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
+import { mojOdstrel, nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
 import { usePrognoza } from "@/lib/vrijeme";
 import { aktivniLov } from "@/lib/lov";
 
@@ -51,7 +51,7 @@ export default function Pregled() {
   const izlasciLG = baza.izlasci.filter((i) => i.datum >= iso(lg.od) && i.datum <= iso(lg.do));
   const odstrelLG = odstrelULovnojGodini(baza);
   const minuta = izlasciLG.reduce((s, i) => s + (trajanjeIzlaska(i.od, i.do) ?? 0), 0);
-  const uspjesni = izlasciLG.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id)).length;
+  const uspjesni = izlasciLG.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id && mojOdstrel(o))).length;
   const upozorenja = baza.dozvole
     .map((d) => ({ d, s: statusDozvole(d) }))
     .filter((x) => x.s.status === "istice" || x.s.status === "istekla");

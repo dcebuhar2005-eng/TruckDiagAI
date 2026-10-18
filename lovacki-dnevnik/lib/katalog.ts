@@ -99,6 +99,9 @@ export const DIVLJAC_PRIJELAZA: { k: string; naziv: string; slovo: string; boja:
   { k: "grabezljivci", naziv: "Lisica / čagalj", slovo: "Li", boja: "#e0864a" },
 ];
 
+/** „odstrijelio Ivo” / „drugi lovac” za odstrel u skupnom lovu. */
+export const opisStrijelca = (o: { tudji?: boolean; strijelac?: string }) => (o.tudji ? (o.strijelac ? `odstrijelio ${o.strijelac}` : "drugi lovac") : undefined);
+
 /** Pobliže vrste točaka (odabir jednim dodirom ispod vrste). */
 export const PODVRSTE: Partial<Record<TipTocke, { k: string; naziv: string }[]>> = {
   ceka: [

@@ -11,7 +11,7 @@ import { Koracnik, OdabirLovista } from "@/components/urednici/zajednicko";
 import { Cipovi, Gumb, Naslov, Ploca, Polje, Segmenti, cx, obavijest, opruga, usePotvrda } from "@/components/ui";
 import { suncevaVremena } from "@/lib/astro";
 import { konfigurirano, pokreniDijeljenje, useDrustvo, zaustaviDijeljenje } from "@/lib/drustvo";
-import { DIVLJAC_TRAGA, NACINI_LOVA, TIPOVI_TOCAKA, VRSTE, ZNAKOVI_TRAGA, bojaVrste, divljacTraga, nazivSpola, opisTraga } from "@/lib/katalog";
+import { DIVLJAC_TRAGA, NACINI_LOVA, TIPOVI_TOCAKA, VRSTE, ZNAKOVI_TRAGA, bojaVrste, divljacTraga, nazivSpola, opisStrijelca, opisTraga } from "@/lib/katalog";
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { dohvatiFoto, smanjiSliku } from "@/lib/foto";
 import {
@@ -277,8 +277,8 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
     ...odstrel.map((o) => ({
       vrijeme: o.vrijeme,
       ikona: "meta" as ImeIkone,
-      tekst: `Odstrel: ${o.vrsta} · ${nazivSpola(o.vrsta, o.spol)}`,
-      boja: "var(--opasnost)",
+      tekst: `Odstrel: ${o.vrsta} · ${nazivSpola(o.vrsta, o.spol)}${o.tudji ? ` · ${opisStrijelca(o)}` : ""}`,
+      boja: o.tudji ? "var(--tekst-3)" : "var(--opasnost)",
       otvori: () => otvori({ tip: "detalj-odstrel", id: o.id }),
     })),
     ...biljeske(i).map((b) => ({ vrijeme: b.vrijeme, ikona: "uredi" as ImeIkone, tekst: b.tekst, boja: "var(--tekst-2)" })),

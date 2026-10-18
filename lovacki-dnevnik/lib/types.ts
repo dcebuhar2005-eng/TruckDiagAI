@@ -158,6 +158,10 @@ export interface Odstrel {
   oruzje?: string;
   kalibar?: string;
   markica?: string;
+  /** Odstrijelio je drugi lovac (npr. u pogonu) – zapis ostaje, ali se ne broji u moj odstrel. */
+  tudji?: boolean;
+  /** Ime lovca koji je odstrijelio (kad nisam ja). */
+  strijelac?: string;
   /** Stari zapis s jednom fotografijom – novi zapisi koriste `fotoIds`. */
   fotoId?: string;
   fotoIds?: string[];

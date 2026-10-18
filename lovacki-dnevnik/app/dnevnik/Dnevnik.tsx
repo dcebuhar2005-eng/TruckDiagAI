@@ -7,7 +7,7 @@ import Ikona from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, Naslov, PraznoStanje, Segmenti } from "@/components/ui";
-import { NACINI_LOVA, bojaVrste, nazivSpola, vrsta as nadiVrstu, SKUPINE } from "@/lib/katalog";
+import { NACINI_LOVA, bojaVrste, nazivSpola, opisStrijelca, vrsta as nadiVrstu, SKUPINE } from "@/lib/katalog";
 import { izIso, MJESECI_KRATKO, mnozina, trajanjeIzlaska } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela } from "@/lib/foto";
 import { useBaza } from "@/lib/store";
@@ -279,6 +279,7 @@ function KarticaOdstrela({ o, baza, red }: { o: Odstrel; baza: Baza; red: number
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{o.vrsta}</span>
             <span className="shrink-0 text-[13px] text-tekst-3">{nazivSpola(o.vrsta, o.spol)}</span>
+            {o.tudji && <span className="shrink-0 rounded-full bg-povrsina-3 px-2 py-0.5 text-[11.5px] text-tekst-2">{opisStrijelca(o)}</span>}
           </div>
           <div className="mt-0.5 truncate text-[13px] text-tekst-2">
             {[nazivLovista(baza, o.lovisteId), skupina ? SKUPINE[skupina].naziv : null].filter(Boolean).join(" · ")}
