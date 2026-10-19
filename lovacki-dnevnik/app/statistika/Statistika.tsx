@@ -8,10 +8,10 @@ import { otvori } from "@/components/urednici/kontroler";
 import { Brojac, Gumb, Naslov, PraznoStanje, Segmenti, cx, djeteListe, roditeljListe } from "@/components/ui";
 import { lovnaGodina } from "@/lib/astro";
 import { NACINI_LOVA, RADOVI, SKUPINE, TIPOVI_TOCAKA, bojaVrste, nazivSpola, vrsta as nadiVrstu, type Skupina } from "@/lib/katalog";
-import { MJESECI_KRATKO, datumKratki, izIso, trajanjeIzlaska } from "@/lib/format";
+import { MJESECI_KRATKO, datumKratki, izIso, mnozina, trajanjeIzlaska } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import type { Baza, VrstaLova, VrstaRada } from "@/lib/types";
-import { danaOd, mojOdstrel, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
+import { danaOd, jeLov, mojOdstrel, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { imaTip } from "@/lib/vjetarCeke";
 
 const SMJEROVI8 = ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"];
@@ -48,9 +48,12 @@ export default function Statistika() {
   const p = useMemo(() => {
     if (!baza) return null;
     const uGodini = (datum: string) => godina === "sve" || lovnaGodina(izIso(datum)).pocetna === Number(godina);
-    const izlasci = baza.izlasci.filter((i) => uGodini(i.datum));
+    const sviIzlasci = baza.izlasci.filter((i) => uGodini(i.datum));
+    // Obilasci (prihrana, solišta) ulaze u sate i radove, ali ne u izlaske i uspješnost.
+    const izlasci = sviIzlasci.filter(jeLov);
+    const obilazaka = sviIzlasci.length - izlasci.length;
     const odstrel = baza.odstrel.filter((o) => uGodini(o.datum) && mojOdstrel(o));
-    const minuta = izlasci.reduce((s, i) => s + (trajanjeIzlaska(i.od, i.do) ?? 0), 0);
+    const minuta = sviIzlasci.reduce((s, i) => s + (trajanjeIzlaska(i.od, i.do) ?? 0), 0);
     const masa = odstrel.reduce((s, o) => s + (o.masa ?? 0), 0);
 
     const poMjesecu = REDOSLIJED.map((m) => ({
@@ -85,15 +88,15 @@ export default function Statistika() {
     // Prihrana i solišta: ukupne količine u razdoblju i zadnja dopuna svake točke (bez obzira na razdoblje).
     const radovi = (Object.keys(RADOVI) as VrstaRada[]).map((v) => ({
       v,
-      kolicina: izlasci.reduce((s, i) => s + (i.radovi ?? []).filter((r) => r.vrsta === v).reduce((a, r) => a + (r.kolicina ?? 0), 0), 0),
-      puta: izlasci.filter((i) => i.radovi?.some((r) => r.vrsta === v)).length,
+      kolicina: sviIzlasci.reduce((s, i) => s + (i.radovi ?? []).filter((r) => r.vrsta === v).reduce((a, r) => a + (r.kolicina ?? 0), 0), 0),
+      puta: sviIzlasci.filter((i) => i.radovi?.some((r) => r.vrsta === v)).length,
     }));
     const dopune = zadnjeDopune(baza);
     const mjesta = baza.tocke
       .filter((t) => imaTip(t, "hraniliste") || imaTip(t, "soliste") || imaTip(t, "pojiliste"))
       .map((t) => ({ t, z: dopune.get(t.id) }))
       .sort((a, b) => (a.z?.datum ?? "").localeCompare(b.z?.datum ?? ""));
-    return { izlasci, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, mjesta };
+    return { izlasci, sviIzlasci, obilazaka, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, mjesta };
   }, [baza, godina]);
 
   if (!baza || !p) return <Kostur />;
@@ -141,12 +144,12 @@ export default function Statistika() {
 
           <AnimatePresence mode="wait">
             <motion.div key={godina} variants={roditeljListe} initial="skriveno" animate="vidljivo" exit={{ opacity: 0, transition: { duration: 0.15 } }} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-              <Plocica oznaka="Izlazaka" v={p.izlasci.length} />
+              <Plocica oznaka="Izlazaka u lov" v={p.izlasci.length} pod={p.obilazaka ? `+ ${p.obilazaka} ${mnozina(p.obilazaka, "obilazak", "obilaska", "obilazaka")} (prihrana)` : undefined} />
               <Plocica oznaka="Odstrijeljeno grla" v={p.odstrel.length} />
               <Plocica oznaka="Sati u lovištu" v={Math.round(p.minuta / 6) / 10} dec={1} />
               <Plocica oznaka="Ukupna masa" v={p.masa} jed="kg" />
               <Plocica oznaka="Uspješnost izlazaka" v={p.izlasci.length ? Math.round((p.izlasci.filter((i) => p.odstrel.some((o) => o.izlazakId === i.id)).length / p.izlasci.length) * 100) : 0} jed="%" />
-              <Plocica oznaka="Opaženih grla" v={p.izlasci.reduce((s, i) => s + i.opazanja.reduce((a, o) => a + o.broj, 0), 0)} />
+              <Plocica oznaka="Opaženih grla" v={p.sviIzlasci.reduce((s, i) => s + i.opazanja.reduce((a, o) => a + o.broj, 0), 0)} />
 
               <Okvir naslov="Izlasci po mjesecima" opis="Broj izlazaka u lovište" sirina="xl:col-span-3">
                 <Stupci podaci={p.poMjesecu.map((x) => ({ oznaka: MJESECI_KRATKO[x.m], v: x.izlasci }))} boja="var(--mahovina)" jedinica="izlazaka" />
@@ -318,7 +321,7 @@ function Prazno() {
   return <p className="py-6 text-center text-sm text-tekst-3">Nema podataka za odabrano razdoblje.</p>;
 }
 
-function Plocica({ oznaka, v, dec = 0, jed }: { oznaka: string; v: number; dec?: number; jed?: string }) {
+function Plocica({ oznaka, v, dec = 0, jed, pod }: { oznaka: string; v: number; dec?: number; jed?: string; pod?: string }) {
   return (
     <motion.div variants={djeteListe} className="kartica p-4 xl:col-span-1">
       <div className="font-display text-[30px] leading-none font-semibold">
@@ -326,6 +329,7 @@ function Plocica({ oznaka, v, dec = 0, jed }: { oznaka: string; v: number; dec?:
         {jed && <span className="ml-1 text-[16px] text-tekst-3">{jed}</span>}
       </div>
       <div className="mt-2 text-[12.5px] text-tekst-2">{oznaka}</div>
+      {pod && <div className="mt-0.5 text-[11.5px] text-tekst-3">{pod}</div>}
     </motion.div>
   );
 }

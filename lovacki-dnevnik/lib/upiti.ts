@@ -1,6 +1,6 @@
 import { lovnaGodina } from "./astro";
 import { danaDo, izIso } from "./format";
-import type { Baza, Dozvola, Kvota, Odstrel, VrstaRada } from "./types";
+import type { Baza, Dozvola, Izlazak, Kvota, Odstrel, VrstaRada } from "./types";
 
 export function centarLovista(b: Baza, lovisteId?: string) {
   const l = b.lovista.find((x) => x.id === lovisteId);
@@ -20,6 +20,9 @@ export function nazivLovista(b: Baza, id?: string) {
 
 /** Odstrel koji sam ja odstrijelio (bez odstrela drugih lovaca u skupnom lovu). */
 export const mojOdstrel = (o: Odstrel) => !o.tudji;
+
+/** Izlazak u lov – obilazak (prihrana, solišta, radovi) se ne broji u izlaske ni uspješnost. */
+export const jeLov = (i: Izlazak) => i.nacin !== "obilazak";
 
 export function odstrelULovnojGodini(b: Baza, d = new Date()) {
   const lg = lovnaGodina(d);
