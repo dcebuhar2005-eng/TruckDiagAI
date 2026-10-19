@@ -30,6 +30,8 @@ function indeks(put: string) {
   return i < 0 ? 0 : i;
 }
 
+const MOBILNE = RUTE.filter((r) => r.mobilno);
+
 export function smjer(trenutni: string, cilj: string) {
   return indeks(cilj) >= indeks(trenutni) ? ["naprijed"] : ["natrag"];
 }
@@ -37,7 +39,10 @@ export function smjer(trenutni: string, cilj: string) {
 export default function Navigacija() {
   const put = usePathname();
   const baza = useBaza();
-  const akt = indeks(put);
+  // Dodirnuta kartica se označi odmah, još dok se nova stranica priprema (na slabijem mobitelu i do pola sekunde).
+  const [dodir, setDodir] = useState<{ od: string; i: number } | null>(null);
+  const akt = dodir && dodir.od === put ? dodir.i : indeks(put);
+  const oznaci = (href: string) => setDodir({ od: put, i: RUTE.findIndex((r) => r.href === href) });
   const ime = baza?.postavke.ime;
   const drustvo = useDrustvo();
   const [vise, setVise] = useState(false);
@@ -79,6 +84,7 @@ export default function Navigacija() {
                 key={r.href}
                 href={r.href}
                 transitionTypes={smjer(put, r.href)}
+                onClick={() => oznaci(r.href)}
                 className={cx(
                   "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14.5px] font-medium transition-colors",
                   a ? "text-tekst" : "text-tekst-2 hover:text-tekst",
@@ -124,34 +130,35 @@ export default function Navigacija() {
         className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] lg:hidden"
       >
         <OznakaLova put={put} />
-        <div className="mx-auto flex max-w-md items-stretch justify-between rounded-[26px] border border-rub-jaki bg-povrsina/85 p-1.5 shadow-jaka backdrop-blur-2xl">
-          {RUTE.filter((r) => r.mobilno).map((r) => {
+        <div className="relative mx-auto flex max-w-md items-stretch justify-between rounded-[26px] border border-rub-jaki bg-povrsina/85 p-1.5 shadow-jaka backdrop-blur-2xl">
+          {/* Oznaka aktivne kartice klizi CSS prijelazom – preglednik ga izvodi glatko i dok se stranica tek iscrtava. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 w-[calc((100%-0.75rem)/5)] rounded-[20px] bg-naglasak-meki transition-transform duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+            style={{ transform: `translateX(${(RUTE[akt].mobilno ? MOBILNE.indexOf(RUTE[akt]) : MOBILNE.length) * 100}%)` }}
+          />
+          {MOBILNE.map((r) => {
             const a = RUTE.indexOf(r) === akt;
             return (
               <Link
                 key={r.href}
                 href={r.href}
                 transitionTypes={smjer(put, r.href)}
+                onClick={() => oznaci(r.href)}
                 className="relative flex flex-1 flex-col items-center gap-0.5 rounded-[20px] py-2"
               >
-                {a && (
-                  <motion.span
-                    layoutId="nav-dolje"
-                    transition={opruga}
-                    className="absolute inset-0 rounded-[20px] bg-naglasak-meki"
-                  />
-                )}
-                <motion.span
-                  animate={{ y: a ? -1 : 0, scale: a ? 1.08 : 1 }}
-                  transition={opruga}
-                  className={cx("relative", a ? "text-naglasak" : "text-tekst-3")}
+                <span
+                  className={cx(
+                    "relative transition-[transform,color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                    a ? "-translate-y-px scale-[1.08] text-naglasak" : "text-tekst-3",
+                  )}
                 >
                   <Ikona ime={r.ikona} velicina={21} debljina={a ? 2 : 1.7} />
                   {znacka(r.href)}
-                </motion.span>
+                </span>
                 <span
                   className={cx(
-                    "relative text-[10.5px] font-medium tracking-wide",
+                    "relative text-[10.5px] font-medium tracking-wide transition-colors duration-300",
                     a ? "text-tekst" : "text-tekst-3",
                   )}
                 >
@@ -164,13 +171,10 @@ export default function Navigacija() {
             onClick={() => setVise(true)}
             className="relative flex flex-1 flex-col items-center gap-0.5 rounded-[20px] py-2"
           >
-            {viseAktivno && (
-              <motion.span layoutId="nav-dolje" transition={opruga} className="absolute inset-0 rounded-[20px] bg-naglasak-meki" />
-            )}
-            <span className={cx("relative", viseAktivno ? "text-naglasak" : "text-tekst-3")}>
+            <span className={cx("relative transition-colors duration-300", viseAktivno ? "text-naglasak" : "text-tekst-3")}>
               <Ikona ime="vise" velicina={21} debljina={2.4} />
             </span>
-            <span className={cx("relative text-[10.5px] font-medium tracking-wide", viseAktivno ? "text-tekst" : "text-tekst-3")}>
+            <span className={cx("relative text-[10.5px] font-medium tracking-wide transition-colors duration-300", viseAktivno ? "text-tekst" : "text-tekst-3")}>
               Više
             </span>
           </button>
@@ -186,7 +190,10 @@ export default function Navigacija() {
                 key={r.href}
                 href={r.href}
                 transitionTypes={smjer(put, r.href)}
-                onClick={() => setVise(false)}
+                onClick={() => {
+                  oznaci(r.href);
+                  setVise(false);
+                }}
                 className={cx(
                   "flex flex-col gap-3 rounded-2xl border p-4 transition-colors",
                   a ? "border-naglasak bg-naglasak-meki" : "border-rub bg-povrsina-2 hover:border-rub-jaki",

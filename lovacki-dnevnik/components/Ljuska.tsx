@@ -33,6 +33,13 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     // GPS praćenje ostalo od prethodnog učitavanja stranice (nastavlja se ako je lov u tijeku).
     ocistiStaroPracenje();
     pokreniTipkuNatrag();
+    // Karta (Leaflet) se u miru učita unaprijed, pa se prvi put otvara bez čekanja.
+    const t = setTimeout(() => {
+      const ucitaj = () => void import("@/app/karta/KartaPrikaz").catch(() => {});
+      if ("requestIdleCallback" in window) requestIdleCallback(ucitaj, { timeout: 5000 });
+      else ucitaj();
+    }, 4000);
+    return () => clearTimeout(t);
   }, []);
 
   // Dnevnik prijavljenog korisnika: sinkronizacija s njegovim privatnim zapisom i mjesečna kopija.
