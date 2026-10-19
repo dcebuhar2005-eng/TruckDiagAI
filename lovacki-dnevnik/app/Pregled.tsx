@@ -17,7 +17,7 @@ import { datumDugi, datumKratki, danUTjednu, metri, mnozina, sat, trajanje, traj
 import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
 import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza } from "@/lib/types";
-import { mojOdstrel, nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
+import { jeLov, mojOdstrel, nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
 import { usePrognoza } from "@/lib/vrijeme";
 import { aktivniLov } from "@/lib/lov";
 
@@ -51,7 +51,8 @@ export default function Pregled() {
   const izlasciLG = baza.izlasci.filter((i) => i.datum >= iso(lg.od) && i.datum <= iso(lg.do));
   const odstrelLG = odstrelULovnojGodini(baza);
   const minuta = izlasciLG.reduce((s, i) => s + (trajanjeIzlaska(i.od, i.do) ?? 0), 0);
-  const uspjesni = izlasciLG.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id && mojOdstrel(o))).length;
+  const lovniLG = izlasciLG.filter(jeLov);
+  const uspjesni = lovniLG.filter((i) => baza.odstrel.some((o) => o.izlazakId === i.id && mojOdstrel(o))).length;
   const upozorenja = baza.dozvole
     .map((d) => ({ d, s: statusDozvole(d) }))
     .filter((x) => x.s.status === "istice" || x.s.status === "istekla");
@@ -234,10 +235,10 @@ export default function Pregled() {
 
         {/* Statistika lovne godine */}
         <motion.section variants={djeteListe} className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:col-span-3">
-          <Plocica ikona="dnevnik" oznaka="Izlazaka" vrijednost={izlasciLG.length} href="/dnevnik" />
+          <Plocica ikona="dnevnik" oznaka="Izlazaka u lov" vrijednost={lovniLG.length} href="/dnevnik" />
           <Plocica ikona="meta" oznaka="Odstrijeljeno" vrijednost={odstrelLG.length} href="/dnevnik?prikaz=odstrel" naglasena />
           <Plocica ikona="sat" oznaka="Sati u lovištu" vrijednost={Math.round(minuta / 6) / 10} decimale={1} href="/statistika" />
-          <Plocica ikona="trofej" oznaka="Uspješnost" vrijednost={izlasciLG.length ? Math.round((uspjesni / izlasciLG.length) * 100) : 0} sufiks="%" href="/statistika" />
+          <Plocica ikona="trofej" oznaka="Uspješnost" vrijednost={lovniLG.length ? Math.round((uspjesni / lovniLG.length) * 100) : 0} sufiks="%" href="/statistika" />
         </motion.section>
 
         {/* Upozorenja */}
@@ -269,8 +270,7 @@ export default function Pregled() {
             </Link>
           </div>
           {aktivnost.length ? (
-            <ol className="relative grid gap-1">
-              <span className="absolute top-3 bottom-3 left-[19px] w-px bg-rub" />
+            <ol className="relative grid gap-1 before:absolute before:top-3 before:bottom-3 before:left-[19px] before:w-px before:bg-rub">
               {aktivnost.map((a) =>
                 a.tip === "izlazak" ? (
                   <li key={a.i.id}>

@@ -552,3 +552,23 @@ create policy lov_poslana_citanje on public.lov_poslana_lovista for select
 create policy lov_poslana_brisanje on public.lov_poslana_lovista for delete
   using (za = (select auth.uid()) or od = (select auth.uid()));
 grant select, insert, delete on public.lov_poslana_lovista to authenticated;
+
+-- Dnevnik grešaka (rušenja stranica, neuspjela učitavanja, Android „bez veze”). Upis smiju svi,
+-- čitanje samo administrator (bez SELECT prava za anon/authenticated).
+create table if not exists public.lov_greske (
+  id bigint generated always as identity primary key,
+  kada timestamptz not null default now(),
+  korisnik uuid default auth.uid(),
+  vrsta text not null check (char_length(vrsta) <= 40),
+  poruka text check (char_length(poruka) <= 1000),
+  stog text check (char_length(stog) <= 3000),
+  stranica text check (char_length(stranica) <= 200),
+  uredjaj text check (char_length(uredjaj) <= 300),
+  verzija text check (char_length(verzija) <= 40),
+  podaci jsonb check (pg_column_size(podaci) < 4000)
+);
+create index if not exists lov_greske_kada on public.lov_greske (kada desc);
+alter table public.lov_greske enable row level security;
+create policy lov_greske_unos on public.lov_greske for insert to anon, authenticated
+  with check (korisnik is null or korisnik = (select auth.uid()));
+grant insert on public.lov_greske to anon, authenticated;

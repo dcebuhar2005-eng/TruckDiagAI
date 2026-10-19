@@ -110,7 +110,7 @@ export default function Dnevnik() {
               />
             </div>
             {baza.lovista.length > 1 && (
-              <select className="unos w-auto max-w-[44%]" value={lovisteFiltar} onChange={(e) => setLovisteFiltar(e.target.value)}>
+              <select aria-label="Lovište" className="unos w-auto max-w-[44%]" value={lovisteFiltar} onChange={(e) => setLovisteFiltar(e.target.value)}>
                 <option value="">Sva lovišta</option>
                 {baza.lovista.map((l) => (
                   <option key={l.id} value={l.id}>

@@ -7,4 +7,20 @@ button{background:#d8c28a;color:#14190f;border:0;border-radius:12px;padding:12px
 </style></head>
 <body><div><h1>Nema internetske veze</h1><p>CroLovac se nakon instalacije treba jednom otvoriti s internetom.<br>Nakon toga radi i bez signala.</p>
 <button onclick="location.replace('https://hunt-jade.vercel.app/')">Pokušaj ponovno</button></div><script>addEventListener("online",function(){location.replace("https://hunt-jade.vercel.app/")});</script>
+<script>
+// Dijagnostika: zašto se stranica nije učitala (bez osobnih podataka). Šalje se u dnevnik grešaka
+// čim ima interneta; bez interneta čeka na uređaju.
+(function(){
+  var URL_="https://wkxzhvplffmblsnxaulq.supabase.co/rest/v1/lov_greske",K="sb_publishable_lfloe1noGxJ-oQHQhxLM7g_xOK3t2gk",S="crolovac-greske";
+  function posalji(redovi){return fetch(URL_,{method:"POST",headers:{apikey:K,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(redovi)}).then(function(r){if(!r.ok)throw 0})}
+  function odgodjeni(){try{return JSON.parse(localStorage.getItem(S)||"[]")}catch(e){return[]}}
+  var t0=Date.now(),c=new AbortController(),tm=setTimeout(function(){c.abort()},8000);
+  fetch("https://hunt-jade.vercel.app/manifest.webmanifest",{cache:"no-store",signal:c.signal}).then(function(r){return "status "+r.status},function(e){return (e&&e.name)+": "+(e&&e.message)}).then(function(proba){
+    clearTimeout(tm);
+    var red={vrsta:"android-bez-veze",poruka:proba,stranica:"greska.html",uredjaj:"Android app · "+navigator.userAgent.slice(0,260),verzija:"ljuska",podaci:{naMrezi:navigator.onLine,ms:Date.now()-t0,veza:(navigator.connection&&navigator.connection.effectiveType)||null,vrijemeUredaja:new Date().toISOString()}};
+    var svi=odgodjeni().concat([red]).slice(-10);
+    posalji(svi).then(function(){localStorage.removeItem(S)},function(){try{localStorage.setItem(S,JSON.stringify(svi))}catch(e){}});
+  });
+})();
+</script>
 </body></html>

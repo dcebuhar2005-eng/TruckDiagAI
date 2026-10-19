@@ -45,6 +45,8 @@ export interface Tocka {
   divljac?: string[];
   /** Pobliže: kakva je čeka, hranilište… (ključ iz PODVRSTE). */
   podvrsta?: string;
+  /** Pobliže, više odabira odjednom (npr. automatska hranilica + za divlje svinje). Zamjenjuje `podvrsta`. */
+  podvrste?: string[];
   /** Za remizu: što je posijano (ključevi iz USJEVI). */
   usjevi?: string[];
   /** Dobri vjetrovi za čeku – strane svijeta (0, 45, … 315°) odakle vjetar smije puhati. */

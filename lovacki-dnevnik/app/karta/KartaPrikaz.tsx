@@ -144,7 +144,8 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
         const snimke = sl.url.includes("World_Imagery");
         const zajednicko = {
           attribution: sl.attr,
-          maxNativeZoom: snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni,
+          // Na oštrim (retina) ekranima Leaflet traži pločice zoom više od maxNativeZoom – zato jedan manje.
+          maxNativeZoom: (snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni) - (sl.retina && L.Browser.retina ? 1 : 0),
           maxZoom: MAKS_ZOOM,
           keepBuffer: 2,
           updateWhenZooming: false,
@@ -750,6 +751,7 @@ export default function KartaPrikaz() {
               key={t.id}
               position={[t.lat, t.lng]}
               icon={ikonaTocke(t, odabir?.id === t.id)}
+              title={t.naziv}
               eventHandlers={{
                 click: () => {
                   if (nacin !== "pregled") return;
@@ -768,6 +770,7 @@ export default function KartaPrikaz() {
                 key={o.id}
                 position={[o.lat!, o.lng!]}
                 icon={ikonaOdstrela(bojaVrste(o.vrsta))}
+                title={`Odstrel: ${o.vrsta}`}
                 eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "odstrel", id: o.id }) }}
               />
             ))}
@@ -781,6 +784,7 @@ export default function KartaPrikaz() {
                       key={`t-${i.id}-${k}`}
                       position={[t.lat, t.lng]}
                       icon={ikonaTraga(divljacTraga(t.divljac).boja, t.svjez)}
+                      title={`Trag: ${znakTraga(t.znak)}`}
                       eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "trag", id: i.id, k }) }}
                     />,
                   ]
