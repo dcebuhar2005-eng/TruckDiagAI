@@ -39,6 +39,18 @@ import { beaufort, smjerVjetra, usePrognoza, type SatnaPrognoza } from "@/lib/vr
 import { OCJENE, imaTip, imaVjetrove, tockaZaVjetar, vrsteTocke, ocjenaVjetra, opisVjetrova, sljedeciDobar } from "@/lib/vjetarCeke";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
+// leaflet-rotate pri svakom okretu (i malom, tijekom zumiranja s dva prsta) osvježi samo okvir sloja
+// granica i krugova na novi zoom, a same oblike ne preračuna – dok su prsti na ekranu oblici ostanu u
+// starom mjerilu, odvojeni od oznaka i podloge. Zato se pri okretu oblici iscrtaju ponovno.
+{
+  type Iscrtavac = { getEvents: () => Record<string, unknown>; _reset: () => void };
+  const proto = L.Renderer.prototype as unknown as Iscrtavac;
+  const dogadaji = proto.getEvents;
+  proto.getEvents = function (this: Iscrtavac) {
+    return { ...dogadaji.call(this), rotate: this._reset };
+  };
+}
+
 const MAKS_ZOOM = 21;
 
 interface SlojPodloge {
