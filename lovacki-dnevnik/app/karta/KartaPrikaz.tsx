@@ -145,8 +145,9 @@ function SlojeviPodloge({ podloga, varijanta, onGreska }: { podloga: Podloga; va
         const zajednicko = {
           attribution: sl.attr,
           // Na oštrim (retina) ekranima Leaflet traži pločice zoom više od maxNativeZoom – zato jedan manje.
+          // Isto tako sloju spusti maxZoom za jedan, pa bi se na najvećem zoomu karte ugasio (bijelo) – zato jedan više.
           maxNativeZoom: (snimke ? Math.min(sl.nativni, zoomSnimki) : sl.nativni) - (sl.retina && L.Browser.retina ? 1 : 0),
-          maxZoom: MAKS_ZOOM,
+          maxZoom: MAKS_ZOOM + (sl.retina && L.Browser.retina ? 1 : 0),
           keepBuffer: 2,
           updateWhenZooming: false,
           eventHandlers: {

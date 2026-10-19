@@ -200,7 +200,7 @@ function Podloga({ slojevi, topo }: { slojevi: readonly { url: string; attr: str
             detectRetina={s.retina}
             // Retina: Leaflet traži zoom više od maxNativeZoom, pa jedan manje.
             maxNativeZoom={(topo ? 17 : snimke ? zoomSnimki : 19) - (s.retina && L.Browser.retina ? 1 : 0)}
-            maxZoom={20}
+            maxZoom={20 + (s.retina && L.Browser.retina ? 1 : 0)}
           />
         );
       })}
