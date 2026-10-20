@@ -11,7 +11,7 @@ import { Koracnik, OdabirLovista } from "@/components/urednici/zajednicko";
 import { Cipovi, Gumb, Naslov, Ploca, Polje, Segmenti, cx, obavijest, opruga, usePotvrda } from "@/components/ui";
 import { suncevaVremena } from "@/lib/astro";
 import { konfigurirano, pokreniDijeljenje, useDrustvo, zaustaviDijeljenje } from "@/lib/drustvo";
-import { DIVLJAC_TRAGA, NACINI_LOVA, TIPOVI_TOCAKA, VRSTE, ZNAKOVI_TRAGA, bojaVrste, divljacTraga, nazivSpola, opisStrijelca, opisTraga } from "@/lib/katalog";
+import { DIVLJAC_TRAGA, NACINI_LOVA, TIPOVI_TOCAKA, VRSTE, ZNAKOVI_TRAGA, bojaVrste, divljacTraga, nazivSpola, nazivSpolaTraga, opisStrijelca, opisTraga } from "@/lib/katalog";
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { dohvatiFoto, smanjiSliku } from "@/lib/foto";
 import {
@@ -631,6 +631,7 @@ function PlocaTraga({ otvorena, zatvori, id }: { otvorena: boolean; zatvori: () 
   const [divljac, setDivljac] = useState(DIVLJAC_TRAGA[2].k);
   const [znak, setZnak] = useState(ZNAKOVI_TRAGA[0].k);
   const [svjez, setSvjez] = useState<"" | "da" | "ne">("");
+  const [spolTraga, setSpolTraga] = useState<Spol | "">("");
   const [slika, setSlika] = useState<string | null>(null);
   const kameraTraga = useRef<HTMLInputElement>(null);
 
@@ -644,11 +645,12 @@ function PlocaTraga({ otvorena, zatvori, id }: { otvorena: boolean; zatvori: () 
   };
 
   const dodaj = () => {
-    const t = { divljac, znak, svjez: svjez ? svjez === "da" : undefined };
+    const t = { divljac, znak, svjez: svjez ? svjez === "da" : undefined, spol: spolTraga || undefined };
     dodajTrag(id, t, slika ?? undefined).catch(() => obavijest("Fotografija traga nije spremljena", "greska"));
     navigator.vibrate?.(40);
     obavijest(`Trag zabilježen: ${opisTraga(t)}`);
     setSvjez("");
+    setSpolTraga("");
     setSlika(null);
     zatvori();
   };
@@ -697,6 +699,17 @@ function PlocaTraga({ otvorena, zatvori, id }: { otvorena: boolean; zatvori: () 
             {z.naziv}
           </motion.button>
         ))}
+      </div>
+      <div className="mt-5">
+        <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Spol / dob (ako se vidi)</div>
+        <Segmenti
+          vrijednost={spolTraga}
+          promjena={setSpolTraga}
+          opcije={[
+            { vrijednost: "" as const, oznaka: "?" },
+            ...(["m", "z", "n"] as Spol[]).map((s) => ({ vrijednost: s, oznaka: nazivSpolaTraga(divljac, s).replace(/^./, (c) => c.toUpperCase()) })),
+          ]}
+        />
       </div>
       <div className="mt-5">
         <div className="mb-1.5 text-[12.5px] font-medium tracking-wide text-tekst-2 uppercase">Svježina</div>

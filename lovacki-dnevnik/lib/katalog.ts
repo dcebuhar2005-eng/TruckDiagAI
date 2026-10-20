@@ -200,10 +200,22 @@ export const ZNAKOVI_TRAGA: { k: string; naziv: string }[] = [
   { k: "plijen", naziv: "Ostaci plijena" },
 ];
 
+/** Nazivi spola za divljač traga (ključ iz DIVLJAC_TRAGA); ostalo: mužjak / ženka / mlado. */
+const SPOL_TRAGA: Record<string, { m: string; z: string; n: string }> = {
+  jelenska: { m: "jelen", z: "košuta", n: "tele" },
+  lopatar: { m: "jelen", z: "košuta", n: "tele" },
+  srneca: { m: "srnjak", z: "srna", n: "lane" },
+  svinje: { m: "vepar", z: "krmača", n: "prase" },
+  muflon: { m: "muflon", z: "muflonka", n: "janje" },
+  divokoza: { m: "jarac", z: "koza", n: "jare" },
+  medvjed: { m: "medvjed", z: "medvjedica", n: "mladunče" },
+};
+export const nazivSpolaTraga = (k: string, s: Spol) => (SPOL_TRAGA[k] ?? { m: "mužjak", z: "ženka", n: "mlado" })[s];
+
 export const divljacTraga = (k: string) => DIVLJAC_TRAGA.find((d) => d.k === k) ?? { k, naziv: k, slovo: "?", boja: "#bdbdbd" };
 export const znakTraga = (k: string) => ZNAKOVI_TRAGA.find((z) => z.k === k)?.naziv ?? k;
-export const opisTraga = (t: { divljac: string; znak: string; svjez?: boolean }) =>
-  `${znakTraga(t.znak)} · ${divljacTraga(t.divljac).naziv.toLowerCase()}${t.svjez == null ? "" : t.svjez ? " · svjež" : " · star"}`;
+export const opisTraga = (t: { divljac: string; znak: string; svjez?: boolean; spol?: Spol }) =>
+  `${znakTraga(t.znak)} · ${t.spol ? nazivSpolaTraga(t.divljac, t.spol) : divljacTraga(t.divljac).naziv.toLowerCase()}${t.svjez == null ? "" : t.svjez ? " · svjež" : " · star"}`;
 
 export function opisPrijelaza(divljac?: string[]) {
   const n = DIVLJAC_PRIJELAZA.filter((d) => divljac?.includes(d.k)).map((d) => d.naziv.toLowerCase());

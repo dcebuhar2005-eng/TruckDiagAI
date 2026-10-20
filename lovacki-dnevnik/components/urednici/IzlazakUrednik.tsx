@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { dohvatiFoto, obrisiFoto, smanjiSliku, spremiFoto } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
 import Fotografije, { type Slika } from "./Fotografije";
-import { NACINI_LOVA, RADOVI } from "@/lib/katalog";
+import { NACINI_LOVA, RADOVI, nazivSpola } from "@/lib/katalog";
 import { isoDatum, isoVrijeme } from "@/lib/format";
 import { db, noviId } from "@/lib/store";
-import type { Baza, Izlazak, Opazanje, Rad, Tocka2D, VrstaLova, VrstaRada, Vrijeme } from "@/lib/types";
+import type { Baza, Izlazak, Opazanje, Rad, Spol, Tocka2D, VrstaLova, VrstaRada, Vrijeme } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
 import { imaTip } from "@/lib/vjetarCeke";
 import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
@@ -346,13 +346,26 @@ export default function IzlazakUrednik({
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 12, height: 0 }}
-                className="flex items-center gap-2"
+                className="flex flex-wrap items-center gap-2"
               >
                 <OdabirVrste
-                  className="flex-1"
+                  className="min-w-[58%] flex-1"
                   vrijednost={o.vrsta}
                   promjena={(v) => setOpazanja(opazanja.map((x, j) => (j === i ? { ...x, vrsta: v } : x)))}
                 />
+                <select
+                  className="unos w-auto flex-1 sm:flex-none"
+                  aria-label="Spol / dob"
+                  value={o.spol ?? ""}
+                  onChange={(e) => setOpazanja(opazanja.map((x, j) => (j === i ? { ...x, spol: (e.target.value || undefined) as Spol | undefined } : x)))}
+                >
+                  <option value="">Spol ?</option>
+                  {(["m", "z", "n"] as Spol[]).map((s) => (
+                    <option key={s} value={s}>
+                      {nazivSpola(o.vrsta, s).replace(/^./, (c) => c.toUpperCase())}
+                    </option>
+                  ))}
+                </select>
                 <Koracnik
                   vrijednost={o.broj}
                   min={1}
