@@ -461,6 +461,18 @@ export default function KartaPrikaz() {
   const [sluzbeno, setSluzbeno] = useState<{ k: number; stanje: "trazim" | "nema" | "greska" | "ok"; podaci?: Record<string, unknown> } | null>(null);
   const [odabir, setOdabir] = useState<Odabir>(null);
   const [crtez, setCrtez] = useState<[number, number][]>([]);
+  // Granica prstom: crta prati zavoje ceste ili potoka. Koliko je vrhova dodao svaki potez (za „Poništi”).
+  const [prstom, setPrstom] = useState(false);
+  const potezi = useRef<number[]>([]);
+  const dodajVrhove = (v: [number, number][]) => {
+    if (!v.length) return;
+    potezi.current.push(v.length);
+    setCrtez((c) => [...c, ...v]);
+  };
+  const ponisti = () => {
+    const n = potezi.current.pop() ?? 1;
+    setCrtez((c) => c.slice(0, Math.max(0, c.length - n)));
+  };
   const [lovisteZaGranicu, setLovisteZaGranicu] = useState<string | undefined>();
   const [cilj, setCilj] = useState<{ lat: number; lng: number; zoom?: number; k: number } | null>(null);
   const [moja, setMoja] = useState<MojaPozicija | null>(null);
@@ -538,8 +550,10 @@ export default function KartaPrikaz() {
     if (nacin === "tocka") {
       novaTocka(ll.lat, ll.lng);
       setNacin("pregled");
+    } else if (nacin === "granica" && prstom) {
+      // Dodir u crtanju prstom već je dodan kao potez od jednog vrha.
     } else if (nacin === "granica" || nacin === "mjerenje") {
-      setCrtez((c) => [...c, [ll.lat, ll.lng]]);
+      dodajVrhove([[ll.lat, ll.lng]]);
     } else {
       const bilo = odabir || dodajNa || sluzbeno;
       setOdabir(null);
@@ -594,6 +608,7 @@ export default function KartaPrikaz() {
   const pokreniNacin = (n: Nacin) => {
     setOdabir(null);
     setCrtez([]);
+    potezi.current = [];
     if (n === "granica") {
       if (!baza.lovista.length) {
         obavijest("Najprije dodajte lovište", "info");
@@ -677,6 +692,7 @@ export default function KartaPrikaz() {
         ref={setKarta}
       >
         <PratiOkret onOkret={setOkret} />
+        {nacin === "granica" && prstom && <SlobodnoCrtanje dodaj={dodajVrhove} />}
         <SlojeviPodloge
           key={`${podloga}-${varijanta}`}
           podloga={podloga}
@@ -856,15 +872,20 @@ export default function KartaPrikaz() {
             ) : (
               <Polyline positions={crtez} interactive={false} pathOptions={{ color: "#e8a947", weight: 3, dashArray: nacin === "mjerenje" ? "6 6" : undefined }} />
             )}
-            {crtez.map((p, i) => (
+            {!(nacin === "granica" && prstom && crtez.length > 40) && crtez.map((p, i) => (
               // Vrh se može povući na pravo mjesto, a dodir na vrh ga briše (ne samo zadnjeg).
               <Marker
-                key={`${i}-${p[0]}-${p[1]}`}
+                key={`${i}-${p[0]}-${p[1]}-${prstom}`}
                 position={p}
                 icon={ikonaVrha}
-                draggable
+                // Kod crtanja prstom vrh ne smije „uhvatiti” dodir – potez često počinje baš na zadnjem vrhu.
+                interactive={!(nacin === "granica" && prstom)}
+                draggable={!(nacin === "granica" && prstom)}
                 eventHandlers={{
-                  click: () => setCrtez((c) => c.filter((_, j) => j !== i)),
+                  click: () => {
+                    potezi.current = [];
+                    setCrtez((c) => c.filter((_, j) => j !== i));
+                  },
                   dragend: (e) => {
                     const ll = (e.target as L.Marker).getLatLng();
                     setCrtez((c) => c.map((x, j) => (j === i ? [ll.lat, ll.lng] : x)));
@@ -1221,6 +1242,7 @@ export default function KartaPrikaz() {
                   value={lovisteZaGranicu}
                   onChange={(e) => {
                     setLovisteZaGranicu(e.target.value);
+                    potezi.current = [];
                     setCrtez(baza.lovista.find((l) => l.id === e.target.value)?.granica ?? []);
                   }}
                   className="ml-auto max-w-[45%] rounded-lg border border-white/10 bg-white/10 px-2 py-1 text-[13px] text-white"
@@ -1232,15 +1254,46 @@ export default function KartaPrikaz() {
                   ))}
                 </select>
               </div>
+              <div className="mb-2.5 grid grid-cols-2 rounded-xl bg-white/10 p-1 text-[13.5px]">
+                {[
+                  [false, "Točke"],
+                  [true, "Prstom"],
+                ].map(([v, oznaka]) => (
+                  <button
+                    key={String(v)}
+                    onClick={() => setPrstom(v as boolean)}
+                    aria-pressed={prstom === v}
+                    className={cx("rounded-lg py-1.5 font-medium", prstom === v ? "bg-[#e8a947] text-[#17130a]" : "text-white/70")}
+                  >
+                    {oznaka as string}
+                  </button>
+                ))}
+              </div>
               <p className="brojke mb-3 text-[13px] text-white/60">
-                {crtez.length < 3 ? `Dodirnite kartu za vrhove (${crtez.length}/3+)` : `${crtez.length} vrhova · ${Math.round(povrsinaHa(crtez)).toLocaleString("hr-HR")} ha`}
+                {crtez.length < 3
+                  ? prstom
+                    ? "Povucite prstom po granici – crta prati cestu, potok, rub šume"
+                    : `Dodirnite kartu za vrhove (${crtez.length}/3+)`
+                  : `${crtez.length} vrhova · ${Math.round(povrsinaHa(crtez)).toLocaleString("hr-HR")} ha`}
               </p>
-              <p className="-mt-2 mb-3 text-[12px] text-white/45">Pogrešan vrh: povucite ga na pravo mjesto ili ga dodirnite da se obriše.</p>
+              <p className="-mt-2 mb-3 text-[12px] text-white/45">
+                {prstom
+                  ? "Svaki potez nastavlja granicu. Dva prsta pomiču i zumiraju kartu. Za fino ispravljanje prebacite na Točke."
+                  : "Pogrešan vrh: povucite ga na pravo mjesto ili ga dodirnite da se obriše."}
+              </p>
               <div className="flex gap-2">
-                <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez((c) => c.slice(0, -1))} disabled={!crtez.length}>
+                <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={ponisti} disabled={!crtez.length}>
                   Poništi
                 </Gumb>
-                <Gumb velicina="sm" className="border-white/10 bg-white/10 text-white" onClick={() => setCrtez([])} disabled={!crtez.length}>
+                <Gumb
+                  velicina="sm"
+                  className="border-white/10 bg-white/10 text-white"
+                  onClick={() => {
+                    potezi.current = [];
+                    setCrtez([]);
+                  }}
+                  disabled={!crtez.length}
+                >
                   Očisti
                 </Gumb>
                 {crtez.length === 0 && baza.lovista.find((l) => l.id === lovisteZaGranicu)?.granica?.length ? (
@@ -1466,6 +1519,84 @@ type RotirajucaKarta = L.Map & { getBearing(): number; setBearing(stupnjevi: num
 
 /** Rotacija dva prsta (leaflet-rotate); gumb kompasa vraća sjever gore. */
 const ROTACIJA = { rotate: true, touchRotate: true, shiftKeyRotate: true, rotateControl: false, bearing: 0 } as Record<string, unknown>;
+
+/** Pojednostavljenje poteza (Douglas–Peucker) u pikselima zaslona: ostaju samo vrhovi koji mijenjaju oblik. */
+function pojednostavi(t: L.Point[], tol: number): L.Point[] {
+  if (t.length < 3) return t;
+  const [a, b] = [t[0], t[t.length - 1]];
+  const dx = b.x - a.x,
+    dy = b.y - a.y,
+    d = Math.hypot(dx, dy) || 1;
+  let max = 0,
+    k = 0;
+  for (let i = 1; i < t.length - 1; i++) {
+    const u = Math.abs(dy * t[i].x - dx * t[i].y + b.x * a.y - b.y * a.x) / d;
+    if (u > max) [max, k] = [u, i];
+  }
+  if (max <= tol) return [a, b];
+  return [...pojednostavi(t.slice(0, k + 1), tol).slice(0, -1), ...pojednostavi(t.slice(k), tol)];
+}
+
+/** Crtanje granice prstom: jedan prst crta, dva prsta pomiču i zumiraju kartu. */
+function SlobodnoCrtanje({ dodaj }: { dodaj: (v: [number, number][]) => void }) {
+  const map = useMap();
+  const [potez, setPotez] = useState<[number, number][]>([]);
+  const dodajRef = useRef(dodaj);
+  useEffect(() => {
+    dodajRef.current = dodaj;
+  }, [dodaj]);
+  useEffect(() => {
+    const el = map.getContainer();
+    map.dragging.disable();
+    let tocke: L.Point[] = [];
+    let id: number | null = null;
+    const prekini = () => {
+      id = null;
+      tocke = [];
+      setPotez([]);
+    };
+    const dolje = (e: PointerEvent) => {
+      // Dodir na vrh, oznaku ili gumb ne crta.
+      if ((e.target as Element).closest(".leaflet-interactive.leaflet-marker-icon, .leaflet-control, button")) return;
+      if (id !== null) return prekini(); // drugi prst: zum, ne crtanje
+      if (!e.isPrimary) return;
+      id = e.pointerId;
+      tocke = [map.mouseEventToContainerPoint(e as unknown as MouseEvent)];
+      setPotez([[map.containerPointToLatLng(tocke[0]).lat, map.containerPointToLatLng(tocke[0]).lng]]);
+    };
+    const pomak = (e: PointerEvent) => {
+      if (e.pointerId !== id) return;
+      const p = map.mouseEventToContainerPoint(e as unknown as MouseEvent);
+      if (p.distanceTo(tocke[tocke.length - 1]) < 4) return;
+      tocke.push(p);
+      setPotez(tocke.map((x) => [map.containerPointToLatLng(x).lat, map.containerPointToLatLng(x).lng]));
+    };
+    const gore = (e: PointerEvent) => {
+      if (e.pointerId !== id) return;
+      const v = pojednostavi(tocke, 3).map((x) => map.containerPointToLatLng(x));
+      prekini();
+      dodajRef.current(v.map((ll) => [ll.lat, ll.lng]));
+    };
+    el.addEventListener("pointerdown", dolje);
+    el.addEventListener("pointermove", pomak);
+    el.addEventListener("pointerup", gore);
+    el.addEventListener("pointercancel", prekini);
+    el.style.cursor = "crosshair";
+    // Bez povlačenja karte Leaflet vrati pregledniku gestu (touch-action) i on prekine potez – zato je ovdje zadržimo.
+    const prijeTouch = el.style.touchAction;
+    el.style.touchAction = "none";
+    return () => {
+      el.style.touchAction = prijeTouch;
+      el.removeEventListener("pointerdown", dolje);
+      el.removeEventListener("pointermove", pomak);
+      el.removeEventListener("pointerup", gore);
+      el.removeEventListener("pointercancel", prekini);
+      el.style.cursor = "";
+      map.dragging.enable();
+    };
+  }, [map]);
+  return potez.length > 1 ? <Polyline positions={potez} interactive={false} pathOptions={{ color: "#fff3d6", weight: 4, opacity: 0.9 }} /> : null;
+}
 
 function PratiOkret({ onOkret }: { onOkret: (stupnjevi: number) => void }) {
   const map = useMap() as RotirajucaKarta;
