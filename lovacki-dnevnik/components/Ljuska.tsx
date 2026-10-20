@@ -20,6 +20,7 @@ import { pratiGreske } from "@/lib/greske";
 import NovaVerzija from "./NovaVerzija";
 import PitanjeMisljenja from "./PitanjeMisljenja";
 import PozivTesterima from "./PozivTesterima";
+import DodajNaPocetni from "./DodajNaPocetni";
 import { Obavijesti, obavijest } from "./ui";
 
 export default function Ljuska({ children }: { children: ReactNode }) {
@@ -127,6 +128,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <NovaVerzija />
       <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
       <PozivTesterima korisnik={prijavljen} email={drustvo.sesija?.user.email} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
+      <DodajNaPocetni zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
     </MotionConfig>
   );
 }
