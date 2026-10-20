@@ -10,7 +10,7 @@ import { cx, opruga } from "./ui";
 
 const KASNJENJE_MS = 20_000;
 const nesToOtvoreno = () =>
-  Boolean(document.querySelector('.fixed.inset-0.z-\\[2000\\], [role="dialog"][aria-label="Vaše mišljenje"]'));
+  Boolean(document.querySelector('.fixed.inset-0.z-\\[2000\\], [role="dialog"][aria-label="Vaše mišljenje"], [role="dialog"][aria-label="Dodaj na početni zaslon"]'));
 
 /**
  * Poziv Android korisnicima da postanu testeri aplikacije na Google Playu (Gmail + broj mobitela za
