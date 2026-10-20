@@ -1,0 +1,91 @@
+# CroLovac – plan razvoja i poslovanja
+
+Živi dokument: ovdje je smjer projekta, stanje i sljedeći koraci. Ažurira se nakon svake veće promjene.
+
+## Vizija
+
+**Najbolji lovački dnevnik i alat za lovačka društva u Hrvatskoj** – zatim regija (BiH, Srbija, Slovenija).
+Osnovna aplikacija ostaje **besplatna i bez reklama**. Zarada dolazi od onih kojima donosi najviše vrijednosti:
+lovačkih društava i lovaca koji žele napredne mogućnosti.
+
+## Stanje (20. 10. 2026.)
+
+| Pokazatelj | Vrijednost |
+|---|---|
+| Registrirani korisnici | 199 (123 nova u zadnjih 7 dana) |
+| Aktivni danas/jučer | 76 (38 % svih – izvrsno) |
+| Aktivni u 7 dana | 108 |
+| Korisnici s upisanim izlascima | 71 |
+| Upisano izlazaka / odstrela | 257 / 168 |
+| Android aplikacija (test na Google Playu) | 16 korisnika, 12 testera u nizu (cilj 14 dana) |
+| Mišljenja | 4/4 pozitivna |
+
+Tehnika: Next.js na Vercelu (hunt-jade.vercel.app), Supabase (EU, Frankfurt), Android ljuska (Capacitor) `com.crolovac.app`.
+
+## Poslovni model
+
+1. **CroLovac (besplatno, zauvijek)** – dnevnik, odstrel, karta, vjetar, lovci uživo, tragovi, statistika.
+2. **CroLovac PRO – lovac** (prijedlog: 2,99 €/mj ili 19,99 €/god)
+   - karte bez signala za cijelo lovište, HD satelit, neograničene fotografije
+   - izvoz za evidenciju (PDF/Excel), napredna statistika i prognoza aktivnosti divljači
+   - **testeri i rani korisnici: PRO besplatno zauvijek (značka Osnivač)** – obećano, mora se poštovati
+3. **CroLovac za lovačka društva** (prijedlog: 99–249 €/god po društvu, ovisno o broju članova)
+   - zajednička karta društva (granice, čeke, hranilišta – jedan izvor istine)
+   - organizacija skupnog lova: stajališta, raspored, tko je gdje, sigurnost
+   - evidencija odstrela društva i plan odstrela (za lovnika/tajnika), izvoz za godišnje izvješće
+   - obavijesti članovima
+   Ovo je najveći potencijal: jedna odluka društva = 20–80 korisnika odjednom.
+4. **Partnerstva** (kasnije): lovačke trgovine, oprema, osiguranje – samo ako je korisno lovcima.
+
+Bez reklama u aplikaciji (obećanje korisnicima).
+
+## Što treba prije prvog eura (pravno i tehnički)
+
+- [ ] **Obrt ili d.o.o.** i razgovor s knjigovođom (porezi na prihod iz Google Playa / Stripea)
+- [ ] **Vercel Pro** (Hobby paket nije dopušten za komercijalnu upotrebu)
+- [ ] **Supabase Pro** (bez pauziranja, sigurnosne kopije baze)
+- [ ] **ArcGIS ključ** za satelitske snimke (komercijalna upotreba)
+- [ ] Uvjeti korištenja + ažurirana pravila privatnosti (plaćanje, PRO)
+- [ ] Naplata: Google Play Billing (Android), Stripe (web, društva)
+
+Procijenjeni fiksni trošak: ~50–70 €/mj. Pokriva ga npr. 3 društva ili ~30 PRO korisnika godišnje.
+
+## Plan po fazama
+
+### Faza 1 – Google Play (do ~2. 11. 2026.)
+- [ ] 14 dana testiranja s 12+ testera (u tijeku, dan 3)
+- [ ] AAB 13: dijagnostika „Nema internetske veze” (greska.html)
+- [ ] Opis, slike i video za Play trgovinu
+- [ ] Prijava za produkciju na Google Playu
+- [ ] TikTok/video upute za dodavanje na početni zaslon (gumb u aplikaciji čeka poveznicu)
+
+### Faza 2 – Rast (studeni)
+- [ ] Cilj: **500 registriranih, 200 aktivnih tjedno**
+- [ ] Plaćeni oglasi FB/IG (30–50 €), videi s pravim snimkama
+- [ ] Županijski savezi i LD-ovi (poruka za tajnike, letak s QR kodom)
+- [ ] Mjerenje: gdje novi korisnici odustaju (prvi dan, prvi izlazak)
+
+### Faza 3 – Lovačka društva (zima 2026./27.)
+- [ ] Uloge u društvu (član, lovnik, tajnik)
+- [ ] Zajednička karta društva
+- [ ] Skupni lov: stajališta i raspored, sigurnosni prikaz
+- [ ] Odstrel društva + plan odstrela + izvoz
+- [ ] 3 pilot-društva besplatno, zatim naplata
+
+### Faza 4 – PRO i iPhone (proljeće 2027.)
+- [ ] PRO paket i naplata
+- [ ] iPhone aplikacija (App Store)
+- [ ] Regija: BiH, Srbija, Slovenija (jezik, katalog divljači, lovne godine)
+
+## Pravila rada
+
+- Objava (PR → main → Vercel) samo na „**objavi**”, najviše 2 puta dnevno; nakon objave provjera verzije uživo.
+- Svaka promjena se testira (build + provjera na simuliranom mobitelu) prije spremanja.
+- Prijave testera: greška = 3 boda, prijedlog = 2 boda (`lov_privatno.bodovi`); bodove potvrđuje vlasnik.
+- Svaki tester dobije odgovor na svoju prijavu.
+
+## Ideje na čekanju
+
+- Gumb „Pogledaj video” u pozivu za početni zaslon (čeka TikTok poveznicu)
+- Prognoza aktivnosti divljači (vjetar + Mjesec + povijest vlastitih opažanja)
+- Glasovni upis („Vidio sam dvije srne”) – za rad s rukavicama na čeki
