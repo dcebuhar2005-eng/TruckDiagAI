@@ -108,6 +108,8 @@ export interface Trag {
   /** Ključ iz ZNAKOVI_TRAGA. */
   znak: string;
   svjez?: boolean;
+  /** Ako se po tragu vidi (npr. otisak jelena ili košute). */
+  spol?: Spol;
   vrijeme?: string;
   lat?: number;
   lng?: number;

@@ -142,7 +142,7 @@ export async function dodajOpazanje(id: string, o: { vrsta: string; broj: number
   });
 }
 
-export async function dodajTrag(id: string, t: Pick<Trag, "divljac" | "znak" | "svjez">, slika?: string) {
+export async function dodajTrag(id: string, t: Pick<Trag, "divljac" | "znak" | "svjez" | "spol">, slika?: string) {
   let fotoId: string | undefined;
   if (slika) {
     fotoId = noviId();
