@@ -9,6 +9,7 @@ import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import VjetarKartica from "@/components/VjetarKartica";
 import CekeDanas from "@/components/CekeDanas";
+import KadULov from "@/components/KadULov";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
 import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { lovnaGodina, mjesec, mjesecevaVremena, solunar, suncevaVremena } from "@/lib/astro";
@@ -210,6 +211,12 @@ export default function Pregled() {
             ))}
           </ul>
         </motion.section>
+
+        {p && lok && (
+          <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">
+            <KadULov p={p} lat={lok.lat} lng={lok.lng} />
+          </motion.section>
+        )}
 
         {baza.tocke.some((t) => tockaZaVjetar(t)) && (
           <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">

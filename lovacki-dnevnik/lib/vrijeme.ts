@@ -49,7 +49,8 @@ export async function dohvatiPrognozu(lat: number, lng: number): Promise<Prognoz
       "temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m",
     hourly:
       "temperature_2m,precipitation_probability,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m",
-    forecast_days: "3",
+    // 8 dana: dovoljno za „Kad u lov?” (tjedan unaprijed).
+    forecast_days: "8",
     timezone: "auto",
     wind_speed_unit: "kmh",
   }).toString();
