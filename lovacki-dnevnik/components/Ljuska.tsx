@@ -17,6 +17,7 @@ import Uvod from "./Uvod";
 import Urednici from "./urednici/Urednici";
 import { zabiljeziDan, zabiljeziVerziju } from "@/lib/verzija";
 import { pratiGreske } from "@/lib/greske";
+import { identificiraj, pokreniPracenje } from "@/lib/pracenje";
 import NovaVerzija from "./NovaVerzija";
 import PitanjeMisljenja from "./PitanjeMisljenja";
 import PozivTesterima from "./PozivTesterima";
@@ -29,6 +30,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     pratiGreske();
+    pokreniPracenje();
     pokreniDrustvo();
     registrirajSW();
     // GPS praćenje ostalo od prethodnog učitavanja stranice (nastavlja se ako je lov u tijeku).
@@ -50,6 +52,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!konfigurirano || !drustvo.spremno) return;
     pokreniSinkronizaciju(prijavljen ?? null);
+    identificiraj(prijavljen ?? null);
     if (prijavljen) {
       automatskaKopija();
       zabiljeziVerziju(prijavljen);

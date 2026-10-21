@@ -8,6 +8,7 @@ import { useSyncExternalStore } from "react";
 import { ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
 import { udaljenostM } from "./format";
 import { fetchZaSupabase, pratiLokaciju, uAplikaciji } from "./nativno";
+import { dogadaj } from "./pracenje";
 import { postaviVlasnika } from "./store";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -144,12 +145,14 @@ export async function registracija(email: string, lozinka: string) {
     options: { emailRedirectTo: window.location.origin + "/" },
   });
   if (error) throw prevedi(error.message);
+  dogadaj("registracija");
   return { trebaPotvrda: !data.session };
 }
 
 export async function prijava(email: string, lozinka: string) {
   const { error } = await sb().auth.signInWithPassword({ email, password: lozinka });
   if (error) throw prevedi(error.message);
+  dogadaj("prijava");
   zabiljeziAktivnost();
   try {
     localStorage.removeItem(KLJUC_ISTEKLA);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { dogadaj } from "./pracenje";
 import type { Baza, Kolekcija, Postavke } from "./types";
 
 /** Stari (zajednički) ključ – podaci se pri prvoj prijavi prenose vlasniku uređaja. */
@@ -145,6 +146,7 @@ export const db = {
       createdAt: Date.now(),
     } as Element<K>;
     spremi({ ...b, [kol]: [el, ...(b[kol] as Element<K>[])] });
+    dogadaj("zapis_dodan", { kolekcija: kol });
     return el;
   },
 

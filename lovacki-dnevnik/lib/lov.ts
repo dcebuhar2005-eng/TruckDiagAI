@@ -7,9 +7,11 @@ import { useSyncExternalStore } from "react";
 import { isoDatum, isoVrijeme, udaljenostM } from "./format";
 import { spremiFoto } from "./foto";
 import { pratiLokaciju } from "./nativno";
+import { dogadaj } from "./pracenje";
 import { db, noviId } from "./store";
 import type { Baza, Izlazak, Spol, Trag, VrstaLova } from "./types";
 import { dohvatiPrognozu } from "./vrijeme";
+
 
 export const aktivniLov = (b: Baza | null) => b?.izlasci.find((i) => i.uTijeku);
 
@@ -102,6 +104,7 @@ export function kreniULov(p: { lovisteId?: string; tockaId?: string; nacin: Vrst
   const postoji = aktivniLov(db.dohvati());
   if (postoji) return postoji.id;
   const id = noviId();
+  dogadaj("lov_pokrenut", { nacin: p.nacin });
   db.dodaj("izlasci", {
     id,
     datum: isoDatum(sad),
@@ -200,6 +203,7 @@ export async function dodajFotografiju(id: string, dataUrl: string) {
 export function zavrsiLov(id: string) {
   spremiTrag();
   db.uredi("izlasci", id, { uTijeku: undefined, do: sada() });
+  dogadaj("lov_zavrsen");
   // Praćenje se gasi odmah, a ne tek kad ljuska primijeti promjenu.
   if (izlazakId === id) uskladiPracenje(null);
 }
