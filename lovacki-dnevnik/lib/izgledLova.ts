@@ -7,7 +7,9 @@ import type { SatnaPrognoza } from "./vrijeme";
 
 export interface Termin {
   ocjena: number;
-  oznaka: "Odlično" | "Dobro" | "Osrednje" | "Loše";
+  oznaka: "Odlično" | "Dobro" | "Slabije" | "Loše";
+  /** Glavni razlog jednom kratkom rečenicom („vedri se nakon kiše”, „jaka bura”). */
+  ukratko: string;
   razlozi: string[];
   vjetarSmjer: number;
   vjetarBrzina: number;
@@ -27,7 +29,15 @@ export interface DanLova {
 const KISA = (kod: number) => (kod >= 51 && kod <= 67) || (kod >= 80 && kod <= 82);
 const OLUJA = (kod: number) => kod >= 95;
 
-const oznaka = (o: number): Termin["oznaka"] => (o >= 75 ? "Odlično" : o >= 60 ? "Dobro" : o >= 45 ? "Osrednje" : "Loše");
+const oznaka = (o: number): Termin["oznaka"] => (o >= 72 ? "Odlično" : o >= 57 ? "Dobro" : o >= 40 ? "Slabije" : "Loše");
+
+/** Ime vjetra kakvo lovac koristi: bura sa sjeveroistoka, jugo s jugoistoka i juga. */
+function imeVjetra(smjer: number, brzina: number) {
+  const jak = brzina > 25 ? "jaka " : brzina > 15 ? "" : "slaba ";
+  if (smjer >= 10 && smjer <= 80) return `${jak}bura`;
+  if (smjer >= 110 && smjer <= 200) return `${jak === "jaka " ? "jako " : jak === "slaba " ? "slabo " : ""}jugo`;
+  return brzina > 25 ? "jak vjetar" : brzina > 15 ? "jači vjetar" : "slab vjetar";
+}
 
 function ocijeni(satno: SatnaPrognoza[], od: Date, doo: Date, jutro: boolean, osvjetljenje: number): Termin | null {
   const u = satno.filter((s) => s.vrijeme >= od && s.vrijeme <= doo);
@@ -60,7 +70,8 @@ function ocijeni(satno: SatnaPrognoza[], od: Date, doo: Date, jutro: boolean, os
   else if (oborine >= 40) dodaj(-12, "Moguća kiša");
 
   const kisaPrije = prije.some((s) => KISA(s.kod) || s.oborinePosto >= 60);
-  if (kisaPrije && oborine < 30) dodaj(12, "Razvedravanje nakon kiše – divljač izlazi hraniti se");
+  const nakonKise = kisaPrije && oborine < 30;
+  if (nakonKise) dodaj(12, "Razvedravanje nakon kiše – divljač izlazi hraniti se");
 
   if (prije.length) {
     const dTlak = u[u.length - 1].tlak - prije[0].tlak;
@@ -74,9 +85,28 @@ function ocijeni(satno: SatnaPrognoza[], od: Date, doo: Date, jutro: boolean, os
   } else if (osvjetljenje < 0.15 && jutro) dodaj(5, "Tamna noć – divljač kasnije odlazi s hranilišta");
 
   const ocjena = Math.max(0, Math.min(100, Math.round(o)));
+  const vjetar = imeVjetra(smjer, brzina);
+  const ukratko = u.some((s) => OLUJA(s.kod))
+    ? "grmljavina"
+    : oborine >= 70
+      ? `kiša${brzina > 25 ? " i " + vjetar : ""}`
+      : brzina > 25 || udari >= 60
+        ? udari >= 60
+          ? `${vjetar.replace(/^(slaba |slabo |jaka |jako )/, "")} s olujnim udarima`
+          : vjetar
+        : brzina > 15
+          ? vjetar
+          : nakonKise
+            ? `vedri se nakon kiše, ${vjetar}`
+            : oborine >= 40
+              ? `moguća kiša, ${vjetar}`
+              : brzina < 4
+                ? "bez vjetra – miris se kovitla"
+                : `mirno, ${vjetar}`;
   return {
     ocjena,
     oznaka: oznaka(ocjena),
+    ukratko,
     razlozi: r,
     vjetarSmjer: smjer,
     vjetarBrzina: brzina,
