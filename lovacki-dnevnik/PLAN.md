@@ -63,7 +63,7 @@ Procijenjeni fiksni trošak: ~50–70 €/mj. Pokriva ga npr. 3 društva ili ~30
 - [ ] Cilj: **500 registriranih, 200 aktivnih tjedno**
 - [ ] Plaćeni oglasi FB/IG (30–50 €), videi s pravim snimkama
 - [ ] Županijski savezi i LD-ovi (poruka za tajnike, letak s QR kodom)
-- [ ] Mjerenje: gdje novi korisnici odustaju (prvi dan, prvi izlazak)
+- [x] Mjerenje: PostHog i Sentry ugrađeni (čeka objavu) – zatim lijevak: registracija → prvi izlazak → povratak
 
 ### Faza 3 – Lovačka društva (zima 2026./27.)
 - [ ] Uloge u društvu (član, lovnik, tajnik)
@@ -77,15 +77,40 @@ Procijenjeni fiksni trošak: ~50–70 €/mj. Pokriva ga npr. 3 društva ili ~30
 - [ ] iPhone aplikacija (App Store)
 - [ ] Regija: BiH, Srbija, Slovenija (jezik, katalog divljači, lovne godine)
 
+## Alati (spojeni s Claudeom)
+
+| Alat | Za što |
+|---|---|
+| Supabase | baza, prijava, fotografije, statistika korisnika |
+| Vercel | objava aplikacije (hunt-jade.vercel.app) |
+| Sentry (EU) | dojave rušenja kod korisnika – projekt `crolovac` |
+| PostHog (EU) | anonimna statistika: stranice, prijave, izlasci, odstrel, lov (bez lokacije i sadržaja dnevnika) |
+| Google Drive | mapa **CroLovac**: „Snimke iz lova (ubaci ovdje)” i „Gotove reklame” |
+| Metricool | zakazivanje objava na Facebook, Instagram i TikTok (crolovac.app) |
+| Context7 | aktualne upute za Next.js, Supabase, Leaflet… |
+| Exa | istraživanje (lovostaji, LD-ovi, konkurencija) |
+
+Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude društvima), Supermetrics (plaćene reklame).
+
 ## Pravila rada
 
 - Objava (PR → main → Vercel) samo na „**objavi**”, najviše 2 puta dnevno; nakon objave provjera verzije uživo.
 - Svaka promjena se testira (build + provjera na simuliranom mobitelu) prije spremanja.
+- Google Play „Sigurnost podataka” mora navesti dojave rušenja i analitiku (Sentry, PostHog) prije sljedeće verzije u Play trgovini.
 - Prijave testera: greška = 3 boda, prijedlog = 2 boda (`lov_privatno.bodovi`); bodove potvrđuje vlasnik.
 - Svaki tester dobije odgovor na svoju prijavu.
 
-## Ideje na čekanju
+## Spremno, čeka „objavi”
 
-- Gumb „Pogledaj video” u pozivu za početni zaslon (čeka TikTok poveznicu)
-- Prognoza aktivnosti divljači (vjetar + Mjesec + povijest vlastitih opažanja)
-- Glasovni upis („Vidio sam dvije srne”) – za rad s rukavicama na čeki
+- Novi Pregled: kartica „Sada”, tijek dana i pločice (vjetar, tjedan, plan odstrela, Mjesec, hranilište)
+- „Kad u lov?” – ocjena jutra i večeri za 8 dana
+- Sentry i PostHog + prekidač statistike u Postavkama
+
+## Ideje na čekanju (redom)
+
+1. Crveni noćni način (za čeku)
+2. Obavijest večer prije („Sutra ujutro odlično za lov”)
+3. Podsjetnik za hranilište (obavijest)
+4. „Danas smiješ loviti” / lovostaji – tek s provjerenim zakonskim podacima
+5. Gumb „Pogledaj video” u pozivu za početni zaslon (čeka TikTok poveznicu)
+6. Glasovni upis („Vidio sam dvije srne”) – za rad s rukavicama na čeki
