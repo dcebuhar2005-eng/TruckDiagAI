@@ -99,6 +99,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Google Play „Sigurnost podataka” mora navesti dojave rušenja i analitiku (Sentry, PostHog) prije sljedeće verzije u Play trgovini.
 - Prijave testera: greška = 3 boda, prijedlog = 2 boda (`lov_privatno.bodovi`); bodove potvrđuje vlasnik.
 - Svaki tester dobije odgovor na svoju prijavu.
+- Objave na mrežama: točno 5 hashtagova po objavi.
 
 ## Spremno, čeka „objavi”
 
