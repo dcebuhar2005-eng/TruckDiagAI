@@ -5,14 +5,14 @@ import { danUTjednu, datumKratki, sat } from "@/lib/format";
 import { izgledLova, najboljiTermin, type Termin } from "@/lib/izgledLova";
 import type { Prognoza } from "@/lib/vrijeme";
 
-const IZGLED: Record<Termin["oznaka"], { znak: string; boja: string }> = {
+export const IZGLED: Record<Termin["oznaka"], { znak: string; boja: string }> = {
   Odlično: { znak: "✅", boja: "#7fd37a" },
   Dobro: { znak: "👍", boja: "#c3d66a" },
   Slabije: { znak: "🤏", boja: "#e8a640" },
   Loše: { znak: "❌", boja: "#ff7a5c" },
 };
 
-function nazivDana(d: Date, puni = false) {
+export function nazivDana(d: Date, puni = false) {
   const razlika = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400e3);
   if (razlika === 0) return "Danas";
   if (razlika === 1) return "Sutra";
