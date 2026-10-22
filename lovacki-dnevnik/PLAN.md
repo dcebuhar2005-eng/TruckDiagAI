@@ -41,6 +41,24 @@ Tehnika: Next.js na Vercelu (hunt-jade.vercel.app), Supabase (EU, Frankfurt), An
 
 Bez reklama u aplikaciji (obećanje korisnicima).
 
+## PRO paket – što čuvamo za plaćanje (UVIJEK PROVJERI OVDJE)
+
+Pravilo: nova funkcija ne ide svima dok vlasnik ne odluči je li besplatna ili PRO. Odluku upiši ovdje (i u PRO.md).
+Cijena (prijedlog): 2,99 €/mj ili 19,99 €/god. Osnivači (testeri) – PRO besplatno zauvijek.
+
+**✅ Napravljeno i skriveno** (vidi samo administrator, `lib/pro.ts`):
+- Novi Pregled – kartica „Sada”, tijek dana, pločice (bez PRO-a: stari Pregled)
+- „Kad u lov?” za 8 dana + najbolji termin u tjednu (bez PRO-a: danas i sutra)
+- Uvoz staza GPX/KML na kartu (bez PRO-a: skriveno)
+
+**📝 Planirano za PRO:** karte bez signala za cijelo lovište, HD satelit, neograničene fotografije, izvoz PDF/Excel,
+napredna statistika sezone i prognoza aktivnosti divljači.
+
+**❓ Vlasnik još odlučuje:** crveni noćni način, obavijest večer prije, podsjetnik za hranilište, lovostaji, glasovni upis.
+
+**🆓 Besplatno zauvijek:** dnevnik i odstrel, karta s točkama i granicama (i crtanje prstom), vjetar i čeke, lovci uživo i
+alarm blizine, tragovi, dozvole i kvote, statistika, lokacija iz Google karata, „Kad u lov?” za danas i sutra.
+
 ## Što treba prije prvog eura (pravno i tehnički)
 
 - [ ] **Obrt ili d.o.o.** i razgovor s knjigovođom (porezi na prihod iz Google Playa / Stripea)
