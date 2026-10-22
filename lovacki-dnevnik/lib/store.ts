@@ -63,6 +63,7 @@ export function praznaBaza(): Baza {
     odstrel: [],
     dozvole: [],
     oruzje: [],
+    staze: [],
     postavke: { ...ZADANE_POSTAVKE },
   };
 }

@@ -106,6 +106,8 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Novi Pregled: kartica „Sada”, tijek dana i pločice (vjetar, tjedan, plan odstrela, Mjesec, hranilište)
 - „Kad u lov?” – ocjena jutra i večeri za 8 dana
 - Sentry i PostHog + prekidač statistike u Postavkama
+- Lokacija iz Google karata (link ili koordinate) – na karti (Slojevi → Uvoz) i u svakom polju lokacije
+- Uvoz staza iz datoteka GPX/KML (planinarske staze, šumski putovi) kao sloj karte
 
 ## Ideje na čekanju (redom)
 
