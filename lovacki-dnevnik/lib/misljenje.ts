@@ -48,6 +48,39 @@ export function dodajVrijeme(id: string, ms: number) {
 export const trebaPitati = (s: StanjeKoristenja) =>
   !s.odgovoreno && s.odbijeno < MAKS_ODBIJANJA && s.ms >= Math.max(PRAG_MS, s.sljedece);
 
+const provjere = new Map<string, Promise<boolean | null>>();
+
+/**
+ * Je li korisnik već odgovorio na bilo kojem uređaju (web, Android, drugi mobitel). Lokalna oznaka nije
+ * dovoljna – nakon novog uređaja ili brisanja podataka pitanje bi se ponovilo. Null = ne zna se (bez veze).
+ */
+export function vecOdgovorio(id: string): Promise<boolean | null> {
+  if (procitaj(id).odgovoreno) return Promise.resolve(true);
+  let p = provjere.get(id);
+  if (!p) {
+    p = Promise.resolve(sb().rpc("lov_vec_odgovorio")).then(
+      ({ data, error }) => {
+        if (error) {
+          provjere.delete(id);
+          return null;
+        }
+        if (data === true) {
+          const s = procitaj(id);
+          s.odgovoreno = true;
+          spremi(id, s);
+        }
+        return data === true;
+      },
+      () => {
+        provjere.delete(id);
+        return null;
+      },
+    );
+    provjere.set(id, p);
+  }
+  return p;
+}
+
 export function odgodi(id: string) {
   const s = procitaj(id);
   s.odbijeno += 1;
