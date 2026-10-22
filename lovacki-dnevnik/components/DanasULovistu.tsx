@@ -421,7 +421,7 @@ function Plocice({
   );
 }
 
-function KreniULovKartica({ baza }: { baza: Baza }) {
+export function KreniULovKartica({ baza }: { baza: Baza }) {
   const i = aktivniLov(baza);
   return (
     <Link

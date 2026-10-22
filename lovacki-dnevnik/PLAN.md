@@ -29,6 +29,8 @@ Tehnika: Next.js na Vercelu (hunt-jade.vercel.app), Supabase (EU, Frankfurt), An
    - karte bez signala za cijelo lovište, HD satelit, neograničene fotografije
    - izvoz za evidenciju (PDF/Excel), napredna statistika i prognoza aktivnosti divljači
    - **testeri i rani korisnici: PRO besplatno zauvijek (značka Osnivač)** – obećano, mora se poštovati
+   - **već napravljeno i skriveno do početka naplate** (`lib/pro.ts`, sad vidi samo administrator): novi Pregled (Sada + tijek dana + pločice), „Kad u lov?” za 8 dana (besplatno: danas i sutra), uvoz staza GPX/KML
+   - pravilo: dobre nove funkcije ne idu odmah svima – vlasnik odlučuje što je besplatno, a što PRO
 3. **CroLovac za lovačka društva** (prijedlog: 99–249 €/god po društvu, ovisno o broju članova)
    - zajednička karta društva (granice, čeke, hranilišta – jedan izvor istine)
    - organizacija skupnog lova: stajališta, raspored, tko je gdje, sigurnost
@@ -103,11 +105,10 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 ## Spremno, čeka „objavi”
 
-- Novi Pregled: kartica „Sada”, tijek dana i pločice (vjetar, tjedan, plan odstrela, Mjesec, hranilište)
-- „Kad u lov?” – ocjena jutra i večeri za 8 dana
+- „Kad u lov?” – za sve danas i sutra (8 dana i novi Pregled su PRO, skriveni)
 - Sentry i PostHog + prekidač statistike u Postavkama
 - Lokacija iz Google karata (link ili koordinate) – na karti (Slojevi → Uvoz) i u svakom polju lokacije
-- Uvoz staza iz datoteka GPX/KML (planinarske staze, šumski putovi) kao sloj karte
+- Uvoz staza iz datoteka GPX/KML – PRO (skriveno)
 
 ## Ideje na čekanju (redom)
 

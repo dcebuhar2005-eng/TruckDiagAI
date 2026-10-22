@@ -32,6 +32,7 @@ import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
 import UvozNaKartu from "./UvozNaKartu";
 import { okvirStaze } from "@/lib/staze";
+import { usePro } from "@/lib/pro";
 import { PodijeliOdabrano } from "../lovista/Podijeli";
 import { useZoomSnimki } from "@/lib/snimke";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
@@ -437,6 +438,7 @@ export default function KartaPrikaz() {
   /** Zakret karte u stupnjevima (0 = sjever gore). */
   const [okret, setOkret] = useState(0);
   const [karta, setKarta] = useState<L.Map | null>(null);
+  const pro = usePro();
   const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, staze: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
@@ -762,7 +764,8 @@ export default function KartaPrikaz() {
             ) : null,
           )}
 
-        {slojevi.staze &&
+        {pro &&
+          slojevi.staze &&
           baza.staze.map((s) => {
             const opis = `${s.naziv}${s.duljina ? ` · ${metri(s.duljina)}` : ""}`;
             // Staza je dodirljiva samo u pregledu – pri crtanju granice dodir mora ići na kartu.
@@ -1062,7 +1065,10 @@ export default function KartaPrikaz() {
                 ["miris", "Zona mirisa (vjetar)"],
                 ["lovci", "Prijatelji u lovu"],
               ] as [keyof typeof slojevi, string][]
-            ).map(([k, n]) => (
+            )
+              // Uvoz staza je PRO funkcija – bez PRO-a se sloj ni ne nudi.
+              .filter(([k]) => pro || k !== "staze")
+              .map(([k, n]) => (
               <button key={k} onClick={() => setSlojevi((s) => ({ ...s, [k]: !s[k] }))} className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-[14px] hover:bg-white/5">
                 {n}
                 <span className={cx("relative h-5 w-9 rounded-full transition-colors", slojevi[k] ? "bg-[#e8a947]" : "bg-white/15")}>
@@ -1071,6 +1077,7 @@ export default function KartaPrikaz() {
               </button>
             ))}
             <UvozNaKartu
+              pro={pro}
               staze={baza.staze}
               pokaziStazu={(s) => {
                 const o = okvirStaze(s);

@@ -38,8 +38,8 @@ function Red({ dio, t }: { dio: string; t: Termin | null }) {
 }
 
 /** Kad u lov? – za svaki od sljedećih dana jednostavno: ide li se ujutro i navečer i zašto. */
-export default function KadULov({ p, lat, lng }: { p: Prognoza; lat: number; lng: number }) {
-  const dani = useMemo(() => izgledLova(p.satno, lat, lng), [p, lat, lng]);
+export default function KadULov({ p, lat, lng, dana = 8 }: { p: Prognoza; lat: number; lng: number; dana?: number }) {
+  const dani = useMemo(() => izgledLova(p.satno, lat, lng, dana), [p, lat, lng, dana]);
   const naj = useMemo(() => najboljiTermin(dani), [dani]);
   if (!dani.length) return null;
 

@@ -9,7 +9,9 @@ import { otvori } from "@/components/urednici/kontroler";
 import VjetarKartica from "@/components/VjetarKartica";
 import CekeDanas from "@/components/CekeDanas";
 import KadULov from "@/components/KadULov";
-import DanasULovistu from "@/components/DanasULovistu";
+import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
+import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
+import { usePro } from "@/lib/pro";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
 import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
 import { lovnaGodina } from "@/lib/astro";
@@ -34,6 +36,7 @@ export default function Pregled() {
   const prognoza = usePrognoza(lok?.lat, lok?.lng);
 
   const potvrda = usePotvrda();
+  const pro = usePro();
   const danas = useMemo(() => new Date(), []);
   if (!baza) return <Kostur />;
 
@@ -124,7 +127,13 @@ export default function Pregled() {
       </motion.header>
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {lok && <DanasULovistu baza={baza} p={p} lat={lok.lat} lng={lok.lng} />}
+        {pro && lok ? (
+          <DanasULovistu baza={baza} p={p} lat={lok.lat} lng={lok.lng} />
+        ) : (
+          <motion.div variants={djeteListe} className="lg:col-span-3">
+            <KreniULovKartica baza={baza} />
+          </motion.div>
+        )}
 
         <BezProfila />
 
@@ -149,9 +158,12 @@ export default function Pregled() {
           )}
         </motion.section>
 
+        {!pro && lok && <AktivnostDivljaci lat={lok.lat} lng={lok.lng} />}
+
         {p && lok && (
-          <motion.section id="kad-u-lov" variants={djeteListe} className="kartica scroll-mt-4 p-5 lg:col-span-1">
-            <KadULov p={p} lat={lok.lat} lng={lok.lng} />
+          <motion.section id="kad-u-lov" variants={djeteListe} className={cx("kartica scroll-mt-4 p-5", pro ? "lg:col-span-1" : "lg:col-span-3")}>
+            {/* Besplatno: danas i sutra; PRO: 8 dana. */}
+            <KadULov p={p} lat={lok.lat} lng={lok.lng} dana={pro ? 8 : 2} />
           </motion.section>
         )}
 
@@ -160,6 +172,8 @@ export default function Pregled() {
             <CekeDanas baza={baza} p={p} />
           </motion.section>
         )}
+
+        {!pro && lok && <SvjetloDanas lat={lok.lat} lng={lok.lng} />}
 
         {/* Statistika lovne godine */}
         <motion.section variants={djeteListe} className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:col-span-3">
