@@ -8,7 +8,7 @@ import { pokreniSinkronizaciju, useSinkronizacija } from "@/lib/sinkronizacija";
 import { automatskaKopija, vratiAkoJePrazno } from "@/lib/kopije";
 import { registrirajSW } from "@/lib/offline";
 import { aktivniLov, uskladiPracenje } from "@/lib/lov";
-import { ocistiStaroPracenje, pokreniTipkuNatrag } from "@/lib/nativno";
+import { ocistiStaroPracenje, pokreniTipkuNatrag, presloziPodsjetnikTestiranja } from "@/lib/nativno";
 import { oznaciUvodGotov, useBaza, uvodGotov } from "@/lib/store";
 import AlarmBlizine from "./AlarmBlizine";
 import Navigacija from "./Navigacija";
@@ -36,13 +36,20 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     // GPS praćenje ostalo od prethodnog učitavanja stranice (nastavlja se ako je lov u tijeku).
     ocistiStaroPracenje();
     pokreniTipkuNatrag();
+    // Podsjetnik testerima (Android): svako otvaranje pomiče ga na sljedeći dan.
+    presloziPodsjetnikTestiranja();
+    const naPovratak = () => document.visibilityState === "visible" && presloziPodsjetnikTestiranja();
+    document.addEventListener("visibilitychange", naPovratak);
     // Karta (Leaflet) se u miru učita unaprijed, pa se prvi put otvara bez čekanja.
     const t = setTimeout(() => {
       const ucitaj = () => void import("@/app/karta/KartaPrikaz").catch(() => {});
       if ("requestIdleCallback" in window) requestIdleCallback(ucitaj, { timeout: 5000 });
       else ucitaj();
     }, 4000);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", naPovratak);
+    };
   }, []);
 
   // Dnevnik prijavljenog korisnika: sinkronizacija s njegovim privatnim zapisom i mjesečna kopija.
