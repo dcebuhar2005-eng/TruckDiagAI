@@ -121,12 +121,11 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Svaki tester dobije odgovor na svoju prijavu.
 - Objave na mrežama: točno 5 hashtagova po objavi.
 
-## Spremno, čeka „objavi”
+## Objavljeno 23. 10. 2026. (verzija 609938727b44)
 
-- „Kad u lov?” – za sve danas i sutra (8 dana i novi Pregled su PRO, skriveni)
-- Sentry i PostHog + prekidač statistike u Postavkama
-- Lokacija iz Google karata (link ili koordinate) – na karti (Slojevi → Uvoz) i u svakom polju lokacije
-- Uvoz staza iz datoteka GPX/KML – PRO (skriveno)
+- „Kad u lov?” za danas i sutra, lokacija iz Google karata, Sentry i PostHog, mišljenje se ne ponavlja,
+  dnevni podsjetnik testerima (Android, 18:30). PRO funkcije su u kodu, ali skrivene.
+- Prije sljedećeg AAB-a: Google Play → Sigurnost podataka → dodati „Dijagnostika rušenja” i „Analitika aplikacije”.
 
 ## Ideje na čekanju (redom)
 
