@@ -572,3 +572,11 @@ alter table public.lov_greske enable row level security;
 create policy lov_greske_unos on public.lov_greske for insert to anon, authenticated
   with check (korisnik is null or korisnik = (select auth.uid()));
 grant insert on public.lov_greske to anon, authenticated;
+
+-- Je li prijavljeni korisnik već poslao mišljenje (na bilo kojem uređaju) – da ga se ne pita ponovno.
+-- Primijenjeno migracijom „lov_vec_odgovorio”.
+create or replace function public.lov_vec_odgovorio()
+returns boolean language sql stable security definer set search_path = public
+as $$ select exists (select 1 from public.lov_misljenja where korisnik = auth.uid()); $$;
+revoke execute on function public.lov_vec_odgovorio() from public, anon;
+grant execute on function public.lov_vec_odgovorio() to authenticated;

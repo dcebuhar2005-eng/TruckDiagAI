@@ -2,11 +2,13 @@
 
 import { useEffect } from "react";
 import { zabiljeziGresku } from "@/lib/greske";
+import { prijaviIznimku } from "@/lib/pracenje";
 
 /** Stranica se srušila: zapisuje se u dnevnik grešaka, a lovac može pokušati ponovno. */
 export default function Greska({ error, unstable_retry }: { error: Error & { digest?: string }; unstable_retry: () => void }) {
   useEffect(() => {
     zabiljeziGresku({ vrsta: "stranica", poruka: error.message, stog: error.stack, podaci: { digest: error.digest } });
+    prijaviIznimku(error);
   }, [error]);
 
   return (

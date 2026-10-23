@@ -102,6 +102,12 @@ export default function Privatnost() {
               svaka web stranica.
             </li>
             <li>
+              <strong>Sentry</strong> (dojave rušenja aplikacije) i <strong>PostHog</strong> (anonimna statistika korištenja) –
+              poslužitelji u Europskoj uniji (Njemačka). Šalje se samo tehnički opis greške te koje stranice i funkcije se
+              koriste (npr. „dodan izlazak”), uz interni broj računa – bez sadržaja dnevnika, lokacije, imena i e-maila. Statistiku
+              možete isključiti u Postavkama (Izgled → Anonimna statistika korištenja).
+            </li>
+            <li>
               Karte (Esri, Mapbox, DGU, OpenTopoMap, OpenStreetMap) i vremenska prognoza (Open-Meteo) dobivaju samo područje karte
               ili koordinate za koje se traži prikaz ili prognoza, bez vašeg imena i e-maila.
             </li>

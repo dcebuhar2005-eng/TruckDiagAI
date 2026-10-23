@@ -30,6 +30,9 @@ import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
+import UvozNaKartu from "./UvozNaKartu";
+import { okvirStaze } from "@/lib/staze";
+import { usePro } from "@/lib/pro";
 import { PodijeliOdabrano } from "../lovista/Podijeli";
 import { useZoomSnimki } from "@/lib/snimke";
 import OfflinePanel, { type PodlogaZaOffline } from "./OfflinePanel";
@@ -435,7 +438,8 @@ export default function KartaPrikaz() {
   /** Zakret karte u stupnjevima (0 = sjever gore). */
   const [okret, setOkret] = useState(0);
   const [karta, setKarta] = useState<L.Map | null>(null);
-  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
+  const pro = usePro();
+  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, staze: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -760,6 +764,31 @@ export default function KartaPrikaz() {
             ) : null,
           )}
 
+        {pro &&
+          slojevi.staze &&
+          baza.staze.map((s) => {
+            const opis = `${s.naziv}${s.duljina ? ` · ${metri(s.duljina)}` : ""}`;
+            // Staza je dodirljiva samo u pregledu – pri crtanju granice dodir mora ići na kartu.
+            const dodirljiva = nacin === "pregled";
+            return (
+              <Fragment key={`s-${s.id}-${dodirljiva}`}>
+                {s.linije.map((l, i) => (
+                  <Fragment key={i}>
+                    <Polyline positions={l} interactive={false} pathOptions={{ color: "#ffffff", weight: 6, opacity: 0.45 }} />
+                    <Polyline positions={l} interactive={dodirljiva} pathOptions={{ color: s.boja, weight: 3.5, opacity: 0.95, dashArray: "8 6" }}>
+                      {dodirljiva && <Tooltip sticky>{opis}</Tooltip>}
+                    </Polyline>
+                  </Fragment>
+                ))}
+                {(s.tocke ?? []).map((t, i) => (
+                  <CircleMarker key={`p${i}`} center={[t.lat, t.lng]} radius={5} interactive={dodirljiva} pathOptions={{ color: "#fff", weight: 2, fillColor: s.boja, fillOpacity: 1 }}>
+                    {dodirljiva && <Tooltip>{t.naziv}</Tooltip>}
+                  </CircleMarker>
+                ))}
+              </Fragment>
+            );
+          })}
+
         {slojevi.miris &&
           vjetarSmjer != null &&
           zaMiris.map((t) => {
@@ -1010,7 +1039,7 @@ export default function KartaPrikaz() {
             exit={{ opacity: 0, scale: 0.95, y: -6 }}
             transition={opruga}
             style={{ transformOrigin: "top right" }}
-            className="absolute top-[max(4.5rem,calc(env(safe-area-inset-top)+4rem))] right-3 z-[600] w-64 rounded-2xl border border-white/10 bg-[#0d130e]/90 p-3 text-white shadow-jaka backdrop-blur-xl md:top-20 md:right-5"
+            className="absolute top-[max(4.5rem,calc(env(safe-area-inset-top)+4rem))] right-3 z-[600] max-h-[calc(100dvh-10rem)] w-64 overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#0d130e]/90 p-3 text-white shadow-jaka backdrop-blur-xl md:top-20 md:right-5"
           >
             <div className="mb-2 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Podloga</div>
             <div className="mb-3 grid grid-cols-3 gap-1.5">
@@ -1029,13 +1058,17 @@ export default function KartaPrikaz() {
               [
                 ["sluzbena", "Službena lovišta (državna i privatna)"],
                 ["lovista", "Moja lovišta"],
+                ["staze", "Uvezene staze (GPX/KML)"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
                 ["tragovi", "Tragovi divljači"],
                 ["miris", "Zona mirisa (vjetar)"],
                 ["lovci", "Prijatelji u lovu"],
               ] as [keyof typeof slojevi, string][]
-            ).map(([k, n]) => (
+            )
+              // Uvoz staza je PRO funkcija – bez PRO-a se sloj ni ne nudi.
+              .filter(([k]) => pro || k !== "staze")
+              .map(([k, n]) => (
               <button key={k} onClick={() => setSlojevi((s) => ({ ...s, [k]: !s[k] }))} className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-[14px] hover:bg-white/5">
                 {n}
                 <span className={cx("relative h-5 w-9 rounded-full transition-colors", slojevi[k] ? "bg-[#e8a947]" : "bg-white/15")}>
@@ -1043,6 +1076,23 @@ export default function KartaPrikaz() {
                 </span>
               </button>
             ))}
+            <UvozNaKartu
+              pro={pro}
+              staze={baza.staze}
+              pokaziStazu={(s) => {
+                const o = okvirStaze(s);
+                if (o) setOkvir({ j: o[0][0], z: o[0][1], s: o[1][0], i: o[1][1], k: Date.now() });
+                setSlojevi((x) => ({ ...x, staze: true }));
+                setIzbornik(false);
+              }}
+              lokacija={(k) => {
+                setIzbornik(false);
+                setNacin("pregled");
+                setOdabir(null);
+                setCilj({ lat: k.lat, lng: k.lng, zoom: 17, k: Date.now() });
+                setDodajNa(k);
+              }}
+            />
           </motion.div>
         )}
       </AnimatePresence>

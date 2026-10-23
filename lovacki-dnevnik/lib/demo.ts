@@ -65,6 +65,7 @@ export function demoBaza(ime: string): Baza {
       { id: noviIdSiguran(), naziv: "Blaser R8", kalibar: "8x57 IS", createdAt: sad - 2 },
       { id: noviIdSiguran(), naziv: "Beretta 686", kalibar: "12/70", napomena: "Sačmarica", createdAt: sad - 3 },
     ],
+    staze: [],
     dozvole: [
       { id: noviIdSiguran(), tip: "lovacka-iskaznica", naziv: "Lovačka iskaznica", broj: "HLS-0457821", izdavatelj: "Hrvatski lovački savez", od: `${lg}-04-01`, do: `${lg + 1}-03-31`, kvote: [], createdAt: sad },
       { id: noviIdSiguran(), tip: "dozvola-za-lov", naziv: "Dozvola za lov – krupna divljač", broj: "DZL-118/24", izdavatelj: "LD Bukovac", od: `${lg}-04-01`, do: `${lg + 1}-03-31`, lovisteId: L1, kvote: [{ vrsta: "Divlja svinja", broj: 4 }, { vrsta: "Srna obična", spol: "m", broj: 2 }, { vrsta: "Srna obična", spol: "z", broj: 2 }], createdAt: sad - 1 },

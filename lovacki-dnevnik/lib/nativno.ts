@@ -148,6 +148,51 @@ export async function nativnaObavijest(naslov: string, tijelo: string) {
   } catch {}
 }
 
+/* ---------------- Podsjetnik za testiranje ---------------- */
+
+// Google Play traži da testeri svaki dan otvore aplikaciju. Svakim otvaranjem podsjetnici se
+// presložuju od sutra nadalje u 18:30 – pa stigne samo na dan kad aplikacija još nije otvorena.
+const KANAL_PODSJETNIKA = "podsjetnik-testiranja";
+const PRVI_ID_PODSJETNIKA = 7100;
+const BROJ_PODSJETNIKA = 14;
+/** Kraj zatvorenog testiranja na Google Playu (nakon toga nema podsjetnika). */
+const KRAJ_TESTIRANJA = new Date(2026, 10, 3);
+
+export async function presloziPodsjetnikTestiranja() {
+  if (!uAplikaciji()) return;
+  try {
+    await LocalNotifications.cancel({ notifications: Array.from({ length: BROJ_PODSJETNIKA }, (_, i) => ({ id: PRVI_ID_PODSJETNIKA + i })) });
+    const sada = new Date();
+    const dani: Date[] = [];
+    for (let k = 1; k <= BROJ_PODSJETNIKA; k++) {
+      const d = new Date(sada.getFullYear(), sada.getMonth(), sada.getDate() + k, 18, 30);
+      if (d >= KRAJ_TESTIRANJA) break;
+      dani.push(d);
+    }
+    if (!dani.length) return;
+    // Dopuštenje se traži samo ako ga korisnik još nije ni dao ni odbio.
+    let dopustenje = (await LocalNotifications.checkPermissions()).display;
+    if (dopustenje === "prompt" || dopustenje === "prompt-with-rationale") dopustenje = (await LocalNotifications.requestPermissions()).display;
+    if (dopustenje !== "granted") return;
+    await LocalNotifications.createChannel({
+      id: KANAL_PODSJETNIKA,
+      name: "Podsjetnik za testiranje",
+      description: "Jednom dnevno, ako aplikacija taj dan još nije otvorena",
+      importance: 3,
+    });
+    await LocalNotifications.schedule({
+      notifications: dani.map((at, i) => ({
+        id: PRVI_ID_PODSJETNIKA + i,
+        title: "CroLovac 🦌",
+        body: "Danas još niste otvorili CroLovac – jedan dodir i pomažete testiranju na Google Playu 💪",
+        schedule: { at, allowWhileIdle: true },
+        channelId: KANAL_PODSJETNIKA,
+        smallIcon: "ic_stat_crolovac",
+      })),
+    });
+  } catch {}
+}
+
 interface VibracijaPlugin {
   uzorak(o: { vremena: number[] }): Promise<void>;
   zaustavi(): Promise<void>;

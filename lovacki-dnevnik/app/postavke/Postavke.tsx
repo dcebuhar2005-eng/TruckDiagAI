@@ -16,6 +16,7 @@ import { db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza, Tocka2D, Postavke as TPostavke } from "@/lib/types";
 import PoljeLokacije from "@/components/lokacija/PoljeLokacije";
 import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
+import { postaviStatistiku, statistikaUkljucena } from "@/lib/pracenje";
 
 export default function Postavke() {
   const baza = useBaza();
@@ -141,6 +142,7 @@ function Obrazac({ baza }: { baza: Baza }) {
           />
           <p className="mt-3 text-[13px] text-tekst-3">Tamna tema štedi bateriju i ne zasljepljuje na čeki u sumrak.</p>
           <ProvjeraVerzije />
+          <StatistikaKoristenja />
         </Sekcija>
 
         <Sekcija ikona="stit" naslov="Podaci i sigurnosna kopija" opis={konfigurirano ? "Dnevnik je spremljen na uređaju i u vašem privatnom računu." : "Svi podaci čuvaju se isključivo na ovom uređaju."}>
@@ -431,5 +433,30 @@ function AutomatskaKopija() {
       )}
       {potvrda.element}
     </Sekcija>
+  );
+}
+
+/** Anonimna statistika korištenja (PostHog) – može se isključiti. */
+function StatistikaKoristenja() {
+  // Postavke se crtaju tek kad je dnevnik učitan na uređaju, pa localStorage ovdje postoji.
+  const [ukljuceno, setUkljuceno] = useState(statistikaUkljucena);
+  return (
+    <div className="mt-4 border-t border-rub pt-4">
+      <div className="mb-2 text-[14px] font-medium">Anonimna statistika korištenja</div>
+      <Segmenti
+        vrijednost={ukljuceno ? "da" : "ne"}
+        promjena={(v: string) => {
+          postaviStatistiku(v === "da");
+          setUkljuceno(v === "da");
+        }}
+        opcije={[
+          { vrijednost: "da", oznaka: "Uključeno" },
+          { vrijednost: "ne", oznaka: "Isključeno" },
+        ]}
+      />
+      <p className="mt-2 text-[13px] text-tekst-3">
+        Pomaže nam vidjeti koje se funkcije koriste i gdje zapinje. Ne šalje se sadržaj dnevnika, lokacija, ime ni e-mail.
+      </p>
+    </div>
   );
 }

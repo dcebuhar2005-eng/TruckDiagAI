@@ -225,6 +225,20 @@ export interface Oruzje {
   createdAt: number;
 }
 
+/** Staza uvezena iz datoteke (GPX/KML – planinarske staze, šumski putovi, tragovi iz drugih aplikacija). */
+export interface Staza {
+  id: ID;
+  naziv: string;
+  /** Linije staze [lat, lng], pojednostavljene da stanu u dnevnik. */
+  linije: [number, number][][];
+  /** Imenovane točke iz datoteke (izvori, vrhovi, raskrižja…). */
+  tocke?: { naziv: string; lat: number; lng: number }[];
+  boja: string;
+  /** Duljina svih linija u metrima. */
+  duljina: number;
+  createdAt: number;
+}
+
 export interface Baza {
   verzija: 1;
   lovista: Loviste[];
@@ -233,7 +247,8 @@ export interface Baza {
   odstrel: Odstrel[];
   dozvole: Dozvola[];
   oruzje: Oruzje[];
+  staze: Staza[];
   postavke: Postavke;
 }
 
-export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole" | "oruzje";
+export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole" | "oruzje" | "staze";

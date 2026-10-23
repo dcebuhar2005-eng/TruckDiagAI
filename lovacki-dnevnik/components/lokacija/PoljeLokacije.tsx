@@ -8,6 +8,7 @@ import { ZADANE_POSTAVKE, useBaza } from "@/lib/store";
 import type { Tocka2D } from "@/lib/types";
 import Ikona from "../Ikona";
 import { Gumb, obavijest } from "../ui";
+import ZalijepiLokaciju from "./ZalijepiLokaciju";
 
 const KartaOdabira = dynamic(() => import("./KartaOdabira"), { ssr: false });
 
@@ -120,6 +121,7 @@ export default function PoljeLokacije({
           {trazim ? "Tražim…" : "Moja lokacija"}
         </Gumb>
       </div>
+      <ZalijepiLokaciju className="mt-2" primijeni={promjena} />
       <OdabirNaKarti
         otvoren={karta}
         pocetak={vrijednost ?? sredina}

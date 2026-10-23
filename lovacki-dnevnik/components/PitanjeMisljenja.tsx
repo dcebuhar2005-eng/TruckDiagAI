@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { konfigurirano } from "@/lib/drustvo";
-import { dodajVrijeme, odgodi, posaljiMisljenje, posaljiNaCekanju, trebaPitati } from "@/lib/misljenje";
+import { dodajVrijeme, odgodi, posaljiMisljenje, posaljiNaCekanju, trebaPitati, vecOdgovorio } from "@/lib/misljenje";
 import Ikona from "./Ikona";
 import { cx, opruga } from "./ui";
 
@@ -25,6 +25,8 @@ export default function PitanjeMisljenja({ korisnik, zauzet }: { korisnik?: stri
   useEffect(() => {
     if (!konfigurirano || !korisnik) return;
     posaljiNaCekanju().catch(() => {});
+    // Odmah provjeri na poslužitelju – tko je već odgovorio (i na drugom uređaju), više se ne pita.
+    vecOdgovorio(korisnik).catch(() => {});
     let zadnje = Date.now();
     const otkucaj = () => {
       try {
@@ -33,7 +35,10 @@ export default function PitanjeMisljenja({ korisnik, zauzet }: { korisnik?: stri
         const s = vidljivo ? dodajVrijeme(korisnik, sada - zadnje) : null;
         zadnje = sada;
         if (s && trebaPitati(s) && !blokirano.current && !otvorenObrazac()) {
-          setFaza((f) => (f === "skriveno" ? "pitanje" : f));
+          // Pita se samo kad poslužitelj potvrdi da odgovora još nema (bez veze se ne pita).
+          vecOdgovorio(korisnik).then((vec) => {
+            if (vec === false && !blokirano.current && !otvorenObrazac()) setFaza((f) => (f === "skriveno" ? "pitanje" : f));
+          });
         }
       } catch {}
     };

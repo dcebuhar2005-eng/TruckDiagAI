@@ -4,22 +4,24 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useMemo } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
-import { FazaMjeseca, TrakaDana } from "@/components/Nebo";
 import { Kostur } from "@/components/Kostur";
 import { otvori } from "@/components/urednici/kontroler";
 import VjetarKartica from "@/components/VjetarKartica";
 import CekeDanas from "@/components/CekeDanas";
+import KadULov from "@/components/KadULov";
+import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
+import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
+import { usePro } from "@/lib/pro";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
 import { Brojac, Gumb, Znacka, cx, djeteListe, obavijest, roditeljListe, usePotvrda } from "@/components/ui";
-import { lovnaGodina, mjesec, mjesecevaVremena, solunar, suncevaVremena } from "@/lib/astro";
+import { lovnaGodina } from "@/lib/astro";
 import { bojaVrste, nazivSpola, NACINI_LOVA } from "@/lib/katalog";
-import { datumDugi, datumKratki, danUTjednu, metri, mnozina, sat, trajanje, trajanjeIzlaska } from "@/lib/format";
+import { datumDugi, datumKratki, danUTjednu, metri, mnozina, sat, trajanjeIzlaska } from "@/lib/format";
 import { lovciUBlizini, useDrustvo } from "@/lib/drustvo";
 import { ZADANE_POSTAVKE, db, praznaBaza, useBaza } from "@/lib/store";
 import type { Baza } from "@/lib/types";
 import { jeLov, mojOdstrel, nazivLovista, odstrelULovnojGodini, statusDozvole } from "@/lib/upiti";
 import { usePrognoza } from "@/lib/vrijeme";
-import { aktivniLov } from "@/lib/lov";
 
 function pozdrav(h: number) {
   if (h < 5) return "Laku noć";
@@ -34,18 +36,9 @@ export default function Pregled() {
   const prognoza = usePrognoza(lok?.lat, lok?.lng);
 
   const potvrda = usePotvrda();
+  const pro = usePro();
   const danas = useMemo(() => new Date(), []);
-  const astro = useMemo(() => {
-    if (!lok) return null;
-    return {
-      sv: suncevaVremena(danas, lok.lat, lok.lng),
-      mv: mjesecevaVremena(danas, lok.lat, lok.lng),
-      m: mjesec(danas),
-      sol: solunar(danas, lok.lat, lok.lng),
-    };
-  }, [danas, lok]);
-
-  if (!baza || !astro) return <Kostur />;
+  if (!baza) return <Kostur />;
 
   const lg = lovnaGodina();
   const izlasciLG = baza.izlasci.filter((i) => i.datum >= iso(lg.od) && i.datum <= iso(lg.do));
@@ -134,15 +127,18 @@ export default function Pregled() {
       </motion.header>
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Kreni u lov / lov u tijeku */}
-        <motion.div variants={djeteListe} className="lg:col-span-3">
-          <KreniULovKartica baza={baza} />
-        </motion.div>
+        {pro && lok ? (
+          <DanasULovistu baza={baza} p={p} lat={lok.lat} lng={lok.lng} />
+        ) : (
+          <motion.div variants={djeteListe} className="lg:col-span-3">
+            <KreniULovKartica baza={baza} />
+          </motion.div>
+        )}
 
         <BezProfila />
 
         {/* Vjetar i vrijeme */}
-        <motion.section variants={djeteListe} className="kartica relative overflow-hidden p-5 lg:col-span-2">
+        <motion.section id="vjetar" variants={djeteListe} className="kartica relative scroll-mt-4 overflow-hidden p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Vjetar i vrijeme</h2>
             {p && <span className="text-[12px] text-tekst-3">Ažurirano {sat(new Date(p.dohvaceno))}</span>}
@@ -162,54 +158,14 @@ export default function Pregled() {
           )}
         </motion.section>
 
-        {/* Mjesec i solunar */}
-        <motion.section variants={djeteListe} className="kartica p-5">
-          <h2 className="mb-4 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Aktivnost divljači</h2>
-          <div className="flex items-center gap-4">
-            <FazaMjeseca faza={astro.m.faza} velicina={72} />
-            <div>
-              <div className="font-medium">{astro.m.naziv}</div>
-              <div className="brojke text-[13px] text-tekst-2">Osvijetljenost {Math.round(astro.m.osvjetljenje * 100)} %</div>
-              <div className="brojke text-[12.5px] text-tekst-3">
-                Izlazi {sat(astro.mv.izlazak)} · zalazi {sat(astro.mv.zalazak)}
-              </div>
-            </div>
-          </div>
-          {astro.m.osvjetljenje < 0.06 && (
-            <p className="mt-3 text-[12.5px] text-tekst-3">
-              Mlađak: Mjesec izlazi i zalazi blizu Sunca, pa se danju ne vidi, a noć je potpuno tamna.
-            </p>
-          )}
-          <div className="mt-5 flex items-center justify-between rounded-2xl bg-povrsina-2 p-3.5">
-            <div>
-              <div className="text-[11.5px] font-medium tracking-wide text-tekst-3 uppercase">Solunarna ocjena</div>
-              <div className="font-medium">{astro.sol.opis}</div>
-            </div>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <motion.span
-                  key={i}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.15 + i * 0.04, type: "spring", stiffness: 400, damping: 15 }}
-                >
-                  <Ikona ime="zvijezda" velicina={18} className={i <= astro.sol.ocjena ? "text-naglasak" : "text-tekst-3/50"} fill={i <= astro.sol.ocjena ? "currentColor" : "none"} />
-                </motion.span>
-              ))}
-            </div>
-          </div>
-          <ul className="mt-3 grid gap-1.5">
-            {astro.sol.razdoblja.map((r, i) => (
-              <li key={i} className="flex items-center gap-2.5 text-[13.5px]">
-                <span className={cx("h-2 w-5 rounded-full", r.vrsta === "glavno" ? "bg-naglasak" : "bg-naglasak/45")} />
-                <span className="brojke font-medium">
-                  {sat(r.od)}–{sat(r.do)}
-                </span>
-                <span className="truncate text-tekst-3">{r.povod}</span>
-              </li>
-            ))}
-          </ul>
-        </motion.section>
+        {!pro && lok && <AktivnostDivljaci lat={lok.lat} lng={lok.lng} />}
+
+        {p && lok && (
+          <motion.section id="kad-u-lov" variants={djeteListe} className={cx("kartica scroll-mt-4 p-5", pro ? "lg:col-span-1" : "lg:col-span-3")}>
+            {/* Besplatno: danas i sutra; PRO: 8 dana. */}
+            <KadULov p={p} lat={lok.lat} lng={lok.lng} dana={pro ? 8 : 2} />
+          </motion.section>
+        )}
 
         {baza.tocke.some((t) => tockaZaVjetar(t)) && (
           <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">
@@ -217,21 +173,7 @@ export default function Pregled() {
           </motion.section>
         )}
 
-        {/* Sunce */}
-        <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">
-          <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <h2 className="mr-auto text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Svjetlo danas</h2>
-            <Vrijeme oznaka="Zora" v={sat(astro.sv.zora)} />
-            <Vrijeme oznaka="Izlazak" v={sat(astro.sv.izlazak)} naglaseno />
-            <Vrijeme oznaka="Zalazak" v={sat(astro.sv.zalazak)} naglaseno />
-            <Vrijeme oznaka="Sumrak" v={sat(astro.sv.sumrak)} />
-            <Vrijeme oznaka="Dan" v={trajanje(astro.sv.duljinaDana)} />
-          </div>
-          <TrakaDana sv={astro.sv} razdoblja={astro.sol.razdoblja} datum={danas} />
-          <p className="mt-3 text-[12px] text-tekst-3">
-            Žuti stupci označavaju glavna (viša) i sporedna solunarna razdoblja. Zora i sumrak su građanski (Sunce 6° ispod obzora).
-          </p>
-        </motion.section>
+        {!pro && lok && <SvjetloDanas lat={lok.lat} lng={lok.lng} />}
 
         {/* Statistika lovne godine */}
         <motion.section variants={djeteListe} className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:col-span-3">
@@ -346,15 +288,6 @@ function BrzaAkcija({ ikona, oznaka, onClick, primarna }: { ikona: ImeIkone; ozn
   );
 }
 
-function Vrijeme({ oznaka, v, naglaseno }: { oznaka: string; v: string; naglaseno?: boolean }) {
-  return (
-    <div>
-      <div className="text-[11px] font-medium tracking-wide text-tekst-3 uppercase">{oznaka}</div>
-      <div className={cx("brojke font-semibold", naglaseno ? "text-[18px] text-naglasak" : "text-[16px]")}>{v}</div>
-    </div>
-  );
-}
-
 function Plocica({
   ikona,
   oznaka,
@@ -423,34 +356,6 @@ function UpozorenjeLovaca() {
         </span>
         <Ikona ime="desno" velicina={16} className="text-tekst-3" />
       </motion.div>
-    </Link>
-  );
-}
-
-function KreniULovKartica({ baza }: { baza: Baza }) {
-  const i = aktivniLov(baza);
-  return (
-    <Link
-      href="/lov"
-      transitionTypes={["naprijed"]}
-      className={cx(
-        "group relative flex items-center gap-4 overflow-hidden rounded-[22px] p-4 pr-5 transition-transform active:scale-[0.99]",
-        i ? "bg-mahovina text-[#0b100c]" : "bg-naglasak text-[#17130a] shadow-[0_14px_34px_-16px_var(--naglasak)]",
-      )}
-    >
-      <span className="pointer-events-none absolute -top-10 -right-6 size-40 rounded-full bg-white/20 blur-2xl" />
-      <span className="relative grid size-12 shrink-0 place-items-center rounded-2xl bg-black/10">
-        <Ikona ime={i ? "sat" : "nisan"} velicina={24} />
-      </span>
-      <span className="relative min-w-0 flex-1">
-        <span className="block font-display text-[21px] leading-tight font-semibold">{i ? "Lov je u tijeku" : "Kreni u lov"}</span>
-        <span className="block truncate text-[13.5px] opacity-75">
-          {i
-            ? `Od ${i.od} · ${i.opazanja.reduce((s, o) => s + o.broj, 0)} viđeno – nastavi bilježiti`
-            : "Pokreni izlazak i bilježi uživo što vidiš"}
-        </span>
-      </span>
-      <Ikona ime="desno" velicina={20} debljina={2.4} className="relative transition-transform group-hover:translate-x-1" />
     </Link>
   );
 }

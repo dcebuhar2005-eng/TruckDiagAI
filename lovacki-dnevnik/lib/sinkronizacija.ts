@@ -197,7 +197,7 @@ export async function pokreniSinkronizaciju(id: string | null) {
   uskladiFotografije().catch(() => {});
 }
 
-const KOLEKCIJE = ["lovista", "tocke", "izlasci", "odstrel", "dozvole", "oruzje"] as const;
+const KOLEKCIJE = ["lovista", "tocke", "izlasci", "odstrel", "dozvole", "oruzje", "staze"] as const;
 const brojZapisa = (b: Baza) => KOLEKCIJE.reduce((n, k) => n + (b[k]?.length ?? 0), 0);
 const prazanIliPrimjer = (b: Baza) => brojZapisa(b) === 0 || Boolean(b.postavke?.primjer);
 
