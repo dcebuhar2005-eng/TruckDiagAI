@@ -202,12 +202,7 @@ export async function presloziPodsjetnikTestiranja() {
     let dopustenje = (await LocalNotifications.checkPermissions()).display;
     if (dopustenje === "prompt" || dopustenje === "prompt-with-rationale") dopustenje = (await LocalNotifications.requestPermissions()).display;
     if (dopustenje !== "granted") return;
-    await LocalNotifications.createChannel({
-      id: KANAL_PODSJETNIKA,
-      name: "Podsjetnik za testiranje",
-      description: "Jednom dnevno, ako aplikacija taj dan još nije otvorena",
-      importance: 3,
-    });
+    await kanalPodsjetnika();
     await LocalNotifications.schedule({
       notifications: dani.map((at, i) => ({
         id: PRVI_ID_PODSJETNIKA + i,
@@ -222,6 +217,41 @@ export async function presloziPodsjetnikTestiranja() {
       })),
     });
   } catch {}
+}
+
+function kanalPodsjetnika() {
+  return LocalNotifications.createChannel({
+    id: KANAL_PODSJETNIKA,
+    name: "Podsjetnik za testiranje",
+    description: "Jednom dnevno, ako aplikacija taj dan još nije otvorena",
+    importance: 3,
+  });
+}
+
+/** Za administratora: „Lovac blizu” odmah i podsjetnik za oko minutu, da se na mobitelu provjeri da sve stiže. */
+export async function probaSvihObavijesti() {
+  if (!uAplikaciji()) return "Proba radi samo u Android aplikaciji";
+  if ((await zatraziObavijestiUAplikaciji()) !== "granted") return "Obavijesti nisu uključene";
+  await nativnaObavijest("Lovac vrlo blizu!", "Proba: Marko je 250 m od vas. Provjerite smjer pucanja.");
+  try {
+    await kanalPodsjetnika();
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: PRVI_ID_PODSJETNIKA + 99,
+          title: "CroLovac 🦌",
+          body: "Proba podsjetnika – ovako testeri dobiju podsjetnik u 18:30",
+          schedule: { at: new Date(Date.now() + 60_000), allowWhileIdle: true },
+          channelId: KANAL_PODSJETNIKA,
+          smallIcon: "ic_stat_crolovac",
+          isExactNotification: false,
+        },
+      ],
+    });
+  } catch {
+    return "„Lovac blizu” poslan, podsjetnik nije uspio";
+  }
+  return "„Lovac blizu” stiže odmah, podsjetnik za oko minutu";
 }
 
 interface VibracijaPlugin {

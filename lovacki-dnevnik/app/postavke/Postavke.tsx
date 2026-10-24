@@ -17,7 +17,7 @@ import type { Baza, Tocka2D, Postavke as TPostavke } from "@/lib/types";
 import PoljeLokacije from "@/components/lokacija/PoljeLokacije";
 import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 import { postaviStatistiku, statistikaUkljucena } from "@/lib/pracenje";
-import { stanjeObavijestiUAplikaciji, uAplikaciji, zatraziObavijestiUAplikaciji, type StanjeObavijesti } from "@/lib/nativno";
+import { probaSvihObavijesti, stanjeObavijestiUAplikaciji, uAplikaciji, zatraziObavijestiUAplikaciji, type StanjeObavijesti } from "@/lib/nativno";
 
 export default function Postavke() {
   const baza = useBaza();
@@ -294,6 +294,11 @@ function Racun() {
               Administracija
             </Gumb>
           </Link>
+        )}
+        {admin && uAplikaciji() && (
+          <Gumb vrsta="tihi" ikona="upozorenje" className="w-full" onClick={() => probaSvihObavijesti().then((p) => obavijest(p))}>
+            Proba svih obavijesti
+          </Gumb>
         )}
       </div>
     </Sekcija>
