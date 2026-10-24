@@ -124,6 +124,34 @@ export function otvoriPostavkeLokacije() {
 const KANAL = "lovac-blizu";
 let kanal: Promise<unknown> | null = null;
 
+export type StanjeObavijesti = "granted" | "denied" | "default" | "nepodrzano";
+
+const izNativnog = (d: string): StanjeObavijesti => (d === "granted" ? "granted" : d === "denied" ? "denied" : "default");
+
+/** Dopuštenje za obavijesti u Android aplikaciji (Notification API preglednika tamo ne radi). */
+export async function stanjeObavijestiUAplikaciji(): Promise<StanjeObavijesti> {
+  try {
+    return izNativnog((await LocalNotifications.checkPermissions()).display);
+  } catch {
+    return "nepodrzano";
+  }
+}
+
+/**
+ * Zatraži dopuštenje u aplikaciji. Ako je već odbijeno, Android više ne prikazuje pitanje –
+ * tada se otvaraju postavke aplikacije (Obavijesti → Dozvoli).
+ */
+export async function zatraziObavijestiUAplikaciji(): Promise<StanjeObavijesti> {
+  try {
+    let s = izNativnog((await LocalNotifications.checkPermissions()).display);
+    if (s === "default") s = izNativnog((await LocalNotifications.requestPermissions()).display);
+    if (s !== "granted") await BG.openSettings();
+    return s;
+  } catch {
+    return "nepodrzano";
+  }
+}
+
 async function dozvoliObavijesti() {
   try {
     const s = await LocalNotifications.checkPermissions();

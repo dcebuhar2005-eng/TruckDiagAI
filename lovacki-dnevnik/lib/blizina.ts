@@ -1,7 +1,7 @@
 "use client";
 
 import { metri } from "./format";
-import { nativnaObavijest, uAplikaciji, vibriraj, zaustaviVibraciju } from "./nativno";
+import { nativnaObavijest, stanjeObavijestiUAplikaciji, uAplikaciji, vibriraj, zaustaviVibraciju, zatraziObavijestiUAplikaciji } from "./nativno";
 
 /**
  * Alarm kad prijatelj u lovu uđe u zadanu udaljenost.
@@ -135,7 +135,13 @@ export function dozvolaObavijesti(): NotificationPermission | "nepodrzano" {
   return typeof Notification === "undefined" ? "nepodrzano" : Notification.permission;
 }
 
+/** Stvarno stanje dopuštenja: u Android aplikaciji Androidovo, u pregledniku preglednikovo. */
+export async function procitajDozvoluObavijesti() {
+  return uAplikaciji() ? stanjeObavijestiUAplikaciji() : dozvolaObavijesti();
+}
+
 export async function zatraziObavijesti() {
+  if (uAplikaciji()) return zatraziObavijestiUAplikaciji();
   if (typeof Notification === "undefined") return "nepodrzano" as const;
   return Notification.requestPermission();
 }

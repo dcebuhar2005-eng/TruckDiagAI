@@ -144,7 +144,7 @@ export default function Privatnost() {
         </Odjeljak>
 
         <Odjeljak naslov="Promjene">
-          <p>O važnim promjenama ovih pravila obavijestit ćemo vas u aplikaciji. Zadnja izmjena: 16. listopada 2026.</p>
+          <p>O važnim promjenama ovih pravila obavijestit ćemo vas u aplikaciji. Zadnja izmjena: 23. listopada 2026.</p>
         </Odjeljak>
       </div>
     </div>
