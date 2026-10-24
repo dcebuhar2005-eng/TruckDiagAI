@@ -7,7 +7,7 @@ Prijedlog cijene: **2,99 €/mj ili 19,99 €/god**. Testeri i rani korisnici (z
 
 ## ✅ Napravljeno i skriveno (čeka početak naplate)
 
-Zasad ih vidi samo administrator (`lib/pro.ts`, provjera `lov_je_admin`).
+Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKAZ = false` u `lib/pro.ts`. Kad krene naplata, staviti `true` (tada vidi administrator, pa pretplatnici).
 
 | Funkcija | Bez PRO-a vidi se |
 |---|---|
