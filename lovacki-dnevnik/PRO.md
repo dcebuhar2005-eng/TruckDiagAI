@@ -7,12 +7,12 @@ Prijedlog cijene: **2,99 €/mj ili 19,99 €/god**. Testeri i rani korisnici (z
 
 ## ✅ Napravljeno i skriveno (čeka početak naplate)
 
-Zasad ih vidi samo administrator (`lib/pro.ts`, provjera `lov_je_admin`).
+Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKAZ = false` u `lib/pro.ts`. Kad krene naplata, staviti `true` (tada vidi administrator, pa pretplatnici).
 
 | Funkcija | Bez PRO-a vidi se |
 |---|---|
 | **Novi Pregled** – kartica „Sada” (kad krenuti, na koju čeku), tijek dana, pločice (vjetar, tjedan, plan odstrela, Mjesec, hranilište) | stari Pregled (Aktivnost divljači, Svjetlo danas) |
-| **„Kad u lov?” za 8 dana** + najbolji termin u tjednu (zasad isključeno i administratoru – vlasnik 24. 10.) | samo danas i sutra |
+| **„Kad u lov?” za 8 dana** + najbolji termin u tjednu | samo danas i sutra |
 | **Uvoz staza GPX/KML** (planinarske staze, šumski putovi) na kartu | ništa – sloj i gumb su skriveni |
 
 ## 📝 Planirano za PRO (još nije napravljeno)
