@@ -162,8 +162,8 @@ export default function Pregled() {
 
         {p && lok && (
           <motion.section id="kad-u-lov" variants={djeteListe} className={cx("kartica scroll-mt-4 p-5", pro ? "lg:col-span-1" : "lg:col-span-3")}>
-            {/* Besplatno: danas i sutra; PRO: 8 dana. */}
-            <KadULov p={p} lat={lok.lat} lng={lok.lng} dana={pro ? 8 : 2} />
+            {/* Zasad svima (i administratoru) danas i sutra; 8 dana čeka PRO naplatu. */}
+            <KadULov p={p} lat={lok.lat} lng={lok.lng} dana={2} />
           </motion.section>
         )}
 

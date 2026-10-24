@@ -63,7 +63,8 @@ const veliko = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 export default function DanasULovistu({ baza, p, lat, lng }: { baza: Baza; p: Prognoza | null; lat: number; lng: number }) {
   const sada = useSada();
-  const dani = useMemo(() => (p ? izgledLova(p.satno, lat, lng) : []), [p, lat, lng]);
+  // Zasad samo danas i sutra (vlasnik: 8 dana ni administratoru dok ne krene naplata).
+  const dani = useMemo(() => (p ? izgledLova(p.satno, lat, lng, 2) : []), [p, lat, lng]);
   const naj = useMemo(() => najboljiTermin(dani), [dani]);
   const sljedeci = sljedeciTermin(dani, sada);
 
@@ -355,7 +356,7 @@ function Plocice({
         </Plocica>
       )}
 
-      {dani.length > 0 && (
+      {dani.length > 2 && (
         <Plocica naslov="Tjedan" onClick={() => skoci("kad-u-lov")}>
           {naj && naj.t.oznaka !== "Loše" ? (
             <>

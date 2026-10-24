@@ -12,7 +12,7 @@ Zasad ih vidi samo administrator (`lib/pro.ts`, provjera `lov_je_admin`).
 | Funkcija | Bez PRO-a vidi se |
 |---|---|
 | **Novi Pregled** – kartica „Sada” (kad krenuti, na koju čeku), tijek dana, pločice (vjetar, tjedan, plan odstrela, Mjesec, hranilište) | stari Pregled (Aktivnost divljači, Svjetlo danas) |
-| **„Kad u lov?” za 8 dana** + najbolji termin u tjednu | samo danas i sutra |
+| **„Kad u lov?” za 8 dana** + najbolji termin u tjednu (zasad isključeno i administratoru – vlasnik 24. 10.) | samo danas i sutra |
 | **Uvoz staza GPX/KML** (planinarske staze, šumski putovi) na kartu | ništa – sloj i gumb su skriveni |
 
 ## 📝 Planirano za PRO (još nije napravljeno)
