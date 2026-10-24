@@ -33,6 +33,7 @@ import {
   GRANICE_M,
   type PostavkeBlizine,
   dozvolaObavijesti,
+  procitajDozvoluObavijesti,
   oglasiAlarm,
   postavkeBlizine,
   pripremiZvuk,
@@ -43,6 +44,7 @@ import {
 import { metri, sat, udaljenostM } from "@/lib/format";
 import { useBaza } from "@/lib/store";
 import { odjaviSe } from "@/lib/sinkronizacija";
+import { uAplikaciji } from "@/lib/nativno";
 
 export default function Lovci() {
   const d = useDrustvo();
@@ -495,7 +497,16 @@ function UloviSam({ brojPrijatelja }: { brojPrijatelja: number }) {
 
 function PostavkeAlarma() {
   const [p, setP] = useState(postavkeBlizine);
-  const [dozvola, setDozvola] = useState(dozvolaObavijesti);
+  // U Android aplikaciji stanje se čita iz Androida (asinkrono); u pregledniku odmah.
+  const [dozvola, setDozvola] = useState<string>(() => (uAplikaciji() ? "nepoznato" : dozvolaObavijesti()));
+  useEffect(() => {
+    const osvjezi = () => void procitajDozvoluObavijesti().then(setDozvola);
+    osvjezi();
+    // Povratak iz postavki Androida – provjeri je li korisnik uključio obavijesti.
+    const naPovratak = () => document.visibilityState === "visible" && osvjezi();
+    document.addEventListener("visibilitychange", naPovratak);
+    return () => document.removeEventListener("visibilitychange", naPovratak);
+  }, []);
   const promijeni = (x: Partial<PostavkeBlizine>) => {
     spremiPostavkeBlizine(x);
     setP((s) => ({ ...s, ...x }));
@@ -532,9 +543,9 @@ function PostavkeAlarma() {
         >
           Isprobaj alarm
         </Gumb>
-        {dozvola === "default" && (
+        {(dozvola === "default" || (dozvola === "denied" && uAplikaciji())) && (
           <Gumb velicina="sm" onClick={() => zatraziObavijesti().then((d) => setDozvola(d))}>
-            Dopusti obavijesti
+            {dozvola === "denied" ? "Uključi obavijesti u postavkama" : "Dopusti obavijesti"}
           </Gumb>
         )}
       </div>
@@ -546,7 +557,10 @@ function PostavkeAlarma() {
       )}
       <p className="text-[12.5px] text-tekst-3">
         Alarm radi dok ste u lovu (dijelite lokaciju): oglasi se kad prijatelj uđe u odabranu udaljenost, a vibracija kuca
-        kao srce dok je u zoni – sve brže što vam je bliže. „U redu” utiša dok se ne približi još više.{dozvola === "denied" && " Obavijesti su blokirane u postavkama preglednika."}
+        kao srce dok je u zoni – sve brže što vam je bliže. „U redu” utiša dok se ne približi još više.{dozvola === "denied" &&
+          (uAplikaciji()
+            ? " Obavijesti su isključene – u postavkama aplikacije otvorite Obavijesti i uključite Dozvoli obavijesti."
+            : " Obavijesti su blokirane u postavkama preglednika.")}
       </p>
     </div>
   );
