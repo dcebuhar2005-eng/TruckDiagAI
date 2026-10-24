@@ -171,7 +171,7 @@ export async function nativnaObavijest(naslov: string, tijelo: string) {
     });
     await kanal;
     await LocalNotifications.schedule({
-      notifications: [{ id: Date.now() % 2147483647, title: naslov, body: tijelo, channelId: KANAL, smallIcon: "ic_stat_crolovac" }],
+      notifications: [{ id: Date.now() % 2147483647, title: naslov, body: tijelo, channelId: KANAL, smallIcon: "ic_stat_crolovac", isExactNotification: false }],
     });
   } catch {}
 }
@@ -214,6 +214,9 @@ export async function presloziPodsjetnikTestiranja() {
         title: "CroLovac 🦌",
         body: "Danas još niste otvorili CroLovac – jedan dodir i pomažete testiranju na Google Playu 💪",
         schedule: { at, allowWhileIdle: true },
+        // Bez točnog alarma: inače dodatak pri svakom otvaranju izbaci zaslon „Alarmi i podsjetnici”
+        // (dozvola SCHEDULE_EXACT_ALARM je namjerno izbačena iz ljuske, Play je ne dopušta).
+        isExactNotification: false,
         channelId: KANAL_PODSJETNIKA,
         smallIcon: "ic_stat_crolovac",
       })),
