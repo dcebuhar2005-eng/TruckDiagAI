@@ -125,7 +125,14 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 - „Kad u lov?” za danas i sutra, lokacija iz Google karata, Sentry i PostHog, mišljenje se ne ponavlja,
   dnevni podsjetnik testerima (Android, 18:30). PRO funkcije su u kodu, ali skrivene.
-- Prije sljedećeg AAB-a: Google Play → Sigurnost podataka → dodati „Dijagnostika rušenja” i „Analitika aplikacije”.
+- ✅ Google Play → Sigurnost podataka: dodani Crash logs, Diagnostics (obavezno) i App interactions (može se isključiti), sve samo za analitiku (25. 10.).
+
+## Objavljeno 25. 10. 2026.
+
+- Kartica „Prvi koraci” na Pregledu (novi korisnici: lovište → čeka → prvi izlazak). Razlog: 12 od 21 novog korisnika
+  (24.–25. 10.) nije dodalo ništa.
+- Dnevnik: traka Izlasci/Odstrel ispod statusne trake (iPhone); ploča više ne pomiče stranicu iza sebe.
+- PRO zasad ne vidi nitko, ni administrator (`PRO_PRIKAZ = false`).
 
 ## Ideje na čekanju (redom)
 
