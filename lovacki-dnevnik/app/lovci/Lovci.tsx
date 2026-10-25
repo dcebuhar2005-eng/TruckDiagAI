@@ -1,5 +1,6 @@
 "use client";
 
+import { SosGumb } from "@/components/Sos";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
@@ -463,6 +464,7 @@ function UloviSam({ brojPrijatelja }: { brojPrijatelja: number }) {
             Završi lov
           </Gumb>
         </div>
+        <SosGumb veliki className="relative mt-4" />
         <PostavkeAlarma />
         <Napomena zaslon={zaslon} setZaslon={setZaslon} />
       </div>

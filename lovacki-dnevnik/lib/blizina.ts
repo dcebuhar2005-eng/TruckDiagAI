@@ -166,6 +166,16 @@ export function naAlarm(f: Javi) {
   javi = f;
 }
 
+/** Prijatelj je uključio SOS: obavijest, vibracija i poruka u aplikaciji (uvijek, bez obzira na postavke alarma). */
+export function oglasiSos(ime: string) {
+  const naslov = `🆘 ${ime} treba pomoć!`;
+  const tijelo = "Uključio je SOS u CroLovcu. Lokacija je u Lovcima i na karti.";
+  vibriraj([600, 250, 600, 250, 600, 250, 1200]);
+  zapistiZvuk(true);
+  javi(`${naslov} ${tijelo}`);
+  void sistemskaObavijest(naslov, tijelo);
+}
+
 export function oglasiAlarm(ime: string, udaljenost: number, hitno: boolean, proba = false) {
   const p = postavkeBlizine();
   const naslov = hitno ? "Lovac vrlo blizu!" : "Lovac u blizini";

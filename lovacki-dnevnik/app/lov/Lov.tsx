@@ -1,5 +1,6 @@
 "use client";
 
+import { SosGumb } from "@/components/Sos";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -318,6 +319,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
             <span className="relative inline-flex size-2.5 rounded-full bg-mahovina" />
           </span>
           Lov u tijeku
+          <SosGumb className="ml-auto" />
         </div>
         <div className="brojke relative mt-1 font-display text-[46px] leading-none font-semibold tracking-tight">{trajanjeOd(i.datum, i.od, sad)}</div>
         <div className="relative mt-1.5 text-[14px] text-tekst-2">

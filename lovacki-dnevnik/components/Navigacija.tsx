@@ -1,5 +1,6 @@
 "use client";
 
+import { SosGumb } from "./Sos";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -182,6 +183,7 @@ export default function Navigacija() {
       </nav>
 
       <Ploca otvorena={vise} zatvori={() => setVise(false)} naslov="Više" sirina={420}>
+        <SosGumb veliki className="mb-3" />
         <div className="grid grid-cols-2 gap-2.5 pb-2">
           {RUTE.filter((r) => !r.mobilno).map((r) => {
             const a = RUTE.indexOf(r) === akt;

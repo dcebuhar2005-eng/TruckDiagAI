@@ -74,8 +74,8 @@ Procijenjeni fiksni trošak: ~50–70 €/mj. Pokriva ga npr. 3 društva ili ~30
 
 ### Faza 1 – Google Play (do ~2. 11. 2026.)
 - [ ] 14 dana testiranja s 12+ testera (u tijeku, dan 3)
-- [ ] AAB 13: dijagnostika „Nema internetske veze” (greska.html)
-- [ ] Opis, slike i video za Play trgovinu
+- [x] AAB 1.0.14 (s greska.html) potpisan i poslan vlasniku za zatvoreno testiranje (25. 10.)
+- [x] Opis i slike za Play trgovinu (25. 10.; slike u scratchpad/objave/play)
 - [ ] Prijava za produkciju na Google Playu
 - [ ] TikTok/video upute za dodavanje na početni zaslon (gumb u aplikaciji čeka poveznicu)
 
@@ -120,6 +120,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Prijave testera: greška = 3 boda, prijedlog = 2 boda (`lov_privatno.bodovi`); bodove potvrđuje vlasnik.
 - Svaki tester dobije odgovor na svoju prijavu.
 - Objave na mrežama: točno 5 hashtagova po objavi.
+- **Uz svaku objavu dodati unos na vrh `lib/novosti.ts`** („Što je novo” – korisnik ga vidi jednom; samo besplatne stvari).
 
 ## Objavljeno 23. 10. 2026. (verzija 609938727b44)
 
@@ -134,7 +135,16 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Dnevnik: traka Izlasci/Odstrel ispod statusne trake (iPhone); ploča više ne pomiče stranicu iza sebe.
 - PRO zasad ne vidi nitko, ni administrator (`PRO_PRIKAZ = false`).
 
+## Objavljeno 25. 10. 2026. (večer)
+
+- **SOS – hitna pomoć** (besplatno): 112, koordinate (decimalno i DMS), slanje lokacije porukom, uzbuna prijatelja
+  (stupac `lov_lokacije.sos`). Plutajući gumb dok je lov u tijeku ili dijelim lokaciju; u izborniku Više.
+- „Što je novo” nakon svake objave (`lib/novosti.ts`).
+- Ideja za idući AAB: gumb SOS u obavijesti „lov u tijeku”.
+
 ## Ideje na čekanju (redom)
+
+- **iPhone obavijesti (web push)** – na iPhoneu zasad nema zakazanih obavijesti (web aplikacija). Vlasnik 25. 10.: **još ne kretati**, kasnije.
 
 1. Crveni noćni način (za čeku) – **PRO** (vlasnik 25. 10.)
 2. Obavijest večer prije („Sutra ujutro odlično za lov”) – **besplatno, napravljeno** (čeka objavu)
