@@ -1,5 +1,6 @@
 "use client";
 
+import { SosGumb } from "@/components/Sos";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
@@ -262,6 +263,7 @@ function Glavno() {
         }
         akcija={
           <div className="flex gap-2">
+            <SosGumb />
             <Gumb velicina="sm" ikona="korisnik" onClick={() => setQr(true)}>
               Moj QR kod
             </Gumb>

@@ -5,7 +5,7 @@
 
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
-import { ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
+import { oglasiSos, ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
 import { udaljenostM } from "./format";
 import { fetchZaSupabase, pratiLokaciju, uAplikaciji } from "./nativno";
 import { dogadaj } from "./pracenje";
@@ -82,6 +82,8 @@ export interface LokacijaLovca {
   tocnost: number | null;
   azurirano: number;
   aktivnoDo: number;
+  /** Kad je lovac uključio SOS (null = nije). */
+  sos: number | null;
 }
 
 export interface MojaPozicija {
@@ -98,6 +100,8 @@ interface Stanje {
   prijateljstva: Prijateljstvo[];
   lokacije: LokacijaLovca[];
   dijelim: { do: number } | null;
+  /** Moj SOS: kad je uključen (prijatelji vide uzbunu dok dijelim lokaciju). */
+  sos: number | null;
   pozicija: MojaPozicija | null;
   greskaLokacije: string | null;
   /** Prijava je poništena jer aplikacija nije otvarana više od 2 mjeseca. */
@@ -113,6 +117,7 @@ let stanje: Stanje = {
   prijateljstva: [],
   lokacije: [],
   dijelim: null,
+  sos: null,
   pozicija: null,
   greskaLokacije: null,
   prijavaIstekla: false,
@@ -264,7 +269,7 @@ async function osvjeziInterno() {
     k
       .from("lov_prijateljstva")
       .select(`id,od,za,status,od_p:lov_profili!lov_prijateljstva_od_fkey(${POLJA_PROFILA}),za_p:lov_profili!lov_prijateljstva_za_fkey(${POLJA_PROFILA})`),
-    k.from("lov_lokacije").select("korisnik,lat,lng,tocnost,azurirano,aktivno_do").neq("korisnik", ja),
+    k.from("lov_lokacije").select("korisnik,lat,lng,tocnost,azurirano,aktivno_do,sos").neq("korisnik", ja),
   ]);
   if (prof.error || prij.error || lok.error) return;
 
@@ -286,9 +291,16 @@ async function osvjeziInterno() {
       tocnost: l.tocnost,
       azurirano: Date.parse(l.azurirano),
       aktivnoDo: Date.parse(l.aktivno_do),
+      sos: l.sos ? Date.parse(l.sos) : null,
     }));
   postavi({ profil: (prof.data as Profil | null) ?? null, prijateljstva, lokacije, profilUcitan: true });
   provjeriAlarm();
+  for (const l of lokacije) {
+    const kljuc = `${l.profil.id}:${l.sos}`;
+    if (!l.sos || vidjeniSos.has(kljuc)) continue;
+    vidjeniSos.add(kljuc);
+    oglasiSos(l.profil.ime.split(" ")[0] || l.profil.korisnicko_ime);
+  }
 }
 
 /** Alarm blizine radi dok sam u lovu (tada je poznata moja pozicija). */
@@ -305,6 +317,9 @@ function provjeriAlarm() {
 /* ---------------- Dijeljenje lokacije ---------------- */
 
 const KLJUC_DIJELJENJA = "lovacki-dnevnik:dijelim";
+const KLJUC_SOS = "lovacki-dnevnik:sos";
+/** SOS uzbune prijatelja koje su već javljene (prijatelj:vrijeme). */
+const vidjeniSos = new Set<string>();
 let pracenje: (() => void) | null = null;
 let zadnjeSlanje: { t: number; lat: number; lng: number } | null = null;
 let zakljucavanje: WakeLockSentinel | null = null;
@@ -356,6 +371,7 @@ async function posaljiPoziciju(p: MojaPozicija, prisilno = false) {
       tocnost: Math.round(p.tocnost),
       azurirano: new Date().toISOString(),
       aktivno_do: new Date(stanje.dijelim.do).toISOString(),
+      sos: stanje.sos ? new Date(stanje.sos).toISOString() : null,
     });
 }
 
@@ -400,13 +416,39 @@ export async function pokreniDijeljenje(minuta: number) {
   if (stanje.pozicija && Date.now() - stanje.pozicija.t < 60000) await posaljiPoziciju(stanje.pozicija, true);
 }
 
+/** SOS: prijatelji koji imaju CroLovac otvoren (ili su u lovu) dobiju uzbunu s mojom lokacijom. */
+export async function posaljiSos(p: { lat: number; lng: number; tocnost: number } | null) {
+  if (!stanje.sesija) throw new Error("Za uzbunu prijatelja prijavite se u Lovcima.");
+  const sos = Date.now();
+  try {
+    localStorage.setItem(KLJUC_SOS, String(sos));
+  } catch {}
+  postavi({ sos });
+  // Dijeljenje lokacije 2 sata (ili koliko je već uključeno, ako je dulje).
+  if (!stanje.dijelim || stanje.dijelim.do < sos + 2 * 3600e3) await pokreniDijeljenje(120);
+  const poz = p ? { ...p, t: Date.now() } : stanje.pozicija;
+  if (poz) {
+    postavi({ pozicija: poz });
+    await posaljiPoziciju(poz, true);
+  }
+}
+
+export async function prekiniSos() {
+  try {
+    localStorage.removeItem(KLJUC_SOS);
+  } catch {}
+  postavi({ sos: null });
+  if (stanje.dijelim && stanje.pozicija) await posaljiPoziciju(stanje.pozicija, true);
+}
+
 export async function zaustaviDijeljenje() {
   try {
     localStorage.removeItem(KLJUC_DIJELJENJA);
+    localStorage.removeItem(KLJUC_SOS);
   } catch {}
   zaustaviPracenje();
   ponistiBlizinu();
-  postavi({ dijelim: null });
+  postavi({ dijelim: null, sos: null });
   const ja = stanje.sesija?.user.id;
   if (ja) await sb().from("lov_lokacije").delete().eq("korisnik", ja);
 }
@@ -491,7 +533,11 @@ export function pokreniDrustvo() {
         doT = Number(localStorage.getItem(KLJUC_DIJELJENJA)) || 0;
       } catch {}
       if (doT > Date.now()) {
-        postavi({ dijelim: { do: doT } });
+        let sos = 0;
+        try {
+          sos = Number(localStorage.getItem(KLJUC_SOS)) || 0;
+        } catch {}
+        postavi({ dijelim: { do: doT }, sos: sos || null });
         pokreniPracenje();
       }
     }

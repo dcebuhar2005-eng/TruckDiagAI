@@ -83,6 +83,8 @@ create table if not exists public.lov_lokacije (
   azurirano timestamptz not null default now(),
   aktivno_do timestamptz not null
 );
+-- SOS: kad je lovac uključio hitnu uzbunu (prijatelji je vide dok dijeli lokaciju).
+alter table public.lov_lokacije add column if not exists sos timestamptz;
 
 alter table public.lov_lokacije enable row level security;
 
