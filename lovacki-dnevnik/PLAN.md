@@ -32,7 +32,7 @@ Tehnika: Next.js na Vercelu (hunt-jade.vercel.app), Supabase (EU, Frankfurt), An
    - **već napravljeno i skriveno do početka naplate** (`lib/pro.ts`, `PRO_PRIKAZ = false` – zasad ne vidi nitko, ni administrator): novi Pregled (Sada + tijek dana + pločice), „Kad u lov?” za 8 dana (besplatno: danas i sutra), uvoz staza GPX/KML
    - pravilo: dobre nove funkcije ne idu odmah svima – vlasnik odlučuje što je besplatno, a što PRO; popis je u **PRO.md**
 3. **CroLovac za lovačka društva** (prijedlog: 99–249 €/god po društvu, ovisno o broju članova)
-   - zajednička karta društva (granice, čeke, hranilišta – jedan izvor istine)
+   - zajednička karta društva (granice, čeke, hranilišta – jedan izvor istine) – **odluka vlasnika 25. 10.: PRO** (jednokratno slanje lovišta ostaje besplatno)
    - organizacija skupnog lova: stajališta, raspored, tko je gdje, sigurnost
    - evidencija odstrela društva i plan odstrela (za lovnika/tajnika), izvoz za godišnje izvješće
    - obavijesti članovima

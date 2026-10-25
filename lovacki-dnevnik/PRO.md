@@ -17,6 +17,7 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 
 ## 📝 Planirano za PRO (još nije napravljeno)
 
+- **Zajednička karta** (vlasnik 25. 10. 2026.: PRO / paket za društva) – čeke, oznake i granice dijeljene s grupom ili društvom; promjene odmah vide svi
 - Karte bez signala za cijelo lovište (veća područja)
 - HD satelit
 - Neograničene fotografije
@@ -33,7 +34,7 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 
 ## 🆓 Besplatno zauvijek (osnova)
 
-Dnevnik izlazaka i odstrela, karta s točkama i granicama (i crtanje prstom), vjetar i čeke za vjetar, lovci uživo i alarm
+Jednokratno slanje lovišta (granica + odabrane čeke i točke) prijatelju, dnevnik izlazaka i odstrela, karta s točkama i granicama (i crtanje prstom), vjetar i čeke za vjetar, lovci uživo i alarm
 blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra.
 
 ## Kad krene naplata
