@@ -241,7 +241,10 @@ function useDesktop() {
  */
 let otvorenihPloca = 0;
 const postaviZakljucavanje = () => {
-  document.body.style.overflow = otvorenihPloca > 0 ? "hidden" : "";
+  // iOS Safari zaključava pomicanje tek kad je i <html> skriven; samo <body> pušta stranicu iza ploče da klizi.
+  const v = otvorenihPloca > 0 ? "hidden" : "";
+  document.documentElement.style.overflow = v;
+  document.body.style.overflow = v;
 };
 if (typeof window !== "undefined") {
   // Sigurnost: kod povratka u aplikaciju bez otvorene ploče stranica se uvijek može pomicati.
@@ -312,7 +315,7 @@ export function Ploca({
       {otvorena && (
         <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center">
           <motion.div
-            className="absolute inset-0 bg-black/55 backdrop-blur-[3px]"
+            className="absolute inset-0 touch-none bg-black/55 backdrop-blur-[3px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
