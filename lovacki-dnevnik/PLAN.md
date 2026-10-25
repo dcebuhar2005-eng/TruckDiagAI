@@ -54,7 +54,7 @@ Cijena (prijedlog): 2,99 €/mj ili 19,99 €/god. Osnivači (testeri) – PRO b
 **📝 Planirano za PRO:** karte bez signala za cijelo lovište, HD satelit, neograničene fotografije, izvoz PDF/Excel,
 napredna statistika sezone i prognoza aktivnosti divljači.
 
-**❓ Vlasnik još odlučuje:** crveni noćni način, obavijest večer prije, podsjetnik za hranilište, lovostaji, glasovni upis.
+**❓ Vlasnik još odlučuje:** podsjetnik za hranilište, lovostaji, glasovni upis. (Odlučeno 25. 10.: crveni noćni način = PRO, obavijest večer prije = besplatno.)
 
 **🆓 Besplatno zauvijek:** dnevnik i odstrel, karta s točkama i granicama (i crtanje prstom), vjetar i čeke, lovci uživo i
 alarm blizine, tragovi, dozvole i kvote, statistika, lokacija iz Google karata, „Kad u lov?” za danas i sutra.
@@ -137,7 +137,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 ## Ideje na čekanju (redom)
 
 1. Crveni noćni način (za čeku) – **PRO** (vlasnik 25. 10.)
-2. Obavijest večer prije („Sutra ujutro odlično za lov”)
+2. Obavijest večer prije („Sutra ujutro odlično za lov”) – **besplatno, napravljeno** (čeka objavu)
 3. Podsjetnik za hranilište (obavijest)
 4. „Danas smiješ loviti” / lovostaji – tek s provjerenim zakonskim podacima
 5. Gumb „Pogledaj video” u pozivu za početni zaslon (čeka TikTok poveznicu)
