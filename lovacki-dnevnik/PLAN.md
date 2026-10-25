@@ -136,6 +136,8 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 ## Ideje na čekanju (redom)
 
+- **iPhone obavijesti (web push)** – na iPhoneu zasad nema zakazanih obavijesti (web aplikacija). Vlasnik 25. 10.: **još ne kretati**, kasnije.
+
 1. Crveni noćni način (za čeku) – **PRO** (vlasnik 25. 10.)
 2. Obavijest večer prije („Sutra ujutro odlično za lov”) – **besplatno, napravljeno** (čeka objavu)
 3. Podsjetnik za hranilište (obavijest)
