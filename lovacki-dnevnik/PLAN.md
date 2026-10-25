@@ -135,6 +135,13 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Dnevnik: traka Izlasci/Odstrel ispod statusne trake (iPhone); ploča više ne pomiče stranicu iza sebe.
 - PRO zasad ne vidi nitko, ni administrator (`PRO_PRIKAZ = false`).
 
+## Objavljeno 25. 10. 2026. (večer)
+
+- **SOS – hitna pomoć** (besplatno): 112, koordinate (decimalno i DMS), slanje lokacije porukom, uzbuna prijatelja
+  (stupac `lov_lokacije.sos`). Plutajući gumb dok je lov u tijeku ili dijelim lokaciju; u izborniku Više.
+- „Što je novo” nakon svake objave (`lib/novosti.ts`).
+- Ideja za idući AAB: gumb SOS u obavijesti „lov u tijeku”.
+
 ## Ideje na čekanju (redom)
 
 - **iPhone obavijesti (web push)** – na iPhoneu zasad nema zakazanih obavijesti (web aplikacija). Vlasnik 25. 10.: **još ne kretati**, kasnije.
