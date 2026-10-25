@@ -74,8 +74,8 @@ Procijenjeni fiksni trošak: ~50–70 €/mj. Pokriva ga npr. 3 društva ili ~30
 
 ### Faza 1 – Google Play (do ~2. 11. 2026.)
 - [ ] 14 dana testiranja s 12+ testera (u tijeku, dan 3)
-- [ ] AAB 13: dijagnostika „Nema internetske veze” (greska.html)
-- [ ] Opis, slike i video za Play trgovinu
+- [x] AAB 1.0.14 (s greska.html) potpisan i poslan vlasniku za zatvoreno testiranje (25. 10.)
+- [x] Opis i slike za Play trgovinu (25. 10.; slike u scratchpad/objave/play)
 - [ ] Prijava za produkciju na Google Playu
 - [ ] TikTok/video upute za dodavanje na početni zaslon (gumb u aplikaciji čeka poveznicu)
 
