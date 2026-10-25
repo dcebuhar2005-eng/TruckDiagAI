@@ -9,6 +9,7 @@ import { otvori } from "@/components/urednici/kontroler";
 import VjetarKartica from "@/components/VjetarKartica";
 import CekeDanas from "@/components/CekeDanas";
 import KadULov from "@/components/KadULov";
+import PrviKoraci from "@/components/PrviKoraci";
 import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
 import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
 import { usePro } from "@/lib/pro";
@@ -134,6 +135,8 @@ export default function Pregled() {
             <KreniULovKartica baza={baza} />
           </motion.div>
         )}
+
+        <PrviKoraci baza={baza} />
 
         <BezProfila />
 
