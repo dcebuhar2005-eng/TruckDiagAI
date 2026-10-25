@@ -136,7 +136,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 ## Ideje na čekanju (redom)
 
-1. Crveni noćni način (za čeku)
+1. Crveni noćni način (za čeku) – **PRO** (vlasnik 25. 10.)
 2. Obavijest večer prije („Sutra ujutro odlično za lov”)
 3. Podsjetnik za hranilište (obavijest)
 4. „Danas smiješ loviti” / lovostaji – tek s provjerenim zakonskim podacima
