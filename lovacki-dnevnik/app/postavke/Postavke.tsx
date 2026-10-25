@@ -17,7 +17,7 @@ import type { Baza, Tocka2D, Postavke as TPostavke } from "@/lib/types";
 import PoljeLokacije from "@/components/lokacija/PoljeLokacije";
 import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 import { postaviStatistiku, statistikaUkljucena } from "@/lib/pracenje";
-import { postaviVecerPrije, presloziVecerPrije, vecerPrijeUkljucena } from "@/lib/vecerPrije";
+import { postaviVecerPrije, presloziVecerPrije, probaVecerPrije, vecerPrijeUkljucena } from "@/lib/vecerPrije";
 import { probaSvihObavijesti, stanjeObavijestiUAplikaciji, uAplikaciji, zatraziObavijestiUAplikaciji, type StanjeObavijesti } from "@/lib/nativno";
 
 export default function Postavke() {
@@ -298,7 +298,7 @@ function Racun() {
           </Link>
         )}
         {admin && uAplikaciji() && (
-          <Gumb vrsta="tihi" ikona="upozorenje" className="w-full" onClick={() => probaSvihObavijesti().then((p) => obavijest(p))}>
+          <Gumb vrsta="tihi" ikona="upozorenje" className="w-full" onClick={() => probaSvihObavijesti().then(async (p) => obavijest((await probaVecerPrije()) ? `${p}, „večer prije” za 2 min` : p))}>
             Proba svih obavijesti
           </Gumb>
         )}
