@@ -263,7 +263,6 @@ function Glavno() {
         }
         akcija={
           <div className="flex gap-2">
-            <SosGumb />
             <Gumb velicina="sm" ikona="korisnik" onClick={() => setQr(true)}>
               Moj QR kod
             </Gumb>
@@ -465,6 +464,7 @@ function UloviSam({ brojPrijatelja }: { brojPrijatelja: number }) {
             Završi lov
           </Gumb>
         </div>
+        <SosGumb veliki className="relative mt-4" />
         <PostavkeAlarma />
         <Napomena zaslon={zaslon} setZaslon={setZaslon} />
       </div>

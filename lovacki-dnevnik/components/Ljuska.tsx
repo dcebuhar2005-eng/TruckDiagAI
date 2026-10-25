@@ -1,7 +1,7 @@
 "use client";
 
 import StoJeNovo from "./StoJeNovo";
-import { SosPrijatelja } from "./Sos";
+import { SosPlutajuci, SosPrijatelja } from "./Sos";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -149,6 +149,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <PozivTesterima korisnik={prijavljen} email={drustvo.sesija?.user.email} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
       <DodajNaPocetni zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
       <SosPrijatelja />
+      <SosPlutajuci lovUTijeku={Boolean(lovId)} />
       <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
     </MotionConfig>
   );

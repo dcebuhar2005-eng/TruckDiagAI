@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Ikona from "./Ikona";
 import { Gumb, Ploca, cx, obavijest } from "./ui";
@@ -192,5 +193,31 @@ export function SosPrijatelja() {
       </span>
       <Ikona ime="desno" />
     </Link>
+  );
+}
+
+/**
+ * Dok je lov u tijeku ili dijelim lokaciju („U lovu sam”), SOS je uvijek pri ruci: okrugli crveni gumb
+ * iznad donje trake na svakom zaslonu (osim na zaslonu lova, gdje je u zaglavlju).
+ */
+export function SosPlutajuci({ lovUTijeku }: { lovUTijeku: boolean }) {
+  const d = useDrustvo();
+  const put = usePathname();
+  const [otvoreno, setOtvoreno] = useState(false);
+  if (!(lovUTijeku || d.dijelim) || put === "/lov") return null;
+  return (
+    <>
+      <button
+        onClick={() => setOtvoreno(true)}
+        aria-label="SOS – hitna pomoć"
+        className={cx(
+          "fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[1800] grid size-14 place-items-center rounded-full bg-[#c8372d] text-[13px] font-bold tracking-wide text-white shadow-[0_10px_30px_-8px_#c8372d] active:scale-95 lg:bottom-6",
+          Boolean(d.sos) && "animate-pulse ring-4 ring-[#c8372d]/40",
+        )}
+      >
+        SOS
+      </button>
+      <SosPloca otvorena={otvoreno} zatvori={() => setOtvoreno(false)} />
+    </>
   );
 }
