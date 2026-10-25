@@ -32,7 +32,7 @@ Tehnika: Next.js na Vercelu (hunt-jade.vercel.app), Supabase (EU, Frankfurt), An
    - **već napravljeno i skriveno do početka naplate** (`lib/pro.ts`, `PRO_PRIKAZ = false` – zasad ne vidi nitko, ni administrator): novi Pregled (Sada + tijek dana + pločice), „Kad u lov?” za 8 dana (besplatno: danas i sutra), uvoz staza GPX/KML
    - pravilo: dobre nove funkcije ne idu odmah svima – vlasnik odlučuje što je besplatno, a što PRO; popis je u **PRO.md**
 3. **CroLovac za lovačka društva** (prijedlog: 99–249 €/god po društvu, ovisno o broju članova)
-   - zajednička karta društva (granice, čeke, hranilišta – jedan izvor istine)
+   - zajednička karta društva (granice, čeke, hranilišta – jedan izvor istine) – **odluka vlasnika 25. 10.: PRO** (jednokratno slanje lovišta ostaje besplatno)
    - organizacija skupnog lova: stajališta, raspored, tko je gdje, sigurnost
    - evidencija odstrela društva i plan odstrela (za lovnika/tajnika), izvoz za godišnje izvješće
    - obavijesti članovima
@@ -125,7 +125,14 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 - „Kad u lov?” za danas i sutra, lokacija iz Google karata, Sentry i PostHog, mišljenje se ne ponavlja,
   dnevni podsjetnik testerima (Android, 18:30). PRO funkcije su u kodu, ali skrivene.
-- Prije sljedećeg AAB-a: Google Play → Sigurnost podataka → dodati „Dijagnostika rušenja” i „Analitika aplikacije”.
+- ✅ Google Play → Sigurnost podataka: dodani Crash logs, Diagnostics (obavezno) i App interactions (može se isključiti), sve samo za analitiku (25. 10.).
+
+## Objavljeno 25. 10. 2026.
+
+- Kartica „Prvi koraci” na Pregledu (novi korisnici: lovište → čeka → prvi izlazak). Razlog: 12 od 21 novog korisnika
+  (24.–25. 10.) nije dodalo ništa.
+- Dnevnik: traka Izlasci/Odstrel ispod statusne trake (iPhone); ploča više ne pomiče stranicu iza sebe.
+- PRO zasad ne vidi nitko, ni administrator (`PRO_PRIKAZ = false`).
 
 ## Ideje na čekanju (redom)
 
