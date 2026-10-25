@@ -14,6 +14,7 @@ import AlarmBlizine from "./AlarmBlizine";
 import Navigacija from "./Navigacija";
 import PrijavaZaslon from "./PrijavaZaslon";
 import Uvod from "./Uvod";
+import { presloziVecerPrije } from "@/lib/vecerPrije";
 import Urednici from "./urednici/Urednici";
 import { zabiljeziDan, zabiljeziVerziju } from "@/lib/verzija";
 import { pratiGreske } from "@/lib/greske";
@@ -38,7 +39,13 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     pokreniTipkuNatrag();
     // Podsjetnik testerima (Android): svako otvaranje pomiče ga na sljedeći dan.
     presloziPodsjetnikTestiranja();
-    const naPovratak = () => document.visibilityState === "visible" && presloziPodsjetnikTestiranja();
+    // Obavijest večer prije (Android): iz svježe prognoze za iduće tri večeri.
+    void presloziVecerPrije();
+    const naPovratak = () => {
+      if (document.visibilityState !== "visible") return;
+      presloziPodsjetnikTestiranja();
+      void presloziVecerPrije();
+    };
     document.addEventListener("visibilitychange", naPovratak);
     // Karta (Leaflet) se u miru učita unaprijed, pa se prvi put otvara bez čekanja.
     const t = setTimeout(() => {

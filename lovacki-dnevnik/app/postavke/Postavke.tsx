@@ -17,6 +17,7 @@ import type { Baza, Tocka2D, Postavke as TPostavke } from "@/lib/types";
 import PoljeLokacije from "@/components/lokacija/PoljeLokacije";
 import { MOJA_VERZIJA, imaNovuVerziju, osvjeziAplikaciju } from "@/lib/verzija";
 import { postaviStatistiku, statistikaUkljucena } from "@/lib/pracenje";
+import { postaviVecerPrije, presloziVecerPrije, probaVecerPrije, vecerPrijeUkljucena } from "@/lib/vecerPrije";
 import { probaSvihObavijesti, stanjeObavijestiUAplikaciji, uAplikaciji, zatraziObavijestiUAplikaciji, type StanjeObavijesti } from "@/lib/nativno";
 
 export default function Postavke() {
@@ -145,6 +146,7 @@ function Obrazac({ baza }: { baza: Baza }) {
           <ProvjeraVerzije />
           <StatistikaKoristenja />
           <ObavijestiUAplikaciji />
+          <VecerPrije />
         </Sekcija>
 
         <Sekcija ikona="stit" naslov="Podaci i sigurnosna kopija" opis={konfigurirano ? "Dnevnik je spremljen na uređaju i u vašem privatnom računu." : "Svi podaci čuvaju se isključivo na ovom uređaju."}>
@@ -296,7 +298,7 @@ function Racun() {
           </Link>
         )}
         {admin && uAplikaciji() && (
-          <Gumb vrsta="tihi" ikona="upozorenje" className="w-full" onClick={() => probaSvihObavijesti().then((p) => obavijest(p))}>
+          <Gumb vrsta="tihi" ikona="upozorenje" className="w-full" onClick={() => probaSvihObavijesti().then(async (p) => obavijest((await probaVecerPrije()) ? `${p}, „večer prije” za 2 min` : p))}>
             Proba svih obavijesti
           </Gumb>
         )}
@@ -468,6 +470,31 @@ function StatistikaKoristenja() {
   );
 }
 
+/** Android aplikacija: u 20:00 obavijest ako je sutra dobar termin za lov (besplatno). */
+function VecerPrije() {
+  const [ukljuceno, setUkljuceno] = useState(vecerPrijeUkljucena);
+  if (!uAplikaciji()) return null;
+  return (
+    <div className="mt-4 border-t border-rub pt-4">
+      <div className="mb-2 text-[14px] font-medium">Obavijest večer prije</div>
+      <Segmenti
+        vrijednost={ukljuceno ? "da" : "ne"}
+        promjena={(v: string) => {
+          postaviVecerPrije(v === "da");
+          setUkljuceno(v === "da");
+        }}
+        opcije={[
+          { vrijednost: "da", oznaka: "Uključeno" },
+          { vrijednost: "ne", oznaka: "Isključeno" },
+        ]}
+      />
+      <p className="mt-2 text-[13px] text-tekst-3">
+        U 20:00 javi kad je sutra dobar termin za lov i na kojoj je čeki vjetar dobar. Samo kad se isplati – inače šuti.
+      </p>
+    </div>
+  );
+}
+
 /** Android aplikacija: stanje obavijesti (alarm blizine, lov u tijeku, podsjetnici) i gumb za uključivanje. */
 function ObavijestiUAplikaciji() {
   const [stanje, setStanje] = useState<StanjeObavijesti | "nepoznato">("nepoznato");
@@ -489,7 +516,7 @@ function ObavijestiUAplikaciji() {
         </div>
       </div>
       {stanje !== "granted" && (
-        <Gumb velicina="sm" vrsta="primarni" onClick={() => zatraziObavijestiUAplikaciji().then(setStanje)}>
+        <Gumb velicina="sm" vrsta="primarni" onClick={() => zatraziObavijestiUAplikaciji().then((st) => (setStanje(st), void presloziVecerPrije()))}>
           Uključi
         </Gumb>
       )}
