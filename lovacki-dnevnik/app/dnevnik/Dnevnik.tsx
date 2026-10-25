@@ -88,8 +88,9 @@ export default function Dnevnik() {
         }
       />
 
-      {/* Ispod statusne trake (iPhone, Android): traka se lijepi ispod nje, a pruga iznad prekriva sadržaj koji klizi. */}
-      <div className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 mb-5 bg-pozadina/80 px-4 py-3 backdrop-blur-xl before:absolute before:inset-x-0 before:bottom-full before:h-[env(safe-area-inset-top)] before:bg-pozadina/80 before:backdrop-blur-xl md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none md:before:hidden">
+      {/* Ispod statusne trake (iPhone): traka se lijepi ispod nje, a fiksna pruga na vrhu prekriva sadržaj koji klizi pod sat. */}
+      <div aria-hidden className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-pozadina/80 backdrop-blur-xl md:hidden" />
+      <div className="sticky top-[env(safe-area-inset-top)] z-20 -mx-4 mb-5 bg-pozadina/80 px-4 py-3 backdrop-blur-xl md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <Segmenti
             className="md:w-80"
