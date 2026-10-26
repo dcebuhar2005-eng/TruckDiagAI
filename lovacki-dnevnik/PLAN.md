@@ -120,6 +120,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Prijave testera: greška = 3 boda, prijedlog = 2 boda (`lov_privatno.bodovi`); bodove potvrđuje vlasnik.
 - Svaki tester dobije odgovor na svoju prijavu.
 - Objave na mrežama: točno 5 hashtagova po objavi.
+- Administratori (`lov_privatno.admini`): cebuhardominik@gmail.com (vlasnik), matijacrlj@gmail.com (dodan 26. 10. na zahtjev vlasnika).
 - **Uz svaku objavu dodati unos na vrh `lib/novosti.ts`** („Što je novo” – korisnik ga vidi jednom; samo besplatne stvari).
 
 ## Objavljeno 23. 10. 2026. (verzija 609938727b44)
