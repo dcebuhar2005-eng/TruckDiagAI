@@ -84,6 +84,15 @@ export function zadnjeDopune(b: Baza) {
   return m;
 }
 
+/** Zadnja prihrana točke s upisanom hranom do datuma (uključivo) – što je divljač tada mogla zateći. */
+export function hranaNaTocki(b: Baza, tockaId: string, doDatuma: string) {
+  let z: { datum: string; hrana: string } | undefined;
+  for (const i of b.izlasci)
+    if (i.datum <= doDatuma && (!z || i.datum > z.datum))
+      for (const r of i.radovi ?? []) if (r.vrsta === "prihrana" && r.tockaId === tockaId && r.hrana) z = { datum: i.datum, hrana: r.hrana };
+  return z;
+}
+
 /** Koliko je dana prošlo od datuma (GGGG-MM-DD) do danas. */
 export function danaOd(datum: string) {
   const [g, mj, d] = datum.split("-").map(Number);

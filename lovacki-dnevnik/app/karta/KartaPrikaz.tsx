@@ -1210,6 +1210,7 @@ export default function KartaPrikaz() {
                         return (
                           <p className="mt-1 text-[13px] text-[#e8c48a]">
                             {z.vrsta}: {z.prozor ? `najčešće ${z.prozor}, ` : ""}zadnji put {datumKratki(z.zadnji.datum)} u {z.zadnji.vrijeme}
+                            {z.hrana ? ` · voli ${z.hrana.naziv.toLowerCase()}` : ""}
                           </p>
                         );
                       })()

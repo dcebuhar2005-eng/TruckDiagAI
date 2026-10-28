@@ -68,6 +68,8 @@ export interface Dolazak {
   /** HH:MM */
   vrijeme: string;
   izvor?: "kamera" | "uzivo";
+  /** Hrana koja je tada bila na mjestu (predloži se zadnja prihrana te točke). */
+  hrana?: string;
   napomena?: string;
 }
 

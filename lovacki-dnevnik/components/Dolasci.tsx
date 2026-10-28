@@ -5,7 +5,9 @@ import { useState } from "react";
 import Ikona from "./Ikona";
 import { Cipovi, Gumb, Ploca, Polje, obavijest } from "./ui";
 import { OdabirVrste, broj, tekst } from "./urednici/zajednicko";
+import { HRANE } from "@/lib/katalog";
 import { datumKratki, isoDatum, isoVrijeme } from "@/lib/format";
+import { hranaNaTocki } from "@/lib/upiti";
 import { db, noviId } from "@/lib/store";
 import type { Dolazak, Tocka } from "@/lib/types";
 
@@ -27,7 +29,16 @@ export function sazetakDolazaka(dolasci: Dolazak[]) {
       for (const x of d) sati[Number(x.vrijeme.slice(0, 2)) % 24]++;
       let od = 0;
       for (let h = 1; h < 24; h++) if (sati[h] + sati[(h + 1) % 24] > sati[od] + sati[(od + 1) % 24]) od = h;
-      return { vrsta, puta: d.length, zadnji: poRedu(d)[0], prozor: d.length > 1 ? `${dvije(od)}–${dvije((od + 2) % 24)} h` : undefined };
+      const hrane = new Map<string, number>();
+      for (const x of d) if (x.hrana) hrane.set(x.hrana, (hrane.get(x.hrana) ?? 0) + 1);
+      const hrana = [...hrane].sort((a, b) => b[1] - a[1])[0];
+      return {
+        vrsta,
+        puta: d.length,
+        zadnji: poRedu(d)[0],
+        prozor: d.length > 1 ? `${dvije(od)}–${dvije((od + 2) % 24)} h` : undefined,
+        hrana: hrana && { naziv: hrana[0], puta: hrana[1] },
+      };
     })
     .sort((a, b) => b.puta - a.puta);
 }
@@ -42,14 +53,20 @@ export function DolasciPloca({ tocka, otvorena, zatvori }: { tocka: Tocka; otvor
   const [vrijeme, setVrijeme] = useState(() => isoVrijeme());
   const [izvor, setIzvor] = useState<"kamera" | "uzivo">(tocka.tip === "kamera" || tocka.dodatno?.includes("kamera") ? "kamera" : "uzivo");
   const [napomena, setNapomena] = useState("");
+  // Hrana se predlaže iz zadnje prihrane ove točke do odabranog datuma, dok je korisnik ne promijeni.
+  const [hranaRucno, setHranaRucno] = useState<string | null>(null);
+  const predlozena = hranaNaTocki(db.dohvati(), tocka.id, datum);
+  const hrana = hranaRucno ?? predlozena?.hrana ?? "";
+  const hrane = [...new Set([...dolasci.flatMap((d) => (d.hrana ? [d.hrana] : [])), ...HRANE])];
 
   const spremi = () => {
     if (!datum || !vrijeme) return;
-    const novi: Dolazak = { id: noviId(), vrsta, broj: broj(kom), datum, vrijeme, izvor, napomena: tekst(napomena) };
+    const novi: Dolazak = { id: noviId(), vrsta, broj: broj(kom), datum, vrijeme, izvor, hrana: tekst(hrana), napomena: tekst(napomena) };
     db.uredi("tocke", tocka.id, { dolasci: [...dolasci, novi] });
     obavijest(`Zapisano: ${vrsta.toLowerCase()} ${datumKratki(datum)} u ${vrijeme}`);
     setKom("");
     setNapomena("");
+    setHranaRucno(null);
   };
   const obrisi = (d: Dolazak) => {
     db.uredi("tocke", tocka.id, { dolasci: dolasci.filter((x) => x.id !== d.id) });
@@ -85,6 +102,14 @@ export function DolasciPloca({ tocka, otvorena, zatvori }: { tocka: Tocka; otvor
             odabrano={izvor}
             promjena={(v) => setIzvor(v as "kamera" | "uzivo")}
           />
+          <Polje oznaka="Na koju hranu je došla" pomoc={predlozena && !hranaRucno ? `Zadnja prihrana ovdje: ${datumKratki(predlozena.datum)}` : undefined}>
+            <input className="unos" list="hrane-dolazak" placeholder="npr. kukuruz u zrnu (može i prazno)" value={hrana} onChange={(e) => setHranaRucno(e.target.value)} />
+            <datalist id="hrane-dolazak">
+              {hrane.map((h) => (
+                <option key={h} value={h} />
+              ))}
+            </datalist>
+          </Polje>
           <input className="unos" placeholder="Napomena (npr. krmača s prascima)" value={napomena} onChange={(e) => setNapomena(e.target.value)} />
           <Gumb vrsta="primarni" ikona="plus" onClick={spremi} disabled={!datum || !vrijeme}>
             Zapiši dolazak
@@ -103,6 +128,11 @@ export function DolasciPloca({ tocka, otvorena, zatvori }: { tocka: Tocka; otvor
                 <div className="text-[13px] text-tekst-2">
                   {s.prozor ? `Najčešće ${s.prozor} · ` : ""}zadnji put {datumKratki(s.zadnji.datum)} u {s.zadnji.vrijeme}
                 </div>
+                {s.hrana && (
+                  <div className="text-[13px] text-naglasak">
+                    Najviše dolazi na: {s.hrana.naziv.toLowerCase()} ({s.hrana.puta}×)
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -125,6 +155,7 @@ export function DolasciPloca({ tocka, otvorena, zatvori }: { tocka: Tocka; otvor
                     </span>
                     <span className="block truncate text-[12.5px] text-tekst-3">
                       {d.izvor === "kamera" ? "s kamere" : "uživo"}
+                      {d.hrana ? ` · na ${d.hrana.toLowerCase()}` : ""}
                       {d.napomena ? ` · ${d.napomena}` : ""}
                     </span>
                   </span>
