@@ -53,7 +53,24 @@ export interface Tocka {
   vjetrovi?: number[];
   /** Na istom mjestu još (npr. čeka s hranilištem i kamerom). */
   dodatno?: TipTocke[];
+  /** Kad je divljač dolazila na ovo mjesto (s kamere ili viđeno uživo). */
+  dolasci?: Dolazak[];
   createdAt: number;
+}
+
+/** Dolazak divljači na čeku, hranilište ili pred kameru – npr. divlje svinje 26. 10. u 00:35. */
+export interface Dolazak {
+  id: ID;
+  vrsta: string;
+  broj?: number;
+  /** GGGG-MM-DD */
+  datum: string;
+  /** HH:MM */
+  vrijeme: string;
+  izvor?: "kamera" | "uzivo";
+  /** Hrana koja je tada bila na mjestu (predloži se zadnja prihrana te točke). */
+  hrana?: string;
+  napomena?: string;
 }
 
 export interface Vrijeme {
@@ -87,6 +104,8 @@ export interface Rad {
   kolicina?: number;
   /** Hranilište, solište ili pojilište koje je dopunjeno. */
   tockaId?: ID;
+  /** Što je doneseno na prihranu (npr. „Kukuruz u zrnu”) – ponuđeno ili upisano. */
+  hrana?: string;
 }
 
 export interface Opazanje {

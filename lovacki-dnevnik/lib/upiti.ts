@@ -74,14 +74,23 @@ export function sortirajPoDatumu<T extends { datum: string; createdAt: number }>
 
 /** Zadnja dopuna po točki (hranilište, solište, pojilište): datum, vrsta i količina iz izlazaka. */
 export function zadnjeDopune(b: Baza) {
-  const m = new Map<string, { datum: string; vrsta: VrstaRada; kolicina?: number }>();
+  const m = new Map<string, { datum: string; vrsta: VrstaRada; kolicina?: number; hrana?: string }>();
   for (const i of b.izlasci)
     for (const r of i.radovi ?? []) {
       if (!r.tockaId) continue;
       const z = m.get(r.tockaId);
-      if (!z || i.datum > z.datum) m.set(r.tockaId, { datum: i.datum, vrsta: r.vrsta, kolicina: r.kolicina });
+      if (!z || i.datum > z.datum) m.set(r.tockaId, { datum: i.datum, vrsta: r.vrsta, kolicina: r.kolicina, hrana: r.hrana });
     }
   return m;
+}
+
+/** Zadnja prihrana točke s upisanom hranom do datuma (uključivo) – što je divljač tada mogla zateći. */
+export function hranaNaTocki(b: Baza, tockaId: string, doDatuma: string) {
+  let z: { datum: string; hrana: string } | undefined;
+  for (const i of b.izlasci)
+    if (i.datum <= doDatuma && (!z || i.datum > z.datum))
+      for (const r of i.radovi ?? []) if (r.vrsta === "prihrana" && r.tockaId === tockaId && r.hrana) z = { datum: i.datum, hrana: r.hrana };
+  return z;
 }
 
 /** Koliko je dana prošlo od datuma (GGGG-MM-DD) do danas. */

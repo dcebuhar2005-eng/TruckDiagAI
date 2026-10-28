@@ -22,6 +22,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
+import { poRedu, sazetakDolazaka } from "@/components/Dolasci";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
 import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisVrsteTocke, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
@@ -1196,11 +1197,31 @@ export default function KartaPrikaz() {
                       return (
                         <p className={cx("mt-1 text-[13px]", n == null || n > 14 ? "text-[#f0a08a]" : "text-[#9fd99f]")}>
                           {z
-                            ? `Zadnja dopuna ${opisDana(n!)} (${datumKratki(z.datum)})${z.kolicina ? ` · ${z.kolicina} ${RADOVI[z.vrsta].jedinica}` : ""}`
+                            ? `Zadnja dopuna ${opisDana(n!)} (${datumKratki(z.datum)})${z.kolicina ? ` · ${z.kolicina} ${RADOVI[z.vrsta].jedinica}` : ""}${z.hrana ? ` · ${z.hrana.toLowerCase()}` : ""}`
                             : "Još nije zabilježena dopuna – upišite je u izlazak"}
                         </p>
                       );
                     })()}
+                  {odabranaTocka.dolasci?.length
+                    ? (() => {
+                        const z = sazetakDolazaka(odabranaTocka.dolasci)[0];
+                        return (
+                          <p className="mt-1 text-[13px] text-[#e8c48a]">
+                            {pro ? (
+                              <>
+                                {z.vrsta}: {z.prozor ? `najčešće ${z.prozor}, ` : ""}zadnji put {datumKratki(z.zadnji.datum)} u {z.zadnji.vrijeme}
+                                {z.hrana ? ` · voli ${z.hrana.naziv.toLowerCase()}` : ""}
+                              </>
+                            ) : (
+                              (() => {
+                                const d = poRedu(odabranaTocka.dolasci)[0];
+                                return `Zadnji dolazak: ${d.vrsta.toLowerCase()} ${datumKratki(d.datum)} u ${d.vrijeme}`;
+                              })()
+                            )}
+                          </p>
+                        );
+                      })()
+                    : null}
                   <div className="mt-1 text-[12px] text-white/50">
                     {baza.izlasci.filter((i) => i.tockaId === odabranaTocka.id).length} izlazaka s ove točke
                   </div>
@@ -1213,8 +1234,11 @@ export default function KartaPrikaz() {
                 <Gumb velicina="sm" className="flex-1 border-white/10 bg-white/10 text-white" ikona="uredi" onClick={() => otvori({ tip: "tocka", id: odabranaTocka.id })}>
                   Uredi
                 </Gumb>
+                <Gumb velicina="sm" className="flex-1 border-white/10 bg-white/10 text-white" ikona="plus" onClick={() => otvori({ tip: "dolazak", tockaId: odabranaTocka.id })}>
+                  Dolazak
+                </Gumb>
                 <Gumb velicina="sm" vrsta="primarni" className="flex-[1.5]" ikona="dnevnik" onClick={() => otvori({ tip: "izlazak", pocetno: { tockaId: odabranaTocka.id, lovisteId: odabranaTocka.lovisteId } })}>
-                  Izlazak ovdje
+                  Izlazak
                 </Gumb>
               </div>
             </Panel>

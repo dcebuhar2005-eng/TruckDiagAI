@@ -10,7 +10,7 @@ import { centarLovista } from "@/lib/upiti";
 import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
-import { zatvori } from "./kontroler";
+import { otvori, zatvori } from "./kontroler";
 import OdabirVjetrova from "./OdabirVjetrova";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
 import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
@@ -561,6 +561,13 @@ export function TockaUrednik({
             <textarea className="unos min-h-20" value={napomena} onChange={(e) => setNapomena(e.target.value)} placeholder="Smjer pogleda, stanje, pristup…" />
           </Polje>
         </Odjeljak>
+        {postojeca && (
+          <Odjeljak naslov="Dolazak divljači">
+            <Gumb ikona="plus" onClick={() => otvori({ tip: "dolazak", tockaId: postojeca.id })}>
+              {postojeca.dolasci?.length ? `Dolasci (${postojeca.dolasci.length}) · zapiši novi` : "Zapiši kad divljač dolazi"}
+            </Gumb>
+          </Odjeljak>
+        )}
         {imaVjetar && (
           <Odjeljak naslov="Dobar vjetar">
             <OdabirVjetrova vrijednost={vjetrovi} promjena={setVjetrovi} />

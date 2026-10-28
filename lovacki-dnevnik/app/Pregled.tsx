@@ -10,6 +10,7 @@ import VjetarKartica from "@/components/VjetarKartica";
 import CekeDanas from "@/components/CekeDanas";
 import KadULov from "@/components/KadULov";
 import PrviKoraci from "@/components/PrviKoraci";
+import { DolasciKartica } from "@/components/Dolasci";
 import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
 import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
 import { usePro } from "@/lib/pro";
@@ -169,6 +170,8 @@ export default function Pregled() {
             <KadULov p={p} lat={lok.lat} lng={lok.lng} dana={pro ? 8 : 2} />
           </motion.section>
         )}
+
+        <DolasciKartica baza={baza} />
 
         {baza.tocke.some((t) => tockaZaVjetar(t)) && (
           <motion.section variants={djeteListe} className="kartica p-5 lg:col-span-3">
