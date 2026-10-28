@@ -22,7 +22,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
-import { DolasciPloca, sazetakDolazaka } from "@/components/Dolasci";
+import { poRedu, sazetakDolazaka } from "@/components/Dolasci";
 import { otvori } from "@/components/urednici/kontroler";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
 import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisVrsteTocke, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
@@ -436,7 +436,6 @@ export default function KartaPrikaz() {
     } catch {}
   };
   const [dijeliLoviste, setDijeliLoviste] = useState<string | null>(null);
-  const [dolasciZa, setDolasciZa] = useState<string | null>(null);
   /** Zakret karte u stupnjevima (0 = sjever gore). */
   const [okret, setOkret] = useState(0);
   const [karta, setKarta] = useState<L.Map | null>(null);
@@ -676,7 +675,6 @@ export default function KartaPrikaz() {
 
   const duljinaMjerenja = crtez.reduce((s, p, i) => (i ? s + udaljenostM({ lat: crtez[i - 1][0], lng: crtez[i - 1][1] }, { lat: p[0], lng: p[1] }) : 0), 0);
   const odabranaTocka = odabir?.tip === "tocka" ? baza.tocke.find((t) => t.id === odabir.id) : undefined;
-  const tockaDolazaka = dolasciZa ? baza.tocke.find((t) => t.id === dolasciZa) : undefined;
   const odabraniOdstrel = odabir?.tip === "odstrel" ? baza.odstrel.find((o) => o.id === odabir.id) : undefined;
   const odabraniTrag = odabir?.tip === "trag" ? baza.izlasci.find((i) => i.id === odabir.id)?.tragovi?.[odabir.k] : undefined;
   const izlazakTraga = odabir?.tip === "trag" ? baza.izlasci.find((i) => i.id === odabir.id) : undefined;
@@ -1209,8 +1207,17 @@ export default function KartaPrikaz() {
                         const z = sazetakDolazaka(odabranaTocka.dolasci)[0];
                         return (
                           <p className="mt-1 text-[13px] text-[#e8c48a]">
-                            {z.vrsta}: {z.prozor ? `najčešće ${z.prozor}, ` : ""}zadnji put {datumKratki(z.zadnji.datum)} u {z.zadnji.vrijeme}
-                            {z.hrana ? ` · voli ${z.hrana.naziv.toLowerCase()}` : ""}
+                            {pro ? (
+                              <>
+                                {z.vrsta}: {z.prozor ? `najčešće ${z.prozor}, ` : ""}zadnji put {datumKratki(z.zadnji.datum)} u {z.zadnji.vrijeme}
+                                {z.hrana ? ` · voli ${z.hrana.naziv.toLowerCase()}` : ""}
+                              </>
+                            ) : (
+                              (() => {
+                                const d = poRedu(odabranaTocka.dolasci)[0];
+                                return `Zadnji dolazak: ${d.vrsta.toLowerCase()} ${datumKratki(d.datum)} u ${d.vrijeme}`;
+                              })()
+                            )}
                           </p>
                         );
                       })()
@@ -1227,7 +1234,7 @@ export default function KartaPrikaz() {
                 <Gumb velicina="sm" className="flex-1 border-white/10 bg-white/10 text-white" ikona="uredi" onClick={() => otvori({ tip: "tocka", id: odabranaTocka.id })}>
                   Uredi
                 </Gumb>
-                <Gumb velicina="sm" className="flex-1 border-white/10 bg-white/10 text-white" ikona="plus" onClick={() => setDolasciZa(odabranaTocka.id)}>
+                <Gumb velicina="sm" className="flex-1 border-white/10 bg-white/10 text-white" ikona="plus" onClick={() => otvori({ tip: "dolazak", tockaId: odabranaTocka.id })}>
                   Dolazak
                 </Gumb>
                 <Gumb velicina="sm" vrsta="primarni" className="flex-[1.5]" ikona="dnevnik" onClick={() => otvori({ tip: "izlazak", pocetno: { tockaId: odabranaTocka.id, lovisteId: odabranaTocka.lovisteId } })}>
@@ -1505,7 +1512,6 @@ export default function KartaPrikaz() {
           />
         </motion.div>
       </div>
-      {tockaDolazaka && <DolasciPloca key={tockaDolazaka.id} tocka={tockaDolazaka} otvorena zatvori={() => setDolasciZa(null)} />}
       {dijeliLoviste && <PodijeliOdabrano key={dijeliLoviste} otvorena zatvori={() => setDijeliLoviste(null)} lovisteId={dijeliLoviste} />}
     </div>
   );

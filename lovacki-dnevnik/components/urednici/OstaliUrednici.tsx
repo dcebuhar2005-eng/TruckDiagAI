@@ -7,11 +7,10 @@ import { povrsinaHa } from "@/lib/format";
 import { db } from "@/lib/store";
 import type { Baza, Kvota, Loviste, Spol, Tocka, Tocka2D, TipDozvole, TipTocke } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
-import { DolasciPloca } from "../Dolasci";
 import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
-import { zatvori } from "./kontroler";
+import { otvori, zatvori } from "./kontroler";
 import OdabirVjetrova from "./OdabirVjetrova";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
 import { Koracnik, OdabirLovista, OdabirVrste, Odjeljak, PodnozjeObrasca, Red, broj, tekst } from "./zajednicko";
@@ -319,7 +318,6 @@ export function TockaUrednik({
   const dodatnoBez = dodatno.filter((x) => x !== tip);
   const potvrda = usePotvrda();
   const imaVjetar = tockaZaVjetar({ tip, dodatno: dodatnoBez });
-  const [dolasci, setDolasci] = useState(false);
 
   const spremi = () => {
     const podaci = {
@@ -564,8 +562,8 @@ export function TockaUrednik({
           </Polje>
         </Odjeljak>
         {postojeca && (
-          <Odjeljak naslov="Dolasci divljači">
-            <Gumb ikona="plus" onClick={() => setDolasci(true)}>
+          <Odjeljak naslov="Dolazak divljači">
+            <Gumb ikona="plus" onClick={() => otvori({ tip: "dolazak", tockaId: postojeca.id })}>
               {postojeca.dolasci?.length ? `Dolasci (${postojeca.dolasci.length}) · zapiši novi` : "Zapiši kad divljač dolazi"}
             </Gumb>
           </Odjeljak>
@@ -577,7 +575,6 @@ export function TockaUrednik({
         )}
       </Ploca>
       {potvrda.element}
-      {postojeca && <DolasciPloca tocka={postojeca} otvorena={dolasci} zatvori={() => setDolasci(false)} />}
     </>
   );
 }

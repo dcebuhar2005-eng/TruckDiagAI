@@ -15,6 +15,9 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 | **„Kad u lov?” za 8 dana** + najbolji termin u tjednu | samo danas i sutra |
 | **Uvoz staza GPX/KML** (planinarske staze, šumski putovi) na kartu | ništa – sloj i gumb su skriveni |
 
+- **Dolazak divljači – izračun** (vlasnik 28. 10.): kad koja divljač najčešće dolazi („najčešće 23–01 h”) i na koju hranu
+  najviše dolazi; na karti „voli kukuruz u zrnu”. Kasnije: dolasci prema vjetru i Mjesecu.
+
 ## 📝 Planirano za PRO (još nije napravljeno)
 
 - **Crveni noćni način** za čeku (vlasnik 25. 10. 2026.: PRO)
@@ -30,12 +33,11 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 - Podsjetnik za hranilište (obavijest)
 - „Danas smiješ loviti” / lovostaji (tek s provjerenim zakonskim podacima)
 - Glasovni upis opažanja
-- **Dolasci divljači na točku** (čeka/hranilište/kamera: vrsta, datum, sat, kamera ili uživo; „najčešće dolaze 23–01 h”) – napravljeno 28. 10., čeka odluku
 
 ## 🆓 Besplatno zauvijek (osnova)
 
 Jednokratno slanje lovišta (granica + odabrane čeke i točke) prijatelju, dnevnik izlazaka i odstrela, karta s točkama i granicama (i crtanje prstom), vjetar i čeke za vjetar, lovci uživo i alarm
-blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.).
+blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.), **Dolazak divljači – upis** (kartica na Pregledu, karta, točka: gdje, divljač, komada, datum, sat, kamera/uživo, hrana; popis zapisanih i „zadnji dolazak”; vlasnik 28. 10.).
 
 ## Kad krene naplata
 
