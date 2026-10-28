@@ -35,7 +35,7 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 ## 🆓 Besplatno zauvijek (osnova)
 
 Jednokratno slanje lovišta (granica + odabrane čeke i točke) prijatelju, dnevnik izlazaka i odstrela, karta s točkama i granicama (i crtanje prstom), vjetar i čeke za vjetar, lovci uživo i alarm
-blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.), **Dolazak divljači – upis** (kartica na Pregledu, karta, točka: gdje, divljač, komada, datum, sat, kamera/uživo, hrana; popis zapisanih i „zadnji dolazak”; vlasnik 28. 10.).
+blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.), **Dolazak divljači – upis** (kartica na Pregledu, karta, točka: gdje, divljač, komada, datum, sat, kamera/uživo, hrana; popis zapisanih i „zadnji dolazak”; vlasnik 28. 10.), **slika s kamere uz dolazak** (datum i sat se preuzmu iz slike; 28. 10. – prijedlog besplatno, potvrditi prije objave).
 
 ## Kad krene naplata
 

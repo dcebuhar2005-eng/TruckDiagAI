@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Ikona from "./Ikona";
 import { Cipovi, Gumb, Ploca, Polje, djeteListe, obavijest } from "./ui";
 import { otvori, zatvori } from "./urednici/kontroler";
@@ -10,6 +10,8 @@ import { HRANE, TIPOVI_TOCAKA } from "@/lib/katalog";
 import { usePro } from "@/lib/pro";
 import { datumKratki, isoDatum, isoVrijeme } from "@/lib/format";
 import { hranaNaTocki } from "@/lib/upiti";
+import { datumSnimanja } from "@/lib/exif";
+import { dohvatiFoto, smanjiSliku, spremiFoto } from "@/lib/foto";
 import { db, noviId } from "@/lib/store";
 import type { Baza, Dolazak, TipTocke, Tocka } from "@/lib/types";
 
@@ -109,6 +111,27 @@ export function DolazakDivljaci({
       : "uzivo",
   );
   const [napomena, setNapomena] = useState("");
+  const [slika, setSlika] = useState<string | null>(null);
+  const [povecana, setPovecana] = useState<string | null>(null);
+  const odabirSlike = useRef<HTMLInputElement>(null);
+  /** Slika s kamere: datum i sat se preuzmu iz slike (EXIF), ako ih kamera upisuje. */
+  const dodajSliku = async (f?: File) => {
+    if (!f) return;
+    try {
+      const [kad, url] = await Promise.all([datumSnimanja(f), smanjiSliku(f)]);
+      setSlika(url);
+      if (kad) {
+        setDatum(kad.datum);
+        setVrijeme(kad.vrijeme);
+        setHranaRucno(null);
+        obavijest(
+          `Datum i sat iz slike: ${datumKratki(kad.datum)} u ${kad.vrijeme}`,
+        );
+      } else obavijest("Slika nema zapisan sat – upišite ga ručno", "info");
+    } catch {
+      obavijest("Slika nije učitana", "greska");
+    }
+  };
   // Hrana se predlaže iz zadnje prihrane ove točke do odabranog datuma, dok je korisnik ne promijeni.
   const [hranaRucno, setHranaRucno] = useState<string | null>(null);
   const predlozena = tocka ? hranaNaTocki(baza, tocka.id, datum) : undefined;
@@ -120,10 +143,23 @@ export function DolazakDivljaci({
     ]),
   ];
 
-  const spremi = () => {
+  const spremi = async () => {
     if (!tocka || !datum || !vrijeme) return;
+    let fotoId: string | undefined;
+    if (slika) {
+      fotoId = noviId();
+      try {
+        await spremiFoto(fotoId, slika);
+      } catch {
+        fotoId = undefined;
+        obavijest("Slika nije spremljena (premalo prostora?)", "greska");
+      }
+    }
+    const zadnji =
+      db.dohvati().tocke.find((t) => t.id === tocka.id)?.dolasci ?? [];
     const novi: Dolazak = {
       id: noviId(),
+      fotoId,
       vrsta,
       broj: broj(kom),
       datum,
@@ -132,13 +168,14 @@ export function DolazakDivljaci({
       hrana: tekst(hrana),
       napomena: tekst(napomena),
     };
-    db.uredi("tocke", tocka.id, { dolasci: [...dolasci, novi] });
+    db.uredi("tocke", tocka.id, { dolasci: [...zadnji, novi] });
     obavijest(
       `Zapisano: ${vrsta.toLowerCase()} ${datumKratki(datum)} u ${vrijeme}`,
     );
     setKom("");
     setNapomena("");
     setHranaRucno(null);
+    setSlika(null);
   };
   const obrisi = (d: Dolazak) => {
     if (!tocka) return;
@@ -207,6 +244,46 @@ export function DolazakDivljaci({
                 ))}
               </select>
             </Polje>
+            {slika ? (
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slika}
+                  alt="Slika s kamere"
+                  className="max-h-56 w-full rounded-xl object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSlika(null)}
+                  className="absolute top-2 right-2 grid size-9 place-items-center rounded-full bg-black/60 text-white"
+                  aria-label="Makni sliku"
+                >
+                  <Ikona ime="x" velicina={16} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => odabirSlike.current?.click()}
+                className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-rub-jaki py-3.5 text-[14.5px] text-tekst-2 hover:border-naglasak hover:text-tekst"
+              >
+                <Ikona ime="kamera" velicina={18} />
+                Dodaj sliku s kamere
+                <span className="text-[12.5px] text-tekst-3">
+                  (datum i sat sami)
+                </span>
+              </button>
+            )}
+            <input
+              ref={odabirSlike}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => (
+                void dodajSliku(e.target.files?.[0]),
+                (e.target.value = "")
+              )}
+            />
             <div className="grid grid-cols-[1fr_90px] gap-2">
               <Polje oznaka="Divljač">
                 <OdabirVrste vrijednost={vrsta} promjena={setVrsta} />
@@ -277,7 +354,7 @@ export function DolazakDivljaci({
             <Gumb
               vrsta="primarni"
               ikona="plus"
-              onClick={spremi}
+              onClick={() => void spremi()}
               disabled={!datum || !vrijeme}
             >
               Zapiši dolazak
@@ -335,6 +412,16 @@ export function DolazakDivljaci({
                       {d.vrijeme}
                     </span>
                   </span>
+                  {d.fotoId && (
+                    <button
+                      type="button"
+                      onClick={() => setPovecana(d.fotoId!)}
+                      aria-label="Pogledaj sliku"
+                      className="shrink-0"
+                    >
+                      <Slicica id={d.fotoId} />
+                    </button>
+                  )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14.5px]">
                       {d.vrsta}
@@ -359,7 +446,68 @@ export function DolazakDivljaci({
           </div>
         )}
       </div>
+      {povecana && (
+        <PovecanaSlika id={povecana} zatvori={() => setPovecana(null)} />
+      )}
     </Ploca>
+  );
+}
+
+/** Mala slika s kamere u popisu. */
+export function Slicica({
+  id,
+  velicina = 44,
+}: {
+  id: string;
+  velicina?: number;
+}) {
+  const [url, setUrl] = useState<string>();
+  useEffect(() => {
+    let ziv = true;
+    dohvatiFoto(id).then((u) => ziv && setUrl(u));
+    return () => {
+      ziv = false;
+    };
+  }, [id]);
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      style={{ width: velicina, height: velicina }}
+      className="rounded-lg object-cover"
+    />
+  ) : (
+    <span
+      style={{ width: velicina, height: velicina }}
+      className="grid place-items-center rounded-lg bg-povrsina-3 text-tekst-3"
+    >
+      <Ikona ime="kamera" velicina={16} />
+    </span>
+  );
+}
+
+function PovecanaSlika({ id, zatvori }: { id: string; zatvori: () => void }) {
+  const [url, setUrl] = useState<string>();
+  useEffect(() => {
+    dohvatiFoto(id).then(setUrl);
+  }, [id]);
+  return (
+    <button
+      type="button"
+      onClick={zatvori}
+      className="fixed inset-0 z-[2500] grid place-items-center bg-black/90 p-3"
+      aria-label="Zatvori sliku"
+    >
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt="Slika s kamere"
+          className="max-h-full max-w-full rounded-xl object-contain"
+        />
+      )}
+    </button>
   );
 }
 
@@ -396,6 +544,7 @@ export function DolasciKartica({ baza }: { baza: Baza }) {
               onClick={() => otvori({ tip: "dolazak", tockaId: t.id })}
               className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3.5 py-2.5 text-left"
             >
+              {d.fotoId && <Slicica id={d.fotoId} velicina={48} />}
               <span className="brojke w-[72px] shrink-0 text-[12.5px] text-tekst-3">
                 {datumKratki(d.datum)}
                 <span className="block text-[15px] font-semibold text-tekst">
