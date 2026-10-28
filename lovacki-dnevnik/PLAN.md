@@ -144,6 +144,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - Ideja za idući AAB: gumb SOS u obavijesti „lov u tijeku”.
 - **Prihrana – vrsta hrane** (besplatno, 28. 10.): u izlasku uz prihranu odabir (kukuruz u zrnu, klip, ječam…) ili vlastiti upis; prikaz u detaljima, na karti i u statistici (kg po hrani).
 - **Dolazak divljači** (28. 10.): upis besplatan – kartica „Dolazak divljači” na Pregledu (zadnja 3 + „Zapiši”), gumb „Dolazak” na karti i u Uredi točku; odabir mjesta, divljač, komada, datum, sat, kamera/uživo, hrana (predloži se zadnja prihrana). PRO: „najčešće 23–01 h” i „najviše dolazi na…”.
+- **Slika s kamere uz dolazak** (28. 10.): „Dodaj sliku s kamere” – datum i sat iz EXIF-a (`lib/exif.ts`), sličica u popisu i na Pregledu, povećanje dodirom; video samo kao slika zaslona.
 
 ## Ideje na čekanju (redom)
 

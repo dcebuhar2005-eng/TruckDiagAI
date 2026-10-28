@@ -10,6 +10,15 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-10-28b",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "📷 Dolazak divljači sa slikom: dodajte sliku s lovačke kamere, a datum i sat se upišu sami iz slike.",
+      "🐗 Dolazak divljači: zapišite gdje, kad i koliko je divljači došlo – kartica na Pregledu ili gumb „Dolazak” na karti.",
+      "🌽 Prihrana: uz izlazak odaberite ili upišite što ste nosili (npr. kukuruz u zrnu).",
+    ],
+  },
+  {
     id: "2026-10-28",
     naslov: "Novo u CroLovcu",
     stavke: [
