@@ -142,6 +142,8 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
   (stupac `lov_lokacije.sos`). Plutajući gumb dok je lov u tijeku ili dijelim lokaciju; u izborniku Više.
 - „Što je novo” nakon svake objave (`lib/novosti.ts`).
 - Ideja za idući AAB: gumb SOS u obavijesti „lov u tijeku”.
+- **Prihrana – vrsta hrane** (besplatno, 28. 10.): u izlasku uz prihranu odabir (kukuruz u zrnu, klip, ječam…) ili vlastiti upis; prikaz u detaljima, na karti i u statistici (kg po hrani).
+- **Dolasci divljači** (napravljeno 28. 10., besplatno ili PRO – čeka vlasnika): na karti točka → „Dolazak” ili Uredi točku; vrsta, komada, datum, sat, s kamere / uživo; sažetak „najčešće 23–01 h”.
 
 ## Ideje na čekanju (redom)
 

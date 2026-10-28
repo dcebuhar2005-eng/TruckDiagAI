@@ -7,6 +7,7 @@ import { povrsinaHa } from "@/lib/format";
 import { db } from "@/lib/store";
 import type { Baza, Kvota, Loviste, Spol, Tocka, Tocka2D, TipDozvole, TipTocke } from "@/lib/types";
 import { centarLovista } from "@/lib/upiti";
+import { DolasciPloca } from "../Dolasci";
 import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
@@ -318,6 +319,7 @@ export function TockaUrednik({
   const dodatnoBez = dodatno.filter((x) => x !== tip);
   const potvrda = usePotvrda();
   const imaVjetar = tockaZaVjetar({ tip, dodatno: dodatnoBez });
+  const [dolasci, setDolasci] = useState(false);
 
   const spremi = () => {
     const podaci = {
@@ -561,6 +563,13 @@ export function TockaUrednik({
             <textarea className="unos min-h-20" value={napomena} onChange={(e) => setNapomena(e.target.value)} placeholder="Smjer pogleda, stanje, pristup…" />
           </Polje>
         </Odjeljak>
+        {postojeca && (
+          <Odjeljak naslov="Dolasci divljači">
+            <Gumb ikona="plus" onClick={() => setDolasci(true)}>
+              {postojeca.dolasci?.length ? `Dolasci (${postojeca.dolasci.length}) · zapiši novi` : "Zapiši kad divljač dolazi"}
+            </Gumb>
+          </Odjeljak>
+        )}
         {imaVjetar && (
           <Odjeljak naslov="Dobar vjetar">
             <OdabirVjetrova vrijednost={vjetrovi} promjena={setVjetrovi} />
@@ -568,6 +577,7 @@ export function TockaUrednik({
         )}
       </Ploca>
       {potvrda.element}
+      {postojeca && <DolasciPloca tocka={postojeca} otvorena={dolasci} zatvori={() => setDolasci(false)} />}
     </>
   );
 }

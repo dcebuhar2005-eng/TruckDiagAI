@@ -30,11 +30,12 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 - Podsjetnik za hranilište (obavijest)
 - „Danas smiješ loviti” / lovostaji (tek s provjerenim zakonskim podacima)
 - Glasovni upis opažanja
+- **Dolasci divljači na točku** (čeka/hranilište/kamera: vrsta, datum, sat, kamera ili uživo; „najčešće dolaze 23–01 h”) – napravljeno 28. 10., čeka odluku
 
 ## 🆓 Besplatno zauvijek (osnova)
 
 Jednokratno slanje lovišta (granica + odabrane čeke i točke) prijatelju, dnevnik izlazaka i odstrela, karta s točkama i granicama (i crtanje prstom), vjetar i čeke za vjetar, lovci uživo i alarm
-blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave.
+blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.).
 
 ## Kad krene naplata
 
