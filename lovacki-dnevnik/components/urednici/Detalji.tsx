@@ -329,6 +329,7 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
               <div key={k} className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3.5 py-2.5">
                 <span className="flex-1 text-[15px]">
                   {RADOVI[r.vrsta].naziv}
+                  {r.hrana && <span className="text-tekst-2"> · {r.hrana}</span>}
                   {r.tockaId && <span className="text-tekst-3"> · {baza.tocke.find((t) => t.id === r.tockaId)?.naziv ?? "točka"}</span>}
                 </span>
                 {r.kolicina != null && (

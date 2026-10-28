@@ -87,6 +87,8 @@ export interface Rad {
   kolicina?: number;
   /** Hranilište, solište ili pojilište koje je dopunjeno. */
   tockaId?: ID;
+  /** Što je doneseno na prihranu (npr. „Kukuruz u zrnu”) – ponuđeno ili upisano. */
+  hrana?: string;
 }
 
 export interface Opazanje {

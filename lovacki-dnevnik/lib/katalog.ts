@@ -240,6 +240,9 @@ export const RADOVI: Record<VrstaRada, { naziv: string; jedinica: string; tocka:
   voda: { naziv: "Voda", jedinica: "l", tocka: "pojiliste" },
 };
 
+/** Ponuđene vrste hrane za prihranu (korisnik može upisati i svoju). */
+export const HRANE = ["Kukuruz u zrnu", "Kukuruz u klipu", "Ječam", "Pšenica", "Zob", "Sijeno", "Repa", "Jabuke", "Mrkva", "Silaža"];
+
 export const TIPOVI_DOZVOLA: Record<TipDozvole, string> = {
   "lovacka-iskaznica": "Lovačka iskaznica",
   "dozvola-za-lov": "Dozvola za lov",

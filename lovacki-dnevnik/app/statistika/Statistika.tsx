@@ -91,12 +91,17 @@ export default function Statistika() {
       kolicina: sviIzlasci.reduce((s, i) => s + (i.radovi ?? []).filter((r) => r.vrsta === v).reduce((a, r) => a + (r.kolicina ?? 0), 0), 0),
       puta: sviIzlasci.filter((i) => i.radovi?.some((r) => r.vrsta === v)).length,
     }));
+    // Prihrana po vrsti hrane (kg u razdoblju), najviše prvo.
+    const poHrani = new Map<string, number>();
+    for (const i of sviIzlasci)
+      for (const r of i.radovi ?? []) if (r.vrsta === "prihrana" && r.hrana) poHrani.set(r.hrana, (poHrani.get(r.hrana) ?? 0) + (r.kolicina ?? 0));
+    const hrane = [...poHrani].sort((a, b) => b[1] - a[1]);
     const dopune = zadnjeDopune(baza);
     const mjesta = baza.tocke
       .filter((t) => imaTip(t, "hraniliste") || imaTip(t, "soliste") || imaTip(t, "pojiliste"))
       .map((t) => ({ t, z: dopune.get(t.id) }))
       .sort((a, b) => (a.z?.datum ?? "").localeCompare(b.z?.datum ?? ""));
-    return { izlasci, sviIzlasci, obilazaka, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, mjesta };
+    return { izlasci, sviIzlasci, obilazaka, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, hrane, mjesta };
   }, [baza, godina]);
 
   if (!baza || !p) return <Kostur />;
@@ -243,6 +248,16 @@ export default function Statistika() {
                     </div>
                   ))}
                 </div>
+                {p.hrane.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {p.hrane.map(([h, kg]) => (
+                      <span key={h} className="rounded-full bg-povrsina-2 px-3 py-1 text-[12.5px] text-tekst-2">
+                        {h}
+                        {kg > 0 && <span className="brojke ml-1 text-tekst-3">{kg} kg</span>}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {p.mjesta.length ? (
                   <div className="mt-3 grid gap-1.5">
                     {p.mjesta.map(({ t, z }) => {
@@ -260,7 +275,11 @@ export default function Statistika() {
                             {z ? (
                               <>
                                 {opisDana(n!)}
-                                {z.kolicina ? <span className="block text-tekst-3">{z.kolicina} {RADOVI[z.vrsta].jedinica}</span> : null}
+                                {z.kolicina || z.hrana ? (
+                                  <span className="block text-tekst-3">
+                                    {[z.kolicina ? `${z.kolicina} ${RADOVI[z.vrsta].jedinica}` : "", z.hrana].filter(Boolean).join(" · ")}
+                                  </span>
+                                ) : null}
                               </>
                             ) : (
                               "nije dopunjeno"

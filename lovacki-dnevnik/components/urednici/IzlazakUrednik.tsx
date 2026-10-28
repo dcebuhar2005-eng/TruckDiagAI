@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { dohvatiFoto, obrisiFoto, smanjiSliku, spremiFoto } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
 import Fotografije, { type Slika } from "./Fotografije";
-import { NACINI_LOVA, RADOVI, nazivSpola } from "@/lib/katalog";
+import { HRANE, NACINI_LOVA, RADOVI, nazivSpola } from "@/lib/katalog";
 import { isoDatum, isoVrijeme } from "@/lib/format";
 import { db, noviId } from "@/lib/store";
 import type { Baza, Izlazak, Opazanje, Rad, Spol, Tocka2D, VrstaLova, VrstaRada, Vrijeme } from "@/lib/types";
@@ -105,6 +105,13 @@ export default function IzlazakUrednik({
     setRadovi([...radovi, { vrsta: v, tockaId: tocka?.id }]);
   };
   const urediRad = (i: number, x: Partial<Rad>) => setRadovi(radovi.map((r, j) => (j === i ? { ...r, ...x } : r)));
+  /** Hrana za prihranu: prvo ono što je korisnik već nosio (najčešće prvo), zatim ponuđene vrste. */
+  const hrane = (() => {
+    const n = new Map<string, number>();
+    for (const iz of baza.izlasci) for (const r of iz.radovi ?? []) if (r.hrana) n.set(r.hrana, (n.get(r.hrana) ?? 0) + 1);
+    const moje = [...n].sort((a, b) => b[1] - a[1]).map(([h]) => h);
+    return [...moje, ...HRANE.filter((h) => !moje.some((m) => m.toLowerCase() === h.toLowerCase()))];
+  })();
 
   const preuzmiVrijeme = async () => {
     setUcitavam(true);
@@ -454,6 +461,37 @@ export default function IzlazakUrednik({
                       <Ikona ime="x" velicina={16} />
                     </button>
                   </div>
+                  {r.vrsta === "prihrana" && (
+                    <div className="grid gap-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {hrane.slice(0, 8).map((h) => {
+                          const a = r.hrana?.toLowerCase() === h.toLowerCase();
+                          return (
+                            <button
+                              type="button"
+                              key={h}
+                              onClick={() => urediRad(i, { hrana: a ? undefined : h })}
+                              className={cx(
+                                "rounded-full border px-3 py-1 text-[13px] transition-colors",
+                                a ? "border-naglasak bg-naglasak-meki text-tekst" : "border-rub bg-povrsina text-tekst-2 hover:border-rub-jaki",
+                              )}
+                            >
+                              {h}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input
+                        className="unos"
+                        list="hrane-prihrana"
+                        placeholder="Ili upišite svoje (npr. kukuruz u zrnu)"
+                        value={r.hrana ?? ""}
+                        onChange={(e) => urediRad(i, { hrana: e.target.value || undefined })}
+                        onBlur={(e) => urediRad(i, { hrana: e.target.value.trim() || undefined })}
+                        aria-label="Hrana za prihranu"
+                      />
+                    </div>
+                  )}
                   <select className="unos" value={r.tockaId ?? ""} onChange={(e) => urediRad(i, { tockaId: e.target.value || undefined })}>
                     <option value="">
                       {m.length
@@ -470,6 +508,11 @@ export default function IzlazakUrednik({
               );
             })}
           </AnimatePresence>
+          <datalist id="hrane-prihrana">
+            {hrane.map((h) => (
+              <option key={h} value={h} />
+            ))}
+          </datalist>
           {!radovi.length && <p className="text-sm text-tekst-3">Prihranili ste divljač ili dopunili solište? Dodajte ovdje.</p>}
         </Odjeljak>
 
