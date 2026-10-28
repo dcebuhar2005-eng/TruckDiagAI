@@ -14,9 +14,7 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 | **Novi Pregled** – kartica „Sada” (kad krenuti, na koju čeku), tijek dana, pločice (vjetar, tjedan, plan odstrela, Mjesec, hranilište) | stari Pregled (Aktivnost divljači, Svjetlo danas) |
 | **„Kad u lov?” za 8 dana** + najbolji termin u tjednu | samo danas i sutra |
 | **Uvoz staza GPX/KML** (planinarske staze, šumski putovi) na kartu | ništa – sloj i gumb su skriveni |
-
-- **Dolazak divljači – izračun** (vlasnik 28. 10.): kad koja divljač najčešće dolazi („najčešće 23–01 h”) i na koju hranu
-  najviše dolazi; na karti „voli kukuruz u zrnu”. Kasnije: dolasci prema vjetru i Mjesecu.
+| **Dolazak divljači – izračun** (vlasnik 28. 10.): kad koja divljač najčešće dolazi („najčešće 23–01 h”), na koju hranu najviše dolazi, na karti „voli kukuruz u zrnu”; kasnije prema vjetru i Mjesecu | samo upis i popis dolazaka, „zadnji dolazak” |
 
 ## 📝 Planirano za PRO (još nije napravljeno)
 
