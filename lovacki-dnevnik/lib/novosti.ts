@@ -10,6 +10,15 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-10-30",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "🙏 Hvala svim testerima! Testiranje na Google Playu je gotovo – podsjetnika za testiranje više nema.",
+      "🔔 Povremene obavijesti (Android): rijetko i samo kad aplikaciju nekoliko dana ne otvorite. Isključuju se u Postavkama.",
+      "🐗 Ne zaboravite: Dolazak divljači sa slikom s kamere – datum i sat upišu se sami.",
+    ],
+  },
+  {
     id: "2026-10-28b",
     naslov: "Novo u CroLovcu",
     stavke: [

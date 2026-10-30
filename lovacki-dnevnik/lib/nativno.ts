@@ -183,8 +183,8 @@ export async function nativnaObavijest(naslov: string, tijelo: string) {
 const KANAL_PODSJETNIKA = "podsjetnik-testiranja";
 const PRVI_ID_PODSJETNIKA = 7100;
 const BROJ_PODSJETNIKA = 14;
-/** Kraj zatvorenog testiranja na Google Playu (nakon toga nema podsjetnika). */
-const KRAJ_TESTIRANJA = new Date(2026, 10, 3);
+/** Kraj podsjetnika za testiranje (zadnji je stigao 30. 10. 2026.); nakon toga povremene obavijesti. */
+const KRAJ_TESTIRANJA = new Date(2026, 9, 31);
 
 export async function presloziPodsjetnikTestiranja() {
   if (!uAplikaciji()) return;
@@ -197,7 +197,7 @@ export async function presloziPodsjetnikTestiranja() {
       if (d >= KRAJ_TESTIRANJA) break;
       dani.push(d);
     }
-    if (!dani.length) return;
+    if (!dani.length) return presloziPovremene();
     // Dopuštenje se traži samo ako ga korisnik još nije ni dao ni odbio.
     let dopustenje = (await LocalNotifications.checkPermissions()).display;
     if (dopustenje === "prompt" || dopustenje === "prompt-with-rationale") dopustenje = (await LocalNotifications.requestPermissions()).display;
@@ -219,6 +219,64 @@ export async function presloziPodsjetnikTestiranja() {
   } catch {}
 }
 
+/* ---------------- Povremene obavijesti (nakon testiranja) ---------------- */
+
+// Lagane obavijesti onima koji aplikaciju neko vrijeme nisu otvorili: svakim otvaranjem presložuju se
+// od tog dana, pa tko je redovito koristi gotovo ih i ne dobije. Isti brojevi (id) kao podsjetnici.
+const KANAL_POVREMENIH = "povremeno";
+const KLJUC_POVREMENIH = "lovacki-dnevnik:povremeno";
+/** Koliko dana nakon zadnjeg otvaranja stiže obavijest (u 18:30). */
+const DANI_POVREMENIH = [2, 4, 7, 10, 14, 21, 28];
+const PORUKE_POVREMENIH: [string, string][] = [
+  ["Kum pita jesi li živ 😄", "Baci oko na vjetar i „Kad u lov?” za iduće dane."],
+  ["Dnevnik ne laže 📖", "…ali samo ako ga pišeš. Je li zadnji izlazak zapisan?"],
+  ["Kamera je možda nešto snimila 🐗", "Dodaj sliku i zapiši dolazak divljači – sat se upiše sam."],
+  ["Na koju čeku danas? 💨", "Pogledaj koje su ti čeke dobre za današnji vjetar."],
+  ["Po mraku su svi hrastovi isti 🌳", "Jesu li sve tvoje čeke i hranilišta na karti?"],
+  ["Prihranio si? 🌽", "Upiši što si nosio – s vremenom vidiš na što najviše dolaze."],
+  ["Još 5 minuta… 🕰️", "Tko čeka, dočeka. Pogledaj kakav je izgled za lov ovaj tjedan."],
+  ["Lovci drže zajedno 🤝", "Pogledaj tko je iz društva u lovu i uključi alarm kad je netko blizu."],
+];
+
+export function povremeneUkljucene() {
+  try {
+    return localStorage.getItem(KLJUC_POVREMENIH) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+export function postaviPovremene(da: boolean) {
+  try {
+    localStorage.setItem(KLJUC_POVREMENIH, da ? "1" : "0");
+  } catch {}
+  void presloziPodsjetnikTestiranja();
+}
+
+async function presloziPovremene() {
+  if (!povremeneUkljucene()) return;
+  // Ovdje se dopuštenje ne traži – samo ako ga je korisnik već dao.
+  if ((await LocalNotifications.checkPermissions()).display !== "granted") return;
+  await LocalNotifications.createChannel({ id: KANAL_POVREMENIH, name: "Povremene obavijesti", description: "Rijetko, kad aplikaciju neko vrijeme ne otvoriš", importance: 3 });
+  const sada = new Date();
+  // Svaki put drugi početak niza, da poruke ne budu uvijek istim redom.
+  const pomak = Math.floor(sada.getTime() / 86400e3);
+  await LocalNotifications.schedule({
+    notifications: DANI_POVREMENIH.map((dana, i) => {
+      const [title, body] = PORUKE_POVREMENIH[(pomak + i) % PORUKE_POVREMENIH.length];
+      return {
+        id: PRVI_ID_PODSJETNIKA + i,
+        title,
+        body,
+        schedule: { at: new Date(sada.getFullYear(), sada.getMonth(), sada.getDate() + dana, 18, 30), allowWhileIdle: true },
+        isExactNotification: false,
+        channelId: KANAL_POVREMENIH,
+        smallIcon: "ic_stat_crolovac",
+      };
+    }),
+  });
+}
+
 function kanalPodsjetnika() {
   return LocalNotifications.createChannel({
     id: KANAL_PODSJETNIKA,
@@ -228,30 +286,31 @@ function kanalPodsjetnika() {
   });
 }
 
-/** Za administratora: „Lovac blizu” odmah i podsjetnik za oko minutu, da se na mobitelu provjeri da sve stiže. */
+/** Za administratora: „Lovac blizu” odmah i jedna povremena obavijest za oko minutu, da se na mobitelu provjeri da sve stiže. */
 export async function probaSvihObavijesti() {
   if (!uAplikaciji()) return "Proba radi samo u Android aplikaciji";
   if ((await zatraziObavijestiUAplikaciji()) !== "granted") return "Obavijesti nisu uključene";
   await nativnaObavijest("Lovac vrlo blizu!", "Proba: Marko je 250 m od vas. Provjerite smjer pucanja.");
   try {
-    await kanalPodsjetnika();
+    await LocalNotifications.createChannel({ id: KANAL_POVREMENIH, name: "Povremene obavijesti", description: "Rijetko, kad aplikaciju neko vrijeme ne otvoriš", importance: 3 });
+    const [title, body] = PORUKE_POVREMENIH[Math.floor(Math.random() * PORUKE_POVREMENIH.length)];
     await LocalNotifications.schedule({
       notifications: [
         {
           id: PRVI_ID_PODSJETNIKA + 99,
-          title: "CroLovac 🦌",
-          body: "Proba podsjetnika – ovako testeri dobiju podsjetnik u 18:30",
+          title,
+          body,
           schedule: { at: new Date(Date.now() + 60_000), allowWhileIdle: true },
-          channelId: KANAL_PODSJETNIKA,
+          channelId: KANAL_POVREMENIH,
           smallIcon: "ic_stat_crolovac",
           isExactNotification: false,
         },
       ],
     });
   } catch {
-    return "„Lovac blizu” poslan, podsjetnik nije uspio";
+    return "„Lovac blizu” poslan, povremena obavijest nije uspjela";
   }
-  return "„Lovac blizu” stiže odmah, podsjetnik za oko minutu";
+  return "„Lovac blizu” stiže odmah, povremena obavijest za oko minutu";
 }
 
 interface VibracijaPlugin {
