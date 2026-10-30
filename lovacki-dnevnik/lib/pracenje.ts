@@ -11,6 +11,7 @@ import { uAplikaciji } from "./nativno";
 const SENTRY_DSN = "https://cbfe3cfa037a8683bf700d1a4a24e894@o4512295445790720.ingest.de.sentry.io/4512295561330768";
 const POSTHOG_KLJUC = "phc_nMe5XUMWSAnhyHXpkSTrfaiwXQvc3saQ8RP4NvcKikrJ";
 const KLJUC_ISKLJUCENO = "lovacki-dnevnik:bez-statistike";
+const KLJUC_IZVOR = "lovacki-dnevnik:izvor";
 
 type Svojstva = Record<string, string | number | boolean | undefined>;
 
@@ -19,6 +20,24 @@ let sentry: typeof import("@sentry/browser") | null = null;
 let pokrenuto = false;
 const naCekanju: [string, Svojstva | undefined][] = [];
 let korisnik: string | null | undefined;
+
+let izvor: Svojstva = {};
+
+/**
+ * Odakle je korisnik prvi put došao: utm_* iz poveznice ili QR koda oglasa (Facebook, Instagram, TikTok…).
+ * Čita se odmah pri otvaranju (prije nego što aplikacija promijeni adresu) i pamti se samo prvi dolazak.
+ */
+function izvorDolaska(): Svojstva {
+  try {
+    const q = new URLSearchParams(location.search);
+    const utm = (k: string) => q.get(`utm_${k}`)?.slice(0, 60) || undefined;
+    if (utm("source") && !localStorage.getItem(KLJUC_IZVOR))
+      localStorage.setItem(KLJUC_IZVOR, JSON.stringify({ izvor: utm("source"), medij: utm("medium"), kampanja: utm("campaign"), oglas: utm("content") }));
+    return JSON.parse(localStorage.getItem(KLJUC_IZVOR) ?? "{}");
+  } catch {
+    return {};
+  }
+}
 
 /** Na razvojnom računalu i u testovima ništa se ne šalje. */
 const lokalno = () => /^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname);
@@ -42,7 +61,9 @@ export function postaviStatistiku(ukljuceno: boolean) {
 }
 
 export function pokreniPracenje() {
-  if (pokrenuto || typeof window === "undefined" || lokalno()) return;
+  if (pokrenuto || typeof window === "undefined") return;
+  izvor = izvorDolaska();
+  if (lokalno()) return;
   pokrenuto = true;
   const ucitaj = async () => {
     const [s, p] = await Promise.all([import("@sentry/browser"), import("posthog-js")]);
@@ -85,7 +106,7 @@ export function pokreniPracenje() {
         return e;
       },
     });
-    posthog.register({ platforma: uAplikaciji() ? "android" : "web", verzija: process.env.NEXT_PUBLIC_VERZIJA });
+    posthog.register({ platforma: uAplikaciji() ? "android" : "web", verzija: process.env.NEXT_PUBLIC_VERZIJA, ...izvor });
     ph = posthog;
     if (korisnik !== undefined) identificiraj(korisnik);
     for (const [ime, sv] of naCekanju.splice(0)) posthog.capture(ime, sv);
@@ -108,7 +129,7 @@ export function identificiraj(id: string | null) {
   if (sentry) sentry.setUser(id ? { id } : null);
   if (!ph) return;
   if (id) {
-    if (ph.get_distinct_id() !== id) ph.identify(id);
+    if (ph.get_distinct_id() !== id) ph.identify(id, undefined, izvor.izvor ? { prvi_izvor: izvor.izvor, prva_kampanja: izvor.kampanja } : undefined);
   } else ph.reset();
 }
 
