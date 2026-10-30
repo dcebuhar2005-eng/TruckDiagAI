@@ -84,12 +84,6 @@ export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]
 
   const rucni = (g: string) => unosi.filter((u) => u.gmail === g.toLowerCase());
   const bodoviOd = (t: TesterPlay) => rucni(t.gmail).reduce((s, u) => s + u.bodovi, 0) + (lovovi.get(t.gmail.toLowerCase()) ?? 0);
-  const ljestvica = testeri
-    .filter((t) => !izvanIgre(t))
-    .map((t) => ({ t, b: bodoviOd(t) }))
-    .filter((x) => x.b > 0)
-    .sort((a, b) => b.b - a.b || b.t.dani_14 - a.t.dani_14)
-    .slice(0, 3);
   const dani = pocetak ? daniTestiranja(pocetak) : [];
   const danas = oznaka(new Date());
   const danTestiranja = pocetak ? dani.indexOf(danas) + 1 || (danas > dani[DANA - 1] ? DANA + 1 : 0) : 0;
@@ -142,25 +136,6 @@ export default function Testiranje({ testeri, pocetak }: { testeri: TesterPlay[]
           " · brojanje dana kreće kad Google odobri zatvoreno testiranje"
         )}
       </p>
-
-      {ljestvica.length > 0 && (
-        <div className="mb-4 rounded-2xl border border-naglasak/30 bg-naglasak-meki p-3">
-          <div className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-naglasak">
-            <Ikona ime="trofej" velicina={16} /> Ljestvica za majice
-          </div>
-          <div className="grid gap-1.5">
-            {ljestvica.map(({ t, b }, i) => (
-              <div key={t.gmail} className="flex items-center gap-2 text-[14px]">
-                <span className="w-6 text-center">{["🥇", "🥈", "🥉"][i]}</span>
-                <span className="min-w-0 flex-1 truncate font-medium">{t.ime ?? t.profil ?? t.gmail}</span>
-                <span className="brojke font-bold text-naglasak">{b}</span>
-                <span className="text-[12px] text-tekst-3">bod.</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 text-[11.5px] text-tekst-3">Greška 3 · prijedlog 2 · zabilježen lov od barem 30 min 1 (od početka testiranja)</div>
-        </div>
-      )}
 
       <ol className="grid gap-2">
         {poredak.map((t, i) => {
