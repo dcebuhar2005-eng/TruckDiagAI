@@ -31,6 +31,7 @@ import { db, useBaza } from "@/lib/store";
 import { danaOd, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { prijeKoliko, useDrustvo } from "@/lib/drustvo";
 import Legenda from "./Legenda";
+import PopisObjekata from "./PopisObjekata";
 import UvozNaKartu from "./UvozNaKartu";
 import { okvirStaze } from "@/lib/staze";
 import { usePro } from "@/lib/pro";
@@ -436,6 +437,7 @@ export default function KartaPrikaz() {
     } catch {}
   };
   const [dijeliLoviste, setDijeliLoviste] = useState<string | null>(null);
+  const [popis, setPopis] = useState(false);
   /** Zakret karte u stupnjevima (0 = sjever gore). */
   const [okret, setOkret] = useState(0);
   const [karta, setKarta] = useState<L.Map | null>(null);
@@ -987,6 +989,17 @@ export default function KartaPrikaz() {
               setIzbornik((s) => !s);
             }}
           />
+          <KartaGumb
+            ikona="popis"
+            oznaka="Popis objekata"
+            aktivan={popis}
+            onClick={() => {
+              setIzbornik(false);
+              setLegenda(false);
+              setOfflinePanel(false);
+              setPopis(true);
+            }}
+          />
           <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
           <AnimatePresence>
             {Math.abs(okret) > 0.5 && (
@@ -1512,6 +1525,22 @@ export default function KartaPrikaz() {
           />
         </motion.div>
       </div>
+      <PopisObjekata
+        baza={baza}
+        otvorena={popis}
+        zatvori={() => setPopis(false)}
+        pozicija={moja}
+        smjer={vjetarSmjer}
+        brzina={vjetarBrzina}
+        satno={satno}
+        odaberi={(o, lat, lng) => {
+          setPopis(false);
+          setNacin("pregled");
+          setSlojevi((x) => ({ ...x, [o.tip === "tocka" ? "tocke" : o.tip === "trag" ? "tragovi" : "odstrel"]: true }));
+          setOdabir(o);
+          setCilj({ lat, lng, zoom: 17, k: Date.now() });
+        }}
+      />
       {dijeliLoviste && <PodijeliOdabrano key={dijeliLoviste} otvorena zatvori={() => setDijeliLoviste(null)} lovisteId={dijeliLoviste} />}
     </div>
   );

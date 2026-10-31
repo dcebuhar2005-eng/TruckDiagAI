@@ -10,6 +10,13 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-10-31",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "📋 Popis svega na karti: novi gumb na karti otvara sve čeke, hranilišta, kamere, tragove i odstrel na jednom mjestu – s pretragom, udaljenošću i vjetrom za svaku čeku. Dodir i karta skoči na mjesto.",
+    ],
+  },
+  {
     id: "2026-10-30",
     naslov: "Novo u CroLovcu",
     stavke: [
