@@ -980,6 +980,19 @@ export default function KartaPrikaz() {
 
         <div className="pointer-events-auto ml-auto flex flex-col gap-2">
           <KartaGumb
+            ikona="pretraga"
+            oznaka="Popis objekata"
+            istaknut
+            broj={baza.tocke.length}
+            aktivan={popis}
+            onClick={() => {
+              setIzbornik(false);
+              setLegenda(false);
+              setOfflinePanel(false);
+              setPopis(true);
+            }}
+          />
+          <KartaGumb
             ikona="slojevi"
             oznaka="Slojevi"
             aktivan={izbornik}
@@ -987,17 +1000,6 @@ export default function KartaPrikaz() {
               setLegenda(false);
               setOfflinePanel(false);
               setIzbornik((s) => !s);
-            }}
-          />
-          <KartaGumb
-            ikona="popis"
-            oznaka="Popis objekata"
-            aktivan={popis}
-            onClick={() => {
-              setIzbornik(false);
-              setLegenda(false);
-              setOfflinePanel(false);
-              setPopis(true);
             }}
           />
           <KartaGumb ikona="gps" oznaka={pratim ? "Pratim lokaciju" : "Moja lokacija"} onClick={gps} aktivan={pratim} />
@@ -1120,7 +1122,7 @@ export default function KartaPrikaz() {
             exit={{ opacity: 0, x: 10 }}
             transition={{ delay: 0.3, ...opruga }}
             onClick={() => setLegenda(true)}
-            className="absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+8.85rem)] right-[4.6rem] z-[500] flex items-center gap-1.5 rounded-full bg-[#e8a947] px-3 py-1.5 text-[12.5px] font-semibold whitespace-nowrap text-[#17130a] shadow-jaka md:top-[9.6rem] md:right-[5.6rem]"
+            className="absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+14.9rem)] right-[4.6rem] z-[500] flex items-center gap-1.5 rounded-full bg-[#e8a947] px-3 py-1.5 text-[12.5px] font-semibold whitespace-nowrap text-[#17130a] shadow-jaka md:top-[15.6rem] md:right-[5.6rem]"
           >
             Što znače oznake?
             <Ikona ime="desno" velicina={14} debljina={2.4} />
@@ -1713,7 +1715,22 @@ function PratiOkret({ onOkret }: { onOkret: (stupnjevi: number) => void }) {
   return null;
 }
 
-function KartaGumb({ ikona, oznaka, onClick, aktivan }: { ikona: ImeIkone; oznaka: string; onClick: () => void; aktivan?: boolean }) {
+function KartaGumb({
+  ikona,
+  oznaka,
+  onClick,
+  aktivan,
+  istaknut,
+  broj,
+}: {
+  ikona: ImeIkone;
+  oznaka: string;
+  onClick: () => void;
+  aktivan?: boolean;
+  /** Narančast i s natpisom ispod ikone – da se ne zamijeni s ostalim gumbima. */
+  istaknut?: boolean;
+  broj?: number;
+}) {
   return (
     <motion.button
       whileTap={{ scale: 0.9 }}
@@ -1721,11 +1738,18 @@ function KartaGumb({ ikona, oznaka, onClick, aktivan }: { ikona: ImeIkone; oznak
       aria-label={oznaka}
       title={oznaka}
       className={cx(
-        "grid size-12 place-items-center rounded-2xl border border-white/10 text-white shadow-jaka backdrop-blur-xl transition-colors",
-        aktivan ? "bg-[#e8a947] text-[#17130a]" : "bg-[#0d130e]/80 hover:bg-[#0d130e]",
+        "relative grid place-items-center rounded-2xl border border-white/10 text-white shadow-jaka backdrop-blur-xl transition-colors",
+        istaknut ? "h-14 w-12 content-center gap-0.5 bg-[#e8a947] text-[#17130a]" : "size-12",
+        !istaknut && (aktivan ? "bg-[#e8a947] text-[#17130a]" : "bg-[#0d130e]/80 hover:bg-[#0d130e]"),
       )}
     >
-      <Ikona ime={ikona} />
+      <Ikona ime={ikona} velicina={istaknut ? 19 : undefined} />
+      {istaknut && <span className="text-[10px] leading-none font-bold">Popis</span>}
+      {broj != null && broj > 0 && (
+        <span className="brojke absolute -top-1.5 -right-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-[#0d130e] px-1 text-[10.5px] font-bold text-white ring-2 ring-[#e8a947]">
+          {broj}
+        </span>
+      )}
     </motion.button>
   );
 }
