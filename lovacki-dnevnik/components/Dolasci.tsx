@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import Ikona from "./Ikona";
-import { Cipovi, Gumb, Ploca, Polje, djeteListe, obavijest } from "./ui";
+import { Cipovi, Gumb, Ploca, Polje, cx, djeteListe, obavijest } from "./ui";
 import { otvori, zatvori } from "./urednici/kontroler";
 import { OdabirVrste, broj, tekst } from "./urednici/zajednicko";
 import { HRANE, TIPOVI_TOCAKA } from "@/lib/katalog";
@@ -112,6 +112,10 @@ export function DolazakDivljaci({
   );
   const [napomena, setNapomena] = useState("");
   const [slika, setSlika] = useState<string | null>(null);
+  // Uređivanje već zapisanog dolaska (npr. naknadno dodana slika s kamere).
+  const [uredujem, setUredujem] = useState<Dolazak | null>(null);
+  const [izvornaSlika, setIzvornaSlika] = useState<string | null>(null);
+  const obrazac = useRef<HTMLDivElement>(null);
   const [povecana, setPovecana] = useState<string | null>(null);
   const odabirSlike = useRef<HTMLInputElement>(null);
   /** Slika s kamere: datum i sat se preuzmu iz slike (EXIF), ako ih kamera upisuje. */
@@ -146,7 +150,8 @@ export function DolazakDivljaci({
   const spremi = async () => {
     if (!tocka || !datum || !vrijeme) return;
     let fotoId: string | undefined;
-    if (slika) {
+    if (uredujem && slika && slika === izvornaSlika) fotoId = uredujem.fotoId;
+    else if (slika) {
       fotoId = noviId();
       try {
         await spremiFoto(fotoId, slika);
@@ -158,7 +163,7 @@ export function DolazakDivljaci({
     const zadnji =
       db.dohvati().tocke.find((t) => t.id === tocka.id)?.dolasci ?? [];
     const novi: Dolazak = {
-      id: noviId(),
+      id: uredujem?.id ?? noviId(),
       fotoId,
       vrsta,
       broj: broj(kom),
@@ -168,14 +173,51 @@ export function DolazakDivljaci({
       hrana: tekst(hrana),
       napomena: tekst(napomena),
     };
-    db.uredi("tocke", tocka.id, { dolasci: [...zadnji, novi] });
+    db.uredi("tocke", tocka.id, {
+      dolasci: uredujem
+        ? zadnji.map((d) => (d.id === uredujem.id ? novi : d))
+        : [...zadnji, novi],
+    });
     obavijest(
-      `Zapisano: ${vrsta.toLowerCase()} ${datumKratki(datum)} u ${vrijeme}`,
+      uredujem
+        ? "Dolazak je ažuriran"
+        : `Zapisano: ${vrsta.toLowerCase()} ${datumKratki(datum)} u ${vrijeme}`,
     );
+    setUredujem(null);
+    setIzvornaSlika(null);
     setKom("");
     setNapomena("");
     setHranaRucno(null);
     setSlika(null);
+  };
+  const urediDolazak = (d: Dolazak) => {
+    setUredujem(d);
+    setVrsta(d.vrsta);
+    setKom(d.broj != null ? String(d.broj) : "");
+    setDatum(d.datum);
+    setVrijeme(d.vrijeme);
+    setIzvor(d.izvor ?? "uzivo");
+    setNapomena(d.napomena ?? "");
+    setHranaRucno(d.hrana ?? "");
+    setSlika(null);
+    setIzvornaSlika(null);
+    if (d.fotoId)
+      void dohvatiFoto(d.fotoId).then((u) => {
+        if (!u) return;
+        setSlika(u);
+        setIzvornaSlika(u);
+      });
+    obrazac.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const odustani = () => {
+    setUredujem(null);
+    setIzvornaSlika(null);
+    setSlika(null);
+    setKom("");
+    setNapomena("");
+    setHranaRucno(null);
+    setDatum(isoDatum());
+    setVrijeme(isoVrijeme());
   };
   const obrisi = (d: Dolazak) => {
     if (!tocka) return;
@@ -221,10 +263,24 @@ export function DolazakDivljaci({
             </Gumb>
           </div>
         ) : (
-          <div className="grid gap-3 rounded-2xl border border-rub bg-povrsina-2 p-4">
+          <div
+            ref={obrazac}
+            className={cx(
+              "grid scroll-mt-4 gap-3 rounded-2xl border bg-povrsina-2 p-4",
+              uredujem ? "border-naglasak" : "border-rub",
+            )}
+          >
+            {uredujem && (
+              <div className="flex items-center gap-2 text-[13.5px] font-medium text-naglasak">
+                <Ikona ime="uredi" velicina={16} />
+                Uređujete dolazak od {datumKratki(uredujem.datum)} u{" "}
+                {uredujem.vrijeme}
+              </div>
+            )}
             <Polje oznaka="Gdje">
               <select
                 className="unos"
+                disabled={Boolean(uredujem)}
                 value={odabrana}
                 onChange={(e) => {
                   const t = baza.tocke.find((x) => x.id === e.target.value);
@@ -351,14 +407,28 @@ export function DolazakDivljaci({
               value={napomena}
               onChange={(e) => setNapomena(e.target.value)}
             />
-            <Gumb
-              vrsta="primarni"
-              ikona="plus"
-              onClick={() => void spremi()}
-              disabled={!datum || !vrijeme}
-            >
-              Zapiši dolazak
-            </Gumb>
+            {uredujem ? (
+              <div className="grid grid-cols-[1fr_1.4fr] gap-2">
+                <Gumb onClick={odustani}>Odustani</Gumb>
+                <Gumb
+                  vrsta="primarni"
+                  ikona="kvacica"
+                  onClick={() => void spremi()}
+                  disabled={!datum || !vrijeme}
+                >
+                  Spremi
+                </Gumb>
+              </div>
+            ) : (
+              <Gumb
+                vrsta="primarni"
+                ikona="plus"
+                onClick={() => void spremi()}
+                disabled={!datum || !vrijeme}
+              >
+                Zapiši dolazak
+              </Gumb>
+            )}
           </div>
         )}
 
@@ -404,9 +474,9 @@ export function DolazakDivljaci({
                   key={d.id}
                   layout
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center gap-3 rounded-xl border border-rub px-3.5 py-2"
+                  className="flex items-center gap-2 rounded-xl border border-rub px-3 py-2"
                 >
-                  <span className="brojke w-[86px] shrink-0 text-[13px] text-tekst-2">
+                  <span className="brojke w-[62px] shrink-0 text-[13px] text-tekst-2">
                     {datumKratki(d.datum)}
                     <span className="block font-semibold text-tekst">
                       {d.vrijeme}
@@ -434,7 +504,17 @@ export function DolazakDivljaci({
                     </span>
                   </span>
                   <button
-                    className="grid size-9 place-items-center rounded-lg text-tekst-3 hover:text-opasnost"
+                    className={cx(
+                      "grid size-8 shrink-0 place-items-center rounded-lg hover:text-naglasak",
+                      uredujem?.id === d.id ? "text-naglasak" : "text-tekst-3",
+                    )}
+                    onClick={() => urediDolazak(d)}
+                    aria-label="Uredi dolazak"
+                  >
+                    <Ikona ime="uredi" velicina={15} />
+                  </button>
+                  <button
+                    className="grid size-8 shrink-0 place-items-center rounded-lg text-tekst-3 hover:text-opasnost"
                     onClick={() => obrisi(d)}
                     aria-label="Obriši dolazak"
                   >
