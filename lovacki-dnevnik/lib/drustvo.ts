@@ -181,10 +181,14 @@ export async function postaviNovuLozinku(lozinka: string) {
     throw new Error("Lozinka mora imati barem 8 znakova, i slova i brojke.");
   const { error } = await sb().auth.updateUser({ password: lozinka });
   if (error) throw prevedi(error.message);
+  // Poveznica služi samo za promjenu lozinke: nakon toga odjava, prijava ide novom lozinkom.
+  await odjava();
   postavi({ oporavakLozinke: false });
 }
 
-export function odustaniOdNoveLozinke() {
+/** Odustajanje od nove lozinke: bez promjene nema ni prijave preko poveznice. */
+export async function odustaniOdNoveLozinke() {
+  await odjava().catch(() => {});
   postavi({ oporavakLozinke: false });
 }
 

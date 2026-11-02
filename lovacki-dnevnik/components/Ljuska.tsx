@@ -3,6 +3,7 @@
 import StoJeNovo from "./StoJeNovo";
 import { SosPlutajuci, SosPrijatelja } from "./Sos";
 import NovaLozinka from "./NovaLozinka";
+import PlayObavijest from "./PlayObavijest";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -99,7 +100,9 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   }, [lovId]);
   // Pravila privatnosti moraju se moći pročitati i bez prijave (poveznica iz Google Playa).
   const javno = usePathname() === "/privatnost";
-  const trebaPrijava = konfigurirano && drustvo.spremno && !drustvo.sesija && !javno;
+  // Poveznica „zaboravljena lozinka”: dok se ne upiše nova lozinka, račun se ne otvara.
+  const oporavak = drustvo.oporavakLozinke;
+  const trebaPrijava = konfigurirano && drustvo.spremno && !drustvo.sesija && !javno && !oporavak;
   const spremnoZaUvod = !konfigurirano || sinkronizacija.spremno;
   // Uvod samo prvi put: ne za korisnika koji već ima dnevnik u oblaku ni na uređaju gdje je već prošao.
   const [uvodVecProsao] = useState(uvodGotov);
@@ -133,7 +136,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   // Ako je u sustavu uključeno „smanji pokrete”, animacije se svode na kratko pojavljivanje.
   return (
     <MotionConfig reducedMotion="user">
-      {!trebaPrijava && (
+      {!trebaPrijava && !oporavak && (
         <>
           <Navigacija />
           <main className="relative z-10 min-h-dvh pt-[env(safe-area-inset-top)] lg:pl-[248px]">{children}</main>
@@ -145,12 +148,13 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <Obavijesti />
       <AlarmBlizine />
       <NovaVerzija />
-      <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
-      <DodajNaPocetni zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
-      <NovaLozinka />
+      <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
+      <DodajNaPocetni zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
+      <AnimatePresence>{oporavak && <NovaLozinka key="nova-lozinka" />}</AnimatePresence>
       <SosPrijatelja />
       <SosPlutajuci lovUTijeku={Boolean(lovId)} />
-      <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || drustvo.oporavakLozinke} />
+      <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
+      <PlayObavijest zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
     </MotionConfig>
   );
 }
