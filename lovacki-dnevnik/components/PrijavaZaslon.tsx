@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ISTEK_PRIJAVE_DANA, prijava, registracija, useDrustvo, zatraziNovuLozinku } from "@/lib/drustvo";
 import Ikona from "./Ikona";
 import { Znak } from "./Navigacija";
@@ -46,7 +46,22 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
   const [radim, setRadim] = useState(false);
-  const [poruka, setPoruka] = useState<{ tekst: string; greska: boolean } | null>(null);
+  const [poruka, setPoruka] = useState<{ tekst: string; greska: boolean } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const h = new URLSearchParams(window.location.hash.slice(1));
+    if (!h.get("error_code") && !h.get("error")) return null;
+    return {
+      tekst:
+        h.get("error_code") === "otp_expired"
+          ? "Poveznica iz e-pošte je istekla ili je već iskorištena. Zatražite novu preko „Zaboravili ste lozinku?”."
+          : "Poveznica iz e-pošte nije valjana. Zatražite novu preko „Zaboravili ste lozinku?”.",
+      greska: true,
+    };
+  });
+  // Istekla ili već iskorištena poveznica iz e-pošte (Supabase je vrati s greškom u adresi): makni je iz adrese.
+  useEffect(() => {
+    if (/error_code=|error=/.test(window.location.hash)) history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, []);
 
   const posalji = async (e: React.FormEvent) => {
     e.preventDefault();
