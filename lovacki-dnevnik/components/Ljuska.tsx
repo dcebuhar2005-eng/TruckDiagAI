@@ -3,6 +3,7 @@
 import StoJeNovo from "./StoJeNovo";
 import { SosPlutajuci, SosPrijatelja } from "./Sos";
 import NovaLozinka from "./NovaLozinka";
+import PlayObavijest from "./PlayObavijest";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -153,6 +154,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <SosPrijatelja />
       <SosPlutajuci lovUTijeku={Boolean(lovId)} />
       <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
+      <PlayObavijest zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
     </MotionConfig>
   );
 }
