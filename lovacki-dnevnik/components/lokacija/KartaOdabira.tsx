@@ -6,6 +6,7 @@ import L from "leaflet";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import Ikona from "../Ikona";
 import { cx, obavijest, opruga } from "../ui";
+import { preciznaLokacija, upozoriAkoGruba } from "@/lib/gps";
 import { useZoomSnimki } from "@/lib/snimke";
 import type { Tocka2D } from "@/lib/types";
 
@@ -71,30 +72,24 @@ export default function KartaOdabira({
   const gps = () => {
     if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
     setTrazim(true);
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        setTrazim(false);
-        setCilj({ lat: p.coords.latitude, lng: p.coords.longitude, k: Date.now() });
-      },
-      () => {
-        setTrazim(false);
-        obavijest("Lokacija nije dostupna", "greska");
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
+    // Karta se odmah pomakne na prvu (grublju) lokaciju, a zatim se izoštrava dok GPS ne uhvati satelite.
+    preciznaLokacija({ napredak: (f) => setCilj({ lat: f.lat, lng: f.lng, k: Date.now() }) })
+      .then((f) => {
+        setCilj({ lat: f.lat, lng: f.lng, k: Date.now() });
+        upozoriAkoGruba(f);
+      })
+      .catch((e: Error) => obavijest(e.message, "greska"))
+      .finally(() => setTrazim(false));
   };
 
   // Nova točka: karta se otvara tamo gdje stojite (ako ste u lovištu), ne treba je tražiti.
   useEffect(() => {
     if (mojaLokacija == null || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const t = { lat: p.coords.latitude, lng: p.coords.longitude };
-        if (udaljenost(t, pocetak) <= mojaLokacija) setCilj({ ...t, k: Date.now() });
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 120000 },
-    );
+    preciznaLokacija()
+      .then((f) => {
+        if (udaljenost(f, pocetak) <= mojaLokacija) setCilj({ lat: f.lat, lng: f.lng, k: Date.now() });
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

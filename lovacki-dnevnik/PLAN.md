@@ -164,3 +164,4 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 6. Glasovni upis („Vidio sam dvije srne”) – za rad s rukavicama na čeki
 
 - **Značka „Osnivač”** (2. 11., besplatno) – testeri s popisa `lib/osnivaci.ts` (id profila) dobiju zlatnu značku 🦌 uz ime i jednokratnu zahvalu. Novi tester = dodati id i objaviti.
+- **Preciznija lokacija** (3. 11., besplatno, popravak nakon recenzije „lokacija nije precizna”) – `lib/gps.ts`: čeka satelitski GPS (cilj ±12 m, najviše 20 s) umjesto prve grube lokacije; upozorenje ako je uključena samo „približna lokacija”; dijeljenje s prijateljima ne šalje staru/grublju lokaciju preko precizne.

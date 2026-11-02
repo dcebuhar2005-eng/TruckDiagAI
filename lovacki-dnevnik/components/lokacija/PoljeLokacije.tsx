@@ -9,6 +9,7 @@ import type { Tocka2D } from "@/lib/types";
 import Ikona from "../Ikona";
 import { Gumb, obavijest } from "../ui";
 import ZalijepiLokaciju from "./ZalijepiLokaciju";
+import { preciznaLokacija, upozoriAkoGruba } from "@/lib/gps";
 
 const KartaOdabira = dynamic(() => import("./KartaOdabira"), { ssr: false });
 
@@ -78,21 +79,19 @@ export default function PoljeLokacije({
 }) {
   const [karta, setKarta] = useState(false);
   const [trazim, setTrazim] = useState(false);
+  const [tocnost, setTocnost] = useState<number | null>(null);
 
   const gps = () => {
-    if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
     setTrazim(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        promjena({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setTrazim(false);
-      },
-      () => {
-        setTrazim(false);
-        obavijest("Lokacija nije dostupna", "greska");
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
+    setTocnost(null);
+    preciznaLokacija({ napredak: (f) => setTocnost(f.tocnost) })
+      .then((f) => {
+        promjena({ lat: f.lat, lng: f.lng });
+        upozoriAkoGruba(f);
+        if (f.tocnost <= 30) obavijest(`Lokacija spremljena (±${Math.round(f.tocnost)} m)`);
+      })
+      .catch((e: Error) => obavijest(e.message, "greska"))
+      .finally(() => setTrazim(false));
   };
 
   return (
@@ -118,7 +117,7 @@ export default function PoljeLokacije({
           Na karti
         </Gumb>
         <Gumb velicina="sm" ikona="gps" onClick={gps} disabled={trazim}>
-          {trazim ? "Tražim…" : "Moja lokacija"}
+          {trazim ? (tocnost != null ? `±${Math.round(tocnost)} m…` : "Tražim GPS…") : "Moja lokacija"}
         </Gumb>
       </div>
       <ZalijepiLokaciju className="mt-2" primijeni={promjena} />

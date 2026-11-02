@@ -1,6 +1,7 @@
 "use client";
 
 import L from "leaflet";
+import { preciznaLokacija, upozoriAkoGruba } from "@/lib/gps";
 // Rotacija karte s dva prsta (kao Google karte); mora se učitati prije stvaranja karte.
 import "leaflet-rotate";
 import { AnimatePresence, motion } from "framer-motion";
@@ -599,17 +600,18 @@ export default function KartaPrikaz() {
   const tockaOvdje = (tip: TipTocke) => {
     setNacin("pregled");
     const otvoriNa = (lat: number, lng: number) => novaTocka(lat, lng, tip);
-    if (moja) return otvoriNa(moja.lat, moja.lng);
-    if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
-    obavijest("Tražim vašu lokaciju…", "info");
-    navigator.geolocation.getCurrentPosition(
-      (p) => otvoriNa(p.coords.latitude, p.coords.longitude),
-      () => {
+    // Praćena pozicija samo ako je već precizna; inače se pričeka GPS (prva lokacija zna biti gruba).
+    if (moja && moja.tocnost <= 15) return otvoriNa(moja.lat, moja.lng);
+    obavijest("Izoštravam GPS lokaciju…", "info");
+    preciznaLokacija()
+      .then((f) => {
+        upozoriAkoGruba(f);
+        otvoriNa(f.lat, f.lng);
+      })
+      .catch(() => {
         obavijest("Lokacija nije dostupna – odaberite mjesto na karti", "greska");
         otvori({ tip: "tocka", pocetno: { tip } });
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
+      });
   };
 
   const pokreniNacin = (n: Nacin) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { preciznaLokacija } from "@/lib/gps";
 import { useEffect, useState } from "react";
 import { DOBNI_RAZREDI, nazivSpola, vrsta as nadiVrstu } from "@/lib/katalog";
 import { datumKratki, isoDatum, isoVrijeme, udaljenostM } from "@/lib/format";
@@ -71,16 +72,14 @@ export default function OdstrelUrednik({
     const uLovu = baza.izlasci.some((i) => i.uTijeku);
     const l = baza.lovista.find((x) => x.id === p.lovisteId);
     const imaLoviste = !!l?.granica?.length || baza.tocke.some((t) => t.lovisteId === p.lovisteId);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const t = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    preciznaLokacija({ cilj: 15 })
+      .then((f) => {
+        const t = { lat: f.lat, lng: f.lng };
         if (!uLovu && !(imaLoviste && udaljenostM(t, centarLovista(baza, p.lovisteId)) < 5000)) return;
         setLok((s) => s ?? t);
         setLokGps(true);
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
-    );
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pocetneFoto = fotografijeOdstrela(p);
