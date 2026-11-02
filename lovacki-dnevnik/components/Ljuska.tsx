@@ -2,6 +2,7 @@
 
 import StoJeNovo from "./StoJeNovo";
 import { SosPlutajuci, SosPrijatelja } from "./Sos";
+import NovaLozinka from "./NovaLozinka";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -106,7 +107,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (uvodZavrsen) oznaciUvodGotov();
   }, [uvodZavrsen]);
-  const prikaziUvod = !javno && !!baza && spremnoZaUvod && !baza.postavke.dovrsenUvod && !sinkronizacija.imaOblak && !uvodVecProsao;
+  const prikaziUvod = !javno && !!baza && spremnoZaUvod && !baza.postavke.dovrsenUvod && !sinkronizacija.imaOblak && !uvodVecProsao && !drustvo.oporavakLozinke;
 
   useEffect(() => {
     if (!tema) return;
@@ -146,9 +147,10 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <NovaVerzija />
       <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
       <DodajNaPocetni zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
+      <NovaLozinka />
       <SosPrijatelja />
       <SosPlutajuci lovUTijeku={Boolean(lovId)} />
-      <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId)} />
+      <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || drustvo.oporavakLozinke} />
     </MotionConfig>
   );
 }
