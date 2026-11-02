@@ -8,6 +8,7 @@ import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
 import { ObrazacPrijave } from "@/components/PrijavaZaslon";
 import QrKod from "@/components/QrKod";
+import { OsnivacUz, ZnackaOsnivac } from "@/components/Osnivac";
 import { KarticaPodijeli, PrimljenaLovista } from "@/app/lovista/Podijeli";
 import { Gumb, Naslov, Ploca, Polje, Segmenti, djeteListe, obavijest, opruga, roditeljListe, usePotvrda } from "@/components/ui";
 import {
@@ -25,6 +26,7 @@ import {
   prijeKoliko,
   spremiProfil,
   trazi,
+  jeOsnivac,
   ukloni,
   useDrustvo,
   zaustaviDijeljenje,
@@ -255,7 +257,13 @@ function Glavno() {
         naslov="Lovci"
         opis={
           <>
-            Prijavljeni kao <span className="font-medium text-tekst">@{d.profil!.korisnicko_ime}</span> ·{" "}
+            Prijavljeni kao <span className="font-medium text-tekst">@{d.profil!.korisnicko_ime}</span>{" "}
+            {jeOsnivac(d.profil!.id) && (
+              <>
+                <ZnackaOsnivac />{" "}
+              </>
+            )}
+            ·{" "}
             <button onClick={() => setProfil(true)} className="font-medium text-naglasak">
               Uredi profil
             </button>
@@ -301,9 +309,12 @@ function Glavno() {
                 const udalj = d.pozicija ? udaljenostM(d.pozicija, l) : null;
                 return (
                   <div key={l.profil.id} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
-                    <Avatar ime={l.profil.ime} aktivan />
+                    <Avatar ime={l.profil.ime} id={l.profil.id} aktivan />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium">{l.profil.ime}</div>
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate font-medium">{l.profil.ime}</span>
+                        <OsnivacUz id={l.profil.id} />
+                      </div>
                       <div className="brojke text-[12.5px] text-tekst-2">
                         {udalj != null ? `${metri(udalj)} od vas · ` : ""}
                         {prijeKoliko(l.azurirano)} · do {sat(new Date(l.aktivnoDo))}
@@ -336,7 +347,7 @@ function Glavno() {
             <div className="grid gap-2">
               {dolazni.map((p) => (
                 <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
-                  <Avatar ime={p.drugi.ime} />
+                  <Avatar ime={p.drugi.ime} id={p.drugi.id} />
                   <ProfilTekst p={p.drugi} />
                   <Gumb velicina="sm" vrsta="tihi" onClick={() => ukloni(p.id).catch((e) => obavijest(e.message, "greska"))}>
                     Odbij
@@ -367,7 +378,7 @@ function Glavno() {
             <div className="grid gap-2">
               {prijatelji.map((p) => (
                 <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
-                  <Avatar ime={p.drugi.ime} aktivan={d.lokacije.some((l) => l.profil.id === p.drugi.id)} />
+                  <Avatar ime={p.drugi.ime} id={p.drugi.id} aktivan={d.lokacije.some((l) => l.profil.id === p.drugi.id)} />
                   <ProfilTekst p={p.drugi} />
                   <button
                     className="grid size-9 place-items-center rounded-lg text-tekst-3 hover:bg-opasnost-meka hover:text-opasnost"
@@ -384,7 +395,7 @@ function Glavno() {
               ))}
               {odlazni.map((p) => (
                 <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-dashed border-rub-jaki p-3">
-                  <Avatar ime={p.drugi.ime} />
+                  <Avatar ime={p.drugi.ime} id={p.drugi.id} />
                   <ProfilTekst p={p.drugi} dodatak="čeka potvrdu" />
                   <Gumb velicina="sm" vrsta="tihi" onClick={() => ukloni(p.id).catch((e) => obavijest(e.message, "greska"))}>
                     Otkaži
@@ -630,7 +641,7 @@ function Trazilica() {
           const odnos = stanjeOdnosa(p.id);
           return (
             <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
-              <Avatar ime={p.ime} />
+              <Avatar ime={p.ime} id={p.id} />
               <ProfilTekst p={p} mjesto />
               {odnos?.status === "prihvaceno" ? (
                 <span className="text-[12.5px] text-mahovina">Prijatelj</span>
@@ -689,6 +700,11 @@ function MojQr({ otvorena, zatvori }: { otvorena: boolean; zatvori: () => void }
         <div>
           <div className="font-display text-[20px] font-semibold">{d.profil?.ime}</div>
           <div className="text-[14px] text-naglasak">@{ki}</div>
+          {jeOsnivac(d.profil?.id) && (
+            <div className="mt-2.5">
+              <ZnackaOsnivac velika tekst="Osnivač CroLovca · 2026" />
+            </div>
+          )}
         </div>
         <p className="max-w-xs text-[13.5px] text-tekst-2">
           Prijatelj otvori kameru na mobitelu, usmjeri je na kod i dodirne poveznicu. CroLovac mu ponudi da vas doda za
@@ -746,9 +762,10 @@ function DodajIzPoveznice() {
     <Ploca otvorena={Boolean(lovac)} zatvori={() => setLovac(null)} naslov="Dodati za prijatelja?" sirina={420}>
       {lovac && (
         <div className="grid justify-items-center gap-3 pb-2 text-center">
-          <Avatar ime={lovac.ime} />
+          <Avatar ime={lovac.ime} id={lovac.id} />
           <div>
             <div className="font-display text-[20px] font-semibold">{lovac.ime}</div>
+            <OsnivacUz id={lovac.id} />
             <div className="text-[14px] text-tekst-3">
               @{lovac.korisnicko_ime}
               {lovac.drustvo ? ` · ${lovac.drustvo}` : ""}
@@ -803,7 +820,8 @@ function Sekcija({ naslov, ikona, broj, children }: { naslov: string; ikona: Ime
   );
 }
 
-function Avatar({ ime, aktivan }: { ime: string; aktivan?: boolean }) {
+function Avatar({ ime, aktivan, id }: { ime: string; aktivan?: boolean; id?: string }) {
+  const osnivac = jeOsnivac(id);
   const inicijali = ime
     .split(/\s+/)
     .map((s) => s[0])
@@ -811,7 +829,9 @@ function Avatar({ ime, aktivan }: { ime: string; aktivan?: boolean }) {
     .join("")
     .toUpperCase();
   return (
-    <span className="relative grid size-10 shrink-0 place-items-center rounded-full bg-povrsina-3 text-[13px] font-semibold text-tekst-2">
+    <span
+      className={`relative grid size-10 shrink-0 place-items-center rounded-full bg-povrsina-3 text-[13px] font-semibold text-tekst-2 ${osnivac ? "ring-2 ring-naglasak" : ""}`}
+    >
       {inicijali}
       {aktivan && <span className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 border-povrsina bg-mahovina" />}
     </span>
@@ -822,7 +842,10 @@ function ProfilTekst({ p, dodatak, mjesto }: { p: Profil; dodatak?: string; mjes
   const gdje = mjesto ? [p.mjesto, p.zupanija].filter(Boolean).join(", ") : "";
   return (
     <div className="min-w-0 flex-1">
-      <div className="truncate font-medium">{p.ime}</div>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate font-medium">{p.ime}</span>
+        <OsnivacUz id={p.id} />
+      </div>
       <div className="truncate text-[12.5px] text-tekst-3">
         @{p.korisnicko_ime}
         {p.drustvo ? ` · ${p.drustvo}` : ""}
@@ -862,7 +885,7 @@ function MozdaPoznajete() {
           <div className="grid gap-2">
             {prikaz.map((l) => (
               <motion.div key={l.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl bg-povrsina-2 p-3">
-                <Avatar ime={l.ime} />
+                <Avatar ime={l.ime} id={l.id} />
                 <ProfilTekst p={l} dodatak={RAZLOZI[l.razlog]} mjesto />
                 <Gumb
                   velicina="sm"

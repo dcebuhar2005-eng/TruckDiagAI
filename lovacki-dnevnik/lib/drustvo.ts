@@ -9,6 +9,7 @@ import { oglasiSos, ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizi
 import { udaljenostM } from "./format";
 import { fetchZaSupabase, pratiLokaciju, uAplikaciji } from "./nativno";
 import { dogadaj } from "./pracenje";
+import { OSNIVACI } from "./osnivaci";
 import { postaviVlasnika } from "./store";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -283,6 +284,11 @@ export async function ukloni(id: number) {
 }
 
 let osvjezavanje: Promise<void> | null = null;
+/** Ima li lovac značku „Osnivač” (bio je među prvim testerima). */
+export function jeOsnivac(id: string | undefined | null) {
+  return Boolean(id && OSNIVACI.has(id));
+}
+
 export function osvjezi() {
   if (!osvjezavanje) osvjezavanje = osvjeziInterno().finally(() => (osvjezavanje = null));
   return osvjezavanje;

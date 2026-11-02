@@ -162,3 +162,5 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 4. „Danas smiješ loviti” / lovostaji – tek s provjerenim zakonskim podacima
 5. Gumb „Pogledaj video” u pozivu za početni zaslon (čeka TikTok poveznicu)
 6. Glasovni upis („Vidio sam dvije srne”) – za rad s rukavicama na čeki
+
+- **Značka „Osnivač”** (2. 11., besplatno) – testeri s popisa `lib/osnivaci.ts` (id profila) dobiju zlatnu značku 🦌 uz ime i jednokratnu zahvalu. Novi tester = dodati id i objaviti.
