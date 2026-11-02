@@ -14,4 +14,5 @@ export const OSNIVACI: ReadonlySet<string> = new Set([
   "4255e0e4-e7f3-4adc-b2f9-aa67312b8569", // jurica
   "0e2bd546-02b7-448a-9f5a-7df444982926", // crlje
   "dace41a9-6549-4ceb-a530-639ece4b2335", // renatoivka
+  "dca574bc-d2cd-49e5-9272-7f9e6820aa1b", // kiki
 ]);
