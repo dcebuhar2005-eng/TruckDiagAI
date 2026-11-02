@@ -108,6 +108,8 @@ interface Stanje {
   prijavaIstekla: boolean;
   /** Profil je provjeren na poslužitelju (pa `profil: null` znači da ga stvarno nema). */
   profilUcitan: boolean;
+  /** Otvorena je poveznica „zaboravljena lozinka” iz e-pošte – treba upisati novu lozinku. */
+  oporavakLozinke: boolean;
 }
 
 let stanje: Stanje = {
@@ -121,6 +123,7 @@ let stanje: Stanje = {
   pozicija: null,
   greskaLokacije: null,
   prijavaIstekla: false,
+  oporavakLozinke: false,
   profilUcitan: false,
 };
 const slusaci = new Set<() => void>();
@@ -165,6 +168,26 @@ export async function prijava(email: string, lozinka: string) {
   postavi({ prijavaIstekla: false });
 }
 
+/** Šalje e-mail s poveznicom za novu lozinku (poveznica vodi natrag u CroLovac). */
+export async function zatraziNovuLozinku(email: string) {
+  const { error } = await sb().auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/" });
+  if (error) throw prevedi(error.message);
+  dogadaj("zaboravljena_lozinka");
+}
+
+/** Nakon poveznice iz e-pošte: nova lozinka za prijavljenog korisnika. */
+export async function postaviNovuLozinku(lozinka: string) {
+  if (lozinka.length < 8 || !/[a-zA-ZčćžšđČĆŽŠĐ]/.test(lozinka) || !/\d/.test(lozinka))
+    throw new Error("Lozinka mora imati barem 8 znakova, i slova i brojke.");
+  const { error } = await sb().auth.updateUser({ password: lozinka });
+  if (error) throw prevedi(error.message);
+  postavi({ oporavakLozinke: false });
+}
+
+export function odustaniOdNoveLozinke() {
+  postavi({ oporavakLozinke: false });
+}
+
 export async function odjava() {
   await zaustaviDijeljenje().catch(() => {});
   const { error } = await sb().auth.signOut();
@@ -182,6 +205,7 @@ function prevedi(poruka: string) {
   if (p.includes("already registered")) return new Error("Taj e-mail je već registriran. Prijavite se.");
   if (p.includes("weak") || p.includes("pwned") || p.includes("leaked"))
     return new Error("Lozinka je preslaba ili se pojavila u poznatim curenjima podataka. Odaberite drugu.");
+  if (p.includes("same") && p.includes("password")) return new Error("Nova lozinka mora biti drukčija od stare.");
   if (p.includes("password")) return new Error("Lozinka mora imati barem 8 znakova, i slova i brojke.");
   if (p.includes("rate limit")) return new Error("Previše pokušaja. Pričekajte malo pa pokušajte ponovno.");
   if (p.includes("duplicate key") && p.includes("korisnicko_ime")) return new Error("To korisničko ime je zauzeto.");
@@ -521,6 +545,8 @@ export function pokreniDrustvo() {
   try {
     if (localStorage.getItem(KLJUC_ISTEKLA)) postavi({ prijavaIstekla: true });
   } catch {}
+  // Poveznica „zaboravljena lozinka” iz e-pošte (Supabase je čita iz adrese pri pokretanju klijenta).
+  if (/type=recovery/.test(window.location.hash)) postavi({ oporavakLozinke: true });
   const k = sb();
   const zavrsi = (sesija: Session | null) => {
     postaviVlasnika(sesija?.user.id ?? null);
@@ -572,6 +598,7 @@ export function pokreniDrustvo() {
     zavrsi(sesija);
   });
   k.auth.onAuthStateChange((dogadaj, sesija) => {
+    if (dogadaj === "PASSWORD_RECOVERY") postavi({ oporavakLozinke: true });
     // Prazna sesija bez stvarne odjave (npr. neuspjelo obnavljanje bez signala) ne odjavljuje korisnika.
     if (!sesija && dogadaj !== "SIGNED_OUT") return;
     const promjena = sesija?.user.id !== stanje.sesija?.user.id;

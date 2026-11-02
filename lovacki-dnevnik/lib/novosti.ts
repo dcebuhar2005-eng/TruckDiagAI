@@ -10,6 +10,14 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-02",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "🎉 CroLovac je sada na Google Playu! Ako ste zadovoljni, ostavite nam ocjenu – jako pomaže.",
+      "🔑 Zaboravili ste lozinku? Na prijavi dodirnite „Zaboravili ste lozinku?” i stići će vam poveznica za novu.",
+    ],
+  },
+  {
     id: "2026-11-01",
     naslov: "Novo u CroLovcu",
     stavke: [

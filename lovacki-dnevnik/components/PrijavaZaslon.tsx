@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
-import { ISTEK_PRIJAVE_DANA, prijava, registracija, useDrustvo } from "@/lib/drustvo";
+import { useEffect, useState } from "react";
+import { ISTEK_PRIJAVE_DANA, prijava, registracija, useDrustvo, zatraziNovuLozinku } from "@/lib/drustvo";
 import Ikona from "./Ikona";
 import { Znak } from "./Navigacija";
 import { Gumb, Naslov, Polje, Segmenti, cx, obavijest } from "./ui";
@@ -42,17 +42,40 @@ export default function PrijavaZaslon() {
 export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
   const istekla = useDrustvo().prijavaIstekla;
   const [nacin, setNacin] = useState<"prijava" | "registracija">("prijava");
+  const [zaboravljena, setZaboravljena] = useState(false);
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
   const [radim, setRadim] = useState(false);
-  const [poruka, setPoruka] = useState<{ tekst: string; greska: boolean } | null>(null);
+  const [poruka, setPoruka] = useState<{ tekst: string; greska: boolean } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const h = new URLSearchParams(window.location.hash.slice(1));
+    if (!h.get("error_code") && !h.get("error")) return null;
+    return {
+      tekst:
+        h.get("error_code") === "otp_expired"
+          ? "Poveznica iz e-pošte je istekla ili je već iskorištena. Zatražite novu preko „Zaboravili ste lozinku?”."
+          : "Poveznica iz e-pošte nije valjana. Zatražite novu preko „Zaboravili ste lozinku?”.",
+      greska: true,
+    };
+  });
+  // Istekla ili već iskorištena poveznica iz e-pošte (Supabase je vrati s greškom u adresi): makni je iz adrese.
+  useEffect(() => {
+    if (/error_code=|error=/.test(window.location.hash)) history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, []);
 
   const posalji = async (e: React.FormEvent) => {
     e.preventDefault();
     setRadim(true);
     setPoruka(null);
     try {
-      if (nacin === "prijava") {
+      if (zaboravljena) {
+        await zatraziNovuLozinku(email.trim());
+        setPoruka({
+          tekst: "Ako postoji račun s tom adresom, poslali smo vam e-mail s poveznicom za novu lozinku. Pogledajte i mapu neželjene pošte (spam).",
+          greska: false,
+        });
+        setZaboravljena(false);
+      } else if (nacin === "prijava") {
         await prijava(email.trim(), lozinka);
         obavijest("Prijavljeni ste");
       } else {
@@ -92,6 +115,7 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
           vrijednost={nacin}
           promjena={(v) => {
             setNacin(v);
+            setZaboravljena(false);
             setPoruka(null);
           }}
           opcije={[
@@ -103,7 +127,10 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
           <Polje oznaka="E-mail">
             <input id="lov-email" type="email" autoComplete="email" required className="unos" value={email} onChange={(e) => setEmail(e.target.value)} />
           </Polje>
-          <Polje oznaka="Lozinka" pomoc={nacin === "registracija" ? "Najmanje 8 znakova, slova i brojke" : undefined}>
+{zaboravljena ? (
+            <p className="text-[13.5px] text-tekst-2">Upišite e-mail s kojim ste se registrirali – poslat ćemo vam poveznicu za novu lozinku.</p>
+          ) : (
+                      <Polje oznaka="Lozinka" pomoc={nacin === "registracija" ? "Najmanje 8 znakova, slova i brojke" : undefined}>
             <input
               id="lov-lozinka"
               type="password"
@@ -115,6 +142,19 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
               onChange={(e) => setLozinka(e.target.value)}
             />
           </Polje>
+          )}
+          {nacin === "prijava" && (
+            <button
+              type="button"
+              onClick={() => {
+                setZaboravljena((z) => !z);
+                setPoruka(null);
+              }}
+              className="-mt-1.5 justify-self-start text-[13px] font-medium text-naglasak"
+            >
+              {zaboravljena ? "← Natrag na prijavu" : "Zaboravili ste lozinku?"}
+            </button>
+          )}
         </div>
         <AnimatePresence>
           {poruka && (
@@ -129,7 +169,7 @@ export function ObrazacPrijave({ bezZaglavlja }: { bezZaglavlja?: boolean }) {
           )}
         </AnimatePresence>
         <Gumb type="submit" vrsta="primarni" className="mt-5 w-full" disabled={radim}>
-          {radim ? "Pričekajte…" : nacin === "prijava" ? "Prijavi se" : "Napravi račun"}
+          {radim ? "Pričekajte…" : zaboravljena ? "Pošalji poveznicu" : nacin === "prijava" ? "Prijavi se" : "Napravi račun"}
         </Gumb>
         <p className="mt-4 text-[12.5px] text-tekst-3">
           Dnevnik je vezan uz vaš račun: vidite ga samo kad ste prijavljeni, i to na svakom mobitelu na kojem se prijavite.
