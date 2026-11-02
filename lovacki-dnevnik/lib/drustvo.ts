@@ -9,6 +9,7 @@ import { oglasiSos, ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizi
 import { udaljenostM } from "./format";
 import { fetchZaSupabase, pratiLokaciju, uAplikaciji } from "./nativno";
 import { dogadaj } from "./pracenje";
+import { OSNIVACI } from "./osnivaci";
 import { postaviVlasnika } from "./store";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -110,8 +111,6 @@ interface Stanje {
   profilUcitan: boolean;
   /** Otvorena je poveznica „zaboravljena lozinka” iz e-pošte – treba upisati novu lozinku. */
   oporavakLozinke: boolean;
-  /** Osnivači CroLovca (prvi testeri) – id-jevi profila sa značkom. */
-  osnivaci: string[];
 }
 
 let stanje: Stanje = {
@@ -127,7 +126,6 @@ let stanje: Stanje = {
   prijavaIstekla: false,
   oporavakLozinke: false,
   profilUcitan: false,
-  osnivaci: [],
 };
 const slusaci = new Set<() => void>();
 function postavi(izmjene: Partial<Stanje>) {
@@ -286,10 +284,9 @@ export async function ukloni(id: number) {
 }
 
 let osvjezavanje: Promise<void> | null = null;
-let osnivaciUcitani = false;
 /** Ima li lovac značku „Osnivač” (bio je među prvim testerima). */
-export function jeOsnivac(s: { osnivaci: string[] }, id: string | undefined | null) {
-  return Boolean(id && s.osnivaci.includes(id));
+export function jeOsnivac(id: string | undefined | null) {
+  return Boolean(id && OSNIVACI.has(id));
 }
 
 export function osvjezi() {
@@ -331,16 +328,6 @@ async function osvjeziInterno() {
       sos: l.sos ? Date.parse(l.sos) : null,
     }));
   postavi({ profil: (prof.data as Profil | null) ?? null, prijateljstva, lokacije, profilUcitan: true });
-  if (!osnivaciUcitani) {
-    osnivaciUcitani = true;
-    void k
-      .from("lov_osnivaci")
-      .select("korisnik")
-      .then(({ data, error }) => {
-        if (error) osnivaciUcitani = false;
-        else postavi({ osnivaci: (data ?? []).map((r) => r.korisnik as string) });
-      });
-  }
   provjeriAlarm();
   for (const l of lokacije) {
     const kljuc = `${l.profil.id}:${l.sos}`;

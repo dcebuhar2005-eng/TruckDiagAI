@@ -26,14 +26,13 @@ export function ZnackaOsnivac({ velika, tekst = "Osnivač" }: { velika?: boolean
 
 /** Značka uz lovca s danim id-jem (ništa ako nije osnivač). */
 export function OsnivacUz({ id }: { id: string | undefined | null }) {
-  const d = useDrustvo();
-  return jeOsnivac(d, id) ? <ZnackaOsnivac /> : null;
+  return jeOsnivac(id) ? <ZnackaOsnivac /> : null;
 }
 
 /** Jednom: zahvala testeru kad prvi put otvori aplikaciju nakon dodjele značke. */
 export default function ZahvalaOsnivacu({ zauzet }: { zauzet: boolean }) {
   const d = useDrustvo();
-  const osnivac = jeOsnivac(d, d.sesija?.user.id);
+  const osnivac = jeOsnivac(d.sesija?.user.id);
   const [otvoreno, setOtvoreno] = useState(false);
 
   useEffect(() => {

@@ -258,7 +258,7 @@ function Glavno() {
         opis={
           <>
             Prijavljeni kao <span className="font-medium text-tekst">@{d.profil!.korisnicko_ime}</span>{" "}
-            {jeOsnivac(d, d.profil!.id) && (
+            {jeOsnivac(d.profil!.id) && (
               <>
                 <ZnackaOsnivac />{" "}
               </>
@@ -700,7 +700,7 @@ function MojQr({ otvorena, zatvori }: { otvorena: boolean; zatvori: () => void }
         <div>
           <div className="font-display text-[20px] font-semibold">{d.profil?.ime}</div>
           <div className="text-[14px] text-naglasak">@{ki}</div>
-          {jeOsnivac(d, d.profil?.id) && (
+          {jeOsnivac(d.profil?.id) && (
             <div className="mt-2.5">
               <ZnackaOsnivac velika tekst="Osnivač CroLovca · 2026" />
             </div>
@@ -821,8 +821,7 @@ function Sekcija({ naslov, ikona, broj, children }: { naslov: string; ikona: Ime
 }
 
 function Avatar({ ime, aktivan, id }: { ime: string; aktivan?: boolean; id?: string }) {
-  const d = useDrustvo();
-  const osnivac = jeOsnivac(d, id);
+  const osnivac = jeOsnivac(id);
   const inicijali = ime
     .split(/\s+/)
     .map((s) => s[0])
