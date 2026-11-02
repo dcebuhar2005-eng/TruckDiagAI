@@ -12,4 +12,5 @@ export const OSNIVACI: ReadonlySet<string> = new Set([
   "33ddb1db-2cf8-4b64-badd-6af6586e3f1d", // marko.vonic
   "cd3b071d-3677-4b76-a3e3-ba1cc7814da0", // zoksima
   "4255e0e4-e7f3-4adc-b2f9-aa67312b8569", // jurica
+  "0e2bd546-02b7-448a-9f5a-7df444982926", // crlje
 ]);
