@@ -1,6 +1,7 @@
 "use client";
 
 import { TIPOVI_TOCAKA } from "@/lib/katalog";
+import ZnakTocke from "@/components/ZnakTocke";
 import type { TipTocke } from "@/lib/types";
 
 function Stavka({ uzorak, naziv, opis }: { uzorak: React.ReactNode; naziv: string; opis?: string }) {
@@ -79,7 +80,7 @@ export default function Legenda() {
               className="grid size-6 shrink-0 place-items-center rounded-full text-[10.5px] font-bold text-black/75"
               style={{ background: TIPOVI_TOCAKA[t].boja }}
             >
-              {TIPOVI_TOCAKA[t].slovo}
+              <ZnakTocke tip={t} velicina={14} />
             </span>
             {TIPOVI_TOCAKA[t].naziv}
           </div>

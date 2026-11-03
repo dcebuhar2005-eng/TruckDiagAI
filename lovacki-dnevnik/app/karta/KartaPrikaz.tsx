@@ -2,6 +2,8 @@
 
 import L from "leaflet";
 import { preciznaLokacija, upozoriAkoGruba } from "@/lib/gps";
+import { svgTocke } from "@/lib/ikoneTocaka";
+import ZnakTocke from "@/components/ZnakTocke";
 // Rotacija karte s dva prsta (kao Google karte); mora se učitati prije stvaranja karte.
 import "leaflet-rotate";
 import { AnimatePresence, motion } from "framer-motion";
@@ -218,10 +220,11 @@ type Odabir = { tip: "tocka"; id: string } | { tip: "odstrel"; id: string } | { 
 
 function ikonaTocke(t: Tocka, odabrana: boolean) {
   const info = { ...TIPOVI_TOCAKA[t.tip] };
-  // Prijelaz s jednom vrstom divljači nosi njezino slovo (J = jelenska, S = svinje…).
+  // Prijelaz s jednom vrstom divljači nosi njezino slovo (J = jelenska, S = svinje…); ostalo sličicu.
+  let slovoPrijelaza: string | null = null;
   if (t.tip === "prijelaz" && t.divljac?.length === 1) {
     const d = DIVLJAC_PRIJELAZA.find((x) => x.k === t.divljac![0]);
-    if (d) info.slovo = d.slovo;
+    if (d) slovoPrijelaza = d.slovo;
   }
   return L.divIcon({
     className: "",
@@ -229,12 +232,12 @@ function ikonaTocke(t: Tocka, odabrana: boolean) {
     iconAnchor: [17, 40],
     html: `<div class="oznaka-karte" style="position:relative;width:34px;height:42px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))${odabrana ? ";transform:scale(1.18) translateY(-4px)" : ""}">
       <svg width="34" height="42" viewBox="0 0 34 42"><path d="M17 41s14-13.5 14-24A14 14 0 0 0 3 17c0 10.5 14 24 14 24z" fill="${info.boja}" stroke="${odabrana ? "#fff" : "rgba(0,0,0,.35)"}" stroke-width="${odabrana ? 2.5 : 1}"/></svg>
-      <span style="position:absolute;top:7px;left:0;right:0;text-align:center;font:700 12px/20px system-ui;color:rgba(0,0,0,.78)">${info.slovo}</span>
+      ${slovoPrijelaza ? `<span style="position:absolute;top:7px;left:0;right:0;text-align:center;font:700 12px/20px system-ui;color:rgba(0,0,0,.78)">${slovoPrijelaza}</span>` : `<span style="position:absolute;left:7px;top:5.5px;line-height:0">${svgTocke(t.tip, 20)}</span>`}
       ${vrsteTocke(t)
         .slice(1, 4)
         .map(
           (x, k) =>
-            `<span style="position:absolute;top:${-4 + k * 15}px;right:-9px;width:16px;height:16px;border-radius:99px;background:${TIPOVI_TOCAKA[x].boja};border:1.5px solid #fff;font:700 8.5px/13px system-ui;text-align:center;color:rgba(0,0,0,.8)">${TIPOVI_TOCAKA[x].slovo}</span>`,
+            `<span style="position:absolute;top:${-4 + k * 15}px;right:-9px;width:16px;height:16px;border-radius:99px;background:${TIPOVI_TOCAKA[x].boja};border:1.5px solid #fff;display:grid;place-items:center">${svgTocke(x, 11)}</span>`,
         )
         .join("")}
     </div>`,
@@ -1206,7 +1209,7 @@ export default function KartaPrikaz() {
             <Panel key={`t-${odabranaTocka.id}`}>
               <div className="flex items-start gap-3">
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl text-[14px] font-bold text-black/75" style={{ background: TIPOVI_TOCAKA[odabranaTocka.tip].boja }}>
-                  {TIPOVI_TOCAKA[odabranaTocka.tip].slovo}
+                  <ZnakTocke tip={odabranaTocka.tip} velicina={24} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{odabranaTocka.naziv}</div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import ZnakTocke from "@/components/ZnakTocke";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -267,7 +268,7 @@ function DetaljLovista({ baza, l, zatvori }: { baza: Baza; l: Loviste; zatvori: 
             {tocke.map((t) => (
               <button key={t.id} onClick={() => otvori({ tip: "tocka", id: t.id })} className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3 py-2.5 text-left hover:bg-povrsina-3">
                 <span className="grid size-7 place-items-center rounded-full text-[11px] font-bold text-black/75" style={{ background: TIPOVI_TOCAKA[t.tip].boja }}>
-                  {TIPOVI_TOCAKA[t.tip].slovo}
+                  <ZnakTocke tip={t.tip} velicina={16} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14px]">{t.naziv}</span>

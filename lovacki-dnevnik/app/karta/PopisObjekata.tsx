@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ZnakTocke from "@/components/ZnakTocke";
 import Ikona from "@/components/Ikona";
 import { Ploca, Segmenti, cx } from "@/components/ui";
 import { poRedu } from "@/components/Dolasci";
@@ -157,7 +158,7 @@ export default function PopisObjekata({
                       className="flex items-center gap-3 rounded-xl bg-povrsina-2 px-3 py-2.5 text-left hover:bg-povrsina-3"
                     >
                       <span className="grid size-8 shrink-0 place-items-center rounded-full text-[12px] font-bold text-black/75" style={{ background: TIPOVI_TOCAKA[t.tip].boja }}>
-                        {TIPOVI_TOCAKA[t.tip].slovo}
+                        <ZnakTocke tip={t.tip} velicina={18} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[14.5px] font-medium">{t.naziv}</span>
