@@ -5,6 +5,7 @@ import { SosPlutajuci, SosPrijatelja } from "./Sos";
 import NovaLozinka from "./NovaLozinka";
 import PlayObavijest from "./PlayObavijest";
 import ZahvalaOsnivacu from "./Osnivac";
+import SvHubert from "./SvHubert";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -156,6 +157,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <SosPlutajuci lovUTijeku={Boolean(lovId)} />
       <StoJeNovo zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
       <PlayObavijest zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
+      <SvHubert zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
       <ZahvalaOsnivacu zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
     </MotionConfig>
   );

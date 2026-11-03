@@ -29,8 +29,13 @@ export default function StoJeNovo({ zauzet }: { zauzet: boolean }) {
       } catch {}
       return;
     }
-    const t = setTimeout(() => setOtvoreno(true), 1500);
-    return () => clearTimeout(t);
+    // Ako je otvorena druga ploča (npr. čestitka), pričeka da se zatvori.
+    const t = setInterval(() => {
+      if (document.querySelector('[role="dialog"][aria-modal]')) return;
+      setOtvoreno(true);
+      clearInterval(t);
+    }, 1500);
+    return () => clearInterval(t);
   }, [baza, zauzet, zadnja]);
 
   const zatvori = () => {

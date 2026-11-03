@@ -1,6 +1,7 @@
 "use client";
 
 import L from "leaflet";
+import { preciznaLokacija, upozoriAkoGruba } from "@/lib/gps";
 // Rotacija karte s dva prsta (kao Google karte); mora se učitati prije stvaranja karte.
 import "leaflet-rotate";
 import { AnimatePresence, motion } from "framer-motion";
@@ -53,6 +54,25 @@ const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
   const dogadaji = proto.getEvents;
   proto.getEvents = function (this: Iscrtavac) {
     return { ...dogadaji.call(this), rotate: this._reset };
+  };
+}
+
+// iPhone: (1) karta koja još „kliže” nakon povlačenja pokuša se pomaknuti i nakon što je zatvorena
+// (odlazak s karte) → „t.classList”; (2) kod okretanja dva prsta leaflet-rotate zna izračunati
+// nepostojeće središte → „t.lat” pa „infinite number of tiles” i karta se zamrzne. Oboje se tu preskoči.
+{
+  type K = { _mapPane?: HTMLElement; panBy: (...a: unknown[]) => unknown; _move: (...a: unknown[]) => unknown };
+  const proto = L.Map.prototype as unknown as K;
+  const panBy = proto.panBy;
+  proto.panBy = function (this: K, ...a: unknown[]) {
+    if (!this._mapPane) return this;
+    return panBy.apply(this, a);
+  };
+  const move = proto._move;
+  proto._move = function (this: K, ...a: unknown[]) {
+    const c = a[0] as { lat?: number; lng?: number } | undefined;
+    if (!this._mapPane || !c || !Number.isFinite(c.lat) || !Number.isFinite(c.lng) || (a[1] !== undefined && !Number.isFinite(a[1] as number))) return this;
+    return move.apply(this, a);
   };
 }
 
@@ -599,17 +619,18 @@ export default function KartaPrikaz() {
   const tockaOvdje = (tip: TipTocke) => {
     setNacin("pregled");
     const otvoriNa = (lat: number, lng: number) => novaTocka(lat, lng, tip);
-    if (moja) return otvoriNa(moja.lat, moja.lng);
-    if (!navigator.geolocation) return obavijest("Lokacija nije podržana", "greska");
-    obavijest("Tražim vašu lokaciju…", "info");
-    navigator.geolocation.getCurrentPosition(
-      (p) => otvoriNa(p.coords.latitude, p.coords.longitude),
-      () => {
+    // Praćena pozicija samo ako je već precizna; inače se pričeka GPS (prva lokacija zna biti gruba).
+    if (moja && moja.tocnost <= 15) return otvoriNa(moja.lat, moja.lng);
+    obavijest("Izoštravam GPS lokaciju…", "info");
+    preciznaLokacija()
+      .then((f) => {
+        upozoriAkoGruba(f);
+        otvoriNa(f.lat, f.lng);
+      })
+      .catch(() => {
         obavijest("Lokacija nije dostupna – odaberite mjesto na karti", "greska");
         otvori({ tip: "tocka", pocetno: { tip } });
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
+      });
   };
 
   const pokreniNacin = (n: Nacin) => {

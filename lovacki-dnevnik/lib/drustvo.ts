@@ -414,6 +414,11 @@ function pokreniPracenje() {
   pracenje = pratiLokaciju(
     (pos) => {
       const p = { ...pos, t: Date.now() };
+      // Stara (iz memorije mobitela) ili puno grublja lokacija ne smije pregaziti svježu preciznu.
+      const stara = pos.vrijeme != null && Date.now() - pos.vrijeme > 2 * 60_000;
+      const pr = stanje.pozicija;
+      const grublja = pr && Date.now() - pr.t < 60_000 && pr.tocnost <= 50 && pos.tocnost > Math.max(100, pr.tocnost * 3);
+      if ((stara && pr) || grublja) return;
       postavi({ pozicija: p, greskaLokacije: null });
       provjeriAlarm();
       posaljiPoziciju(p).catch(() => {});

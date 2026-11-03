@@ -10,6 +10,14 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-03",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "📍 Preciznija lokacija: „Moja lokacija” sada pričeka da GPS uhvati satelite (prikazuje ±m) umjesto da spremi prvu, grubu lokaciju. Najtočnije je na otvorenom.",
+      "💡 Ako je lokacija i dalje gruba, u postavkama mobitela uključite „Precizna lokacija” za CroLovac.",
+    ],
+  },
+  {
     id: "2026-11-02",
     naslov: "Novo u CroLovcu",
     stavke: [

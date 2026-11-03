@@ -41,13 +41,6 @@ interface VerzijaKorisnika {
   azurirano: string;
 }
 
-interface Aktivnost {
-  email: string;
-  dani_14: number;
-  dani_ukupno: number;
-  prvi: string;
-  zadnji: string;
-}
 
 const PRAVA_ADRESA = "hunt-jade.vercel.app";
 /** Broj korisnika po stranici u popisu. */
@@ -82,7 +75,6 @@ export default function Admin() {
   const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
   const [stranica, setStranica] = useState(0);
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
-  const [aktivnost, setAktivnost] = useState<Map<string, Aktivnost>>(new Map());
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
   const [osvjezeno, setOsvjezeno] = useState<Date | null>(null);
@@ -95,9 +87,6 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
-    sb()
-      .rpc("lov_admin_aktivnost")
-      .then(({ data, error }) => !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
   };
 
   // „Osvježi” najprije provjeri je li objavljena nova verzija aplikacije; ako jest, učita je.
@@ -141,9 +130,6 @@ export default function Admin() {
     sb()
       .rpc("lov_admin_verzije")
       .then(({ data, error }) => ziv && !error && setVerzije(new Map(((data ?? []) as VerzijaKorisnika[]).map((v) => [v.email, v]))));
-    sb()
-      .rpc("lov_admin_aktivnost")
-      .then(({ data, error }) => ziv && !error && setAktivnost(new Map(((data ?? []) as Aktivnost[]).map((a) => [a.email, a]))));
     return () => {
       ziv = false;
     };
@@ -255,7 +241,6 @@ export default function Admin() {
                   <th className="px-5 py-2 font-medium">Korisnik</th>
                   <th className="px-3 py-2 font-medium">Registriran</th>
                   <th className="px-3 py-2 font-medium">Zadnje aktivan</th>
-                  <th className="px-3 py-2 text-right font-medium" title="Dani korištenja u zadnjih 14 dana">Dani (14)</th>
                   <th className="px-3 py-2 text-right font-medium">Odstrel</th>
                   <th className="px-3 py-2 text-right font-medium">Izlasci</th>
                   <th className="px-5 py-2 text-right font-medium">Foto</th>
@@ -277,7 +262,6 @@ export default function Admin() {
                       </td>
                       <td className="brojke px-3 py-2.5 text-tekst-2">{datumKratki(new Date(k.registriran))}</td>
                       <td className="brojke px-3 py-2.5 text-tekst-2">{zadnje ? kadJe(zadnje) : "–"}</td>
-                      <td className="brojke px-3 py-2.5 text-right">{aktivnost.get(k.email)?.dani_14 ?? "–"}</td>
                       <td className="brojke px-3 py-2.5 text-right">{k.odstrel}</td>
                       <td className="brojke px-3 py-2.5 text-right">{k.izlasci}</td>
                       <td className="brojke px-5 py-2.5 text-right">{k.fotografija}</td>
