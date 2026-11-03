@@ -49,7 +49,6 @@ export default function SvHubert({ zauzet }: { zauzet: boolean }) {
       }
     >
       <div className="grid gap-4 pb-1">
-        <img src="/hubert.jpg" alt="Jelen i košute s lovačke kamere" className="w-full rounded-2xl border border-rub" />
         <p className="text-[15.5px] leading-relaxed text-tekst-2">
           Danas slavimo zaštitnika lovaca. Želimo vam lovačku sreću, pouzdanu pušku, siguran povratak sa svakog lova i puno lijepih
           trenutaka u prirodi.

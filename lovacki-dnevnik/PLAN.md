@@ -165,5 +165,5 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 - **Značka „Osnivač”** (2. 11., besplatno) – testeri s popisa `lib/osnivaci.ts` (id profila) dobiju zlatnu značku 🦌 uz ime i jednokratnu zahvalu. Novi tester = dodati id i objaviti.
 - **Preciznija lokacija** (3. 11., besplatno, popravak nakon recenzije „lokacija nije precizna”) – `lib/gps.ts`: čeka satelitski GPS (cilj ±12 m, najviše 20 s) umjesto prve grube lokacije; upozorenje ako je uključena samo „približna lokacija”; dijeljenje s prijateljima ne šalje staru/grublju lokaciju preko precizne.
-- **Čestitka sv. Huberta** (3. 11., besplatno) – `components/SvHubert.tsx`: svake godine 3. studenoga jednom ploča s čestitkom i slikom s kamere; „Što je novo” čeka dok je otvorena druga ploča.
+- **Čestitka sv. Huberta** (3. 11., besplatno) – `components/SvHubert.tsx`: svake godine 3. studenoga jednom ploča s čestitkom; „Što je novo” čeka dok je otvorena druga ploča.
 - **Pozdrav:** u aplikaciji, objavama i reklamama piše se **„Dobra kob!”** (ne „Lovu mir”) – vlasnik 3. 11.
