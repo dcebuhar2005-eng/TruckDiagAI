@@ -44,7 +44,7 @@ export default function SvHubert({ zauzet }: { zauzet: boolean }) {
       sirina={440}
       podnozje={
         <Gumb vrsta="primarni" className="w-full" onClick={zatvori}>
-          Hvala, Lovu mir!
+          Hvala, dobra kob!
         </Gumb>
       }
     >
@@ -57,7 +57,7 @@ export default function SvHubert({ zauzet }: { zauzet: boolean }) {
         <p className="text-[15.5px] leading-relaxed text-tekst-2">
           Hvala što ste dio CroLovca – sve nas je više od 450! 🙏
         </p>
-        <p className="font-display text-[20px] font-semibold text-naglasak">Lovu mir! 🍀</p>
+        <p className="font-display text-[20px] font-semibold text-naglasak">Dobra kob! 🍀</p>
       </div>
     </Ploca>
   );
