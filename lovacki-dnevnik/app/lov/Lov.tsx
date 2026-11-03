@@ -1,6 +1,7 @@
 "use client";
 
 import { SosGumb } from "@/components/Sos";
+import ZnakTocke from "@/components/ZnakTocke";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -148,7 +149,7 @@ function Pokretanje({ baza }: { baza: Baza }) {
                   className="grid size-8 place-items-center rounded-full text-[12px] font-bold text-black/75"
                   style={{ background: TIPOVI_TOCAKA[t.tip].boja }}
                 >
-                  {TIPOVI_TOCAKA[t.tip].slovo}
+                  <ZnakTocke tip={t.tip} velicina={18} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{t.naziv}</span>

@@ -167,3 +167,4 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - **Preciznija lokacija** (3. 11., besplatno, popravak nakon recenzije „lokacija nije precizna”) – `lib/gps.ts`: čeka satelitski GPS (cilj ±12 m, najviše 20 s) umjesto prve grube lokacije; upozorenje ako je uključena samo „približna lokacija”; dijeljenje s prijateljima ne šalje staru/grublju lokaciju preko precizne.
 - **Čestitka sv. Huberta** (3. 11., besplatno) – `components/SvHubert.tsx`: svake godine 3. studenoga jednom ploča s čestitkom; „Što je novo” čeka dok je otvorena druga ploča.
 - **Pozdrav:** u aplikaciji, objavama i reklamama piše se **„Dobra kob!”** (ne „Lovu mir”) – vlasnik 3. 11.
+- **Sličice točaka** (3. 11., besplatno) – `lib/ikoneTocaka.ts` + `components/ZnakTocke.tsx`: umjesto slova (Č, H, S…) sličice; vlasnik odabrao zasjedu = tronožac, solište = stup s krovićem, hranilište = bačva na nogama. Prijelaz s jednom divljači i dalje nosi slovo divljači.

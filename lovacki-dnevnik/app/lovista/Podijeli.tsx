@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ZnakTocke from "@/components/ZnakTocke";
 import { useState } from "react";
 import Ikona from "@/components/Ikona";
 import { Gumb, Ploca, cx, obavijest } from "@/components/ui";
@@ -111,7 +112,7 @@ export function PodijeliLoviste({ otvorena, zatvori, l, tocke }: { otvorena: boo
             on={odabrane.has(t.id)}
             promijeni={() => setOdabrane(prebaci(odabrane, t.id))}
             boja={TIPOVI_TOCAKA[t.tip].boja}
-            slovo={TIPOVI_TOCAKA[t.tip].slovo}
+            slovo={<ZnakTocke tip={t.tip} velicina={16} />}
             naziv={t.naziv}
             opis={opisVrsteTocke(t)}
           />
@@ -123,7 +124,7 @@ export function PodijeliLoviste({ otvorena, zatvori, l, tocke }: { otvorena: boo
   );
 }
 
-function Stavka({ on, promijeni, boja, slovo, naziv, opis }: { on: boolean; promijeni: () => void; boja: string; slovo: string; naziv: string; opis: string }) {
+function Stavka({ on, promijeni, boja, slovo, naziv, opis }: { on: boolean; promijeni: () => void; boja: string; slovo: React.ReactNode; naziv: string; opis: string }) {
   return (
     <button onClick={promijeni} aria-pressed={on} className={cx("flex items-center gap-3 rounded-xl px-3 py-2.5 text-left", on ? "bg-povrsina-2" : "opacity-55")}>
       <span className={cx("grid size-6 shrink-0 place-items-center rounded-md border-2", on ? "border-naglasak bg-naglasak text-[#17130a]" : "border-rub-jaki")}>

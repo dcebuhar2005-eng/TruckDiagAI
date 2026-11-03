@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import ZnakTocke from "@/components/ZnakTocke";
 import { useState } from "react";
 import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, PODVRSTE, TIPOVI_DOZVOLA, TIPOVI_TOCAKA, USJEVI, opisPodvrsta, opisUsjeva, podvrsteTocke } from "@/lib/katalog";
 import { povrsinaHa } from "@/lib/format";
@@ -394,7 +395,7 @@ export function TockaUrednik({
                     className="grid size-8 place-items-center rounded-full text-[12px] font-bold text-black/75"
                     style={{ background: TIPOVI_TOCAKA[t].boja }}
                   >
-                    {TIPOVI_TOCAKA[t].slovo}
+                    <ZnakTocke tip={t} velicina={18} />
                   </span>
                   {TIPOVI_TOCAKA[t].naziv}
                 </motion.button>
@@ -526,7 +527,7 @@ export function TockaUrednik({
                     )}
                   >
                     <span className="grid size-5 place-items-center rounded-full text-[9.5px] font-bold text-black/75" style={{ background: TIPOVI_TOCAKA[t].boja }}>
-                      {on ? "✓" : TIPOVI_TOCAKA[t].slovo}
+                      {on ? "✓" : <ZnakTocke tip={t} velicina={12} />}
                     </span>
                     {TIPOVI_TOCAKA[t].naziv}
                   </motion.button>
