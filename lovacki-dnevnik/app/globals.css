@@ -338,3 +338,9 @@ html[data-lagano]::view-transition-old(.naprijed) { --pomak: -28px; }
 html[data-lagano]::view-transition-new(.naprijed) { --pomak: 28px; }
 html[data-lagano]::view-transition-old(.natrag) { --pomak: 28px; }
 html[data-lagano]::view-transition-new(.natrag) { --pomak: -28px; }
+
+@keyframes pojava {
+  to {
+    opacity: 1;
+  }
+}

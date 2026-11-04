@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Animacija from "./Animacija";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Ikona from "./Ikona";
@@ -99,6 +100,7 @@ export function SosPloca({ otvorena, zatvori }: { otvorena: boolean; zatvori: ()
   return (
     <Ploca otvorena={otvorena} zatvori={zatvori} naslov="SOS – hitna pomoć" podnaslov="Ostanite mirni. Recite gdje ste i što se dogodilo." sirina={460}>
       <div className="grid gap-3 pb-2">
+        <Animacija ime="upozorenje" className="mx-auto -my-2 size-24" />
         <a href="tel:112" className="flex items-center justify-center gap-3 rounded-2xl bg-[#c8372d] py-4 text-[20px] font-bold text-white active:scale-[0.99]">
           <Ikona ime="upozorenje" velicina={24} />
           Nazovi 112

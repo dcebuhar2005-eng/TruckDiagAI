@@ -20,6 +20,7 @@
     "framer-motion": "^12.42.2",
     "leaflet": "^1.9.4",
     "leaflet-rotate": "^0.2.8",
+    "lottie-web": "^5.12.2",
     "next": "16.2.9",
     "posthog-js": "^1.438.13",
     "qrcode-generator": "^2.0.4",

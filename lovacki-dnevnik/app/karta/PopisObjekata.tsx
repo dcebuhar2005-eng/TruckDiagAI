@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Animacija from "@/components/Animacija";
 import ZnakTocke from "@/components/ZnakTocke";
 import Ikona from "@/components/Ikona";
 import { Ploca, Segmenti, cx } from "@/components/ui";
@@ -241,5 +242,10 @@ export default function PopisObjekata({
 }
 
 function Prazno({ tekst }: { tekst: string }) {
-  return <p className="rounded-xl bg-povrsina-2 p-4 text-center text-[14px] text-tekst-3">{tekst}</p>;
+  return (
+    <div className="flex flex-col items-center rounded-xl bg-povrsina-2 p-4 text-center text-[14px] text-tekst-3">
+      <Animacija ime="prazno" className="h-24 w-36" />
+      {tekst}
+    </div>
+  );
 }

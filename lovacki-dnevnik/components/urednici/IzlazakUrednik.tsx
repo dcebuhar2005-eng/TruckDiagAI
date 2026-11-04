@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { slavi } from "../Slavlje";
 import { useEffect, useRef, useState } from "react";
 import { dohvatiFoto, obrisiFoto, smanjiSliku, spremiFoto } from "@/lib/foto";
 import { duljinaTraga } from "@/lib/lov";
@@ -188,6 +189,7 @@ export default function IzlazakUrednik({
     } else {
       db.dodaj("izlasci", podaci);
       obavijest("Izlazak je zabilježen");
+      slavi("spremljeno");
     }
     zatvori();
   };

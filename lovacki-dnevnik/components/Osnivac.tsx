@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { slavi } from "./Slavlje";
 import { Gumb, Ploca } from "./ui";
 import { jeOsnivac, useDrustvo } from "@/lib/drustvo";
 import { dogadaj } from "@/lib/pracenje";
@@ -45,6 +46,7 @@ export default function ZahvalaOsnivacu({ zauzet }: { zauzet: boolean }) {
     const t = setTimeout(() => {
       if (document.querySelector('[role="dialog"][aria-modal]') || document.visibilityState !== "visible") return;
       setOtvoreno(true);
+      slavi("konfete");
       dogadaj("osnivac_zahvala");
     }, 2500);
     return () => clearTimeout(t);

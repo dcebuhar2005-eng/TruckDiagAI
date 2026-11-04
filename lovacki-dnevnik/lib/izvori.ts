@@ -112,7 +112,7 @@ export const IZVORI: Skupina[] = [
         poveznica: "https://vercel.com/legal/terms",
       },
       {
-        naziv: "Leaflet, React, Next.js, Framer Motion",
+        naziv: "Leaflet, React, Next.js, Framer Motion, lottie-web",
         za: "Karta i sučelje",
         licenca: "BSD-2 (Leaflet), MIT (ostalo)",
         uvjeti: "Slobodno korištenje uz zadržavanje licence.",
@@ -127,6 +127,74 @@ export const IZVORI: Skupina[] = [
         kadNaraste: "Ništa.",
         poveznica: "https://openfontlicense.org",
       },
+    ],
+  },
+  {
+    naslov: "Animacije (LottieFiles)",
+    izvori: [
+      {
+        naziv: "Spremljeno (kvačica) – Darius Afchar",
+        za: "Kvačica nakon spremanja izlaska, odstrela i točke",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/success-0u6rqMvimp",
+      },
+      {
+        naziv: "Konfete – Shubh Dubey",
+        za: "Prvi odstrel, zahvala osnivačima",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/confetti-3ofTs67sBx",
+      },
+      {
+        naziv: "Jelen (linije) – Tom Fabre",
+        za: "Učitavanje (prebojano u zlatnu)",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/deer-AjP8ZeUVyw",
+      },
+      {
+        naziv: "Jelen u hodu – Alexander Chakhoyan",
+        za: "Prazan dnevnik",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/walking-deer-HGtGFC14RF",
+      },
+      {
+        naziv: "Lokacija – SM Rony",
+        za: "Traženje GPS lokacije (prebojano u zlatnu)",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/location-lottie-animation-dA1gfjnb3q",
+      },
+      {
+        naziv: "Prazno (povećalo) – Creative Salt & Pepper",
+        za: "Prazna pretraga i popis",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/empty-state-EfSeWUwwKs",
+      },
+      {
+        naziv: "Upozorenje – Luis Talavera",
+        za: "SOS – hitna pomoć",
+        licenca: "Lottie Simple License (FL 9.13.21), © Design Barn Inc.",
+        uvjeti:
+          "Besplatno, uključujući komercijalnu upotrebu; smiju se mijenjati (npr. boje). Izmijenjene datoteke i dalje su pod istom licencom. Navođenje autora nije obavezno, ali je navedeno.",
+        kadNaraste: "Ništa – licenca vrijedi i za komercijalnu upotrebu i reklame.",
+        poveznica: "https://lottiefiles.com/free-animation/alert-icon-exclamation-JeSwcVnOPf",
+      }
     ],
   },
 ];

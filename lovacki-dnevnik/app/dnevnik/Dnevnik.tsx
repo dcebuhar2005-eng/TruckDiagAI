@@ -135,10 +135,11 @@ export default function Dnevnik() {
         >
           {lista.length === 0 ? (
             upit || lovisteFiltar ? (
-              <PraznoStanje ikona="pretraga" naslov="Nema rezultata" opis="Pokušajte s drugim pojmom ili uklonite filtar lovišta." />
+              <PraznoStanje ikona="pretraga" animacija="prazno" naslov="Nema rezultata" opis="Pokušajte s drugim pojmom ili uklonite filtar lovišta." />
             ) : prikaz === "izlasci" ? (
               <PraznoStanje
                 ikona="dnevnik"
+                animacija="jelen-hod"
                 naslov="Još nema izlazaka"
                 opis="Zabilježite izlazak – vrijeme, vjetar, čeku i opaženu divljač."
                 akcija={<Gumb vrsta="primarni" ikona="plus" onClick={() => otvori({ tip: "izlazak" })}>Novi izlazak</Gumb>}
@@ -146,6 +147,7 @@ export default function Dnevnik() {
             ) : (
               <PraznoStanje
                 ikona="meta"
+                animacija="jelen-hod"
                 naslov="Još nema odstrela"
                 opis="Upisujte odstrijeljenu divljač s markicom, masom, trofejom i fotografijom."
                 akcija={<Gumb vrsta="primarni" ikona="plus" onClick={() => otvori({ tip: "odstrel" })}>Upiši odstrel</Gumb>}

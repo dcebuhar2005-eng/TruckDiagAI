@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { slavi } from "../Slavlje";
 import { preciznaLokacija } from "@/lib/gps";
 import { useEffect, useState } from "react";
 import { DOBNI_RAZREDI, nazivSpola, vrsta as nadiVrstu } from "@/lib/katalog";
@@ -160,8 +161,11 @@ export default function OdstrelUrednik({
       for (let k = 0; k < n; k++) db.dodaj("odstrel", { ...podaci, fotoIds: k === 0 ? fotoIds : [] });
       obavijest(`Upisano u odstrel lova: ${v.vrsta} × ${n}${v.strijelac.trim() ? ` (${v.strijelac.trim()})` : ""}`);
     } else {
+      // Prvi vlastiti odstrel – konfete; inače kvačica.
+      const prvi = !baza.odstrel.some((o) => !o.tudji);
       db.dodaj("odstrel", podaci);
       obavijest(`Dobra kob! ${v.vrsta} je upisan.`);
+      slavi(prvi ? "konfete" : "spremljeno");
     }
     zatvori();
   };

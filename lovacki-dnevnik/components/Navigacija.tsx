@@ -16,11 +16,20 @@ export const RUTE: { href: string; oznaka: string; ikona: ImeIkone; mobilno: boo
   { href: "/dnevnik", oznaka: "Dnevnik", ikona: "dnevnik", mobilno: true },
   { href: "/karta", oznaka: "Karta", ikona: "karta", mobilno: true },
   { href: "/lovci", oznaka: "Lovci", ikona: "korisnik", mobilno: true },
+  { href: "/kalendar", oznaka: "Lovni kalendar", ikona: "kalendar", mobilno: false },
   { href: "/lovista", oznaka: "Lovišta", ikona: "loviste", mobilno: false },
   { href: "/dozvole", oznaka: "Dozvole", ikona: "dozvola", mobilno: false },
   { href: "/statistika", oznaka: "Statistika", ikona: "statistika", mobilno: false },
   { href: "/postavke", oznaka: "Postavke", ikona: "postavke", mobilno: false },
 ];
+
+function procitajVidjenKalendar() {
+  try {
+    return !!localStorage.getItem("lovacki-dnevnik:kalendar-vidjen");
+  } catch {
+    return true;
+  }
+}
 
 function indeks(put: string) {
   // Podstranice postavki (npr. Izvori i licence) pripadaju Postavkama.
@@ -47,6 +56,8 @@ export default function Navigacija() {
   const ime = baza?.postavke.ime;
   const drustvo = useDrustvo();
   const [vise, setVise] = useState(false);
+  // Oznaka NOVO na Lovnom kalendaru dok ga korisnik prvi put ne otvori.
+  const kalendarVidjen = !vise || procitajVidjenKalendar();
   const zahtjevi = drustvo.prijateljstva.filter((p) => p.dolazni && p.status === "ceka").length;
   const opasnost = lovciUBlizini(drustvo).length > 0;
   const znacka = (href: string) =>
@@ -185,7 +196,28 @@ export default function Navigacija() {
       <Ploca otvorena={vise} zatvori={() => setVise(false)} naslov="Više" sirina={420}>
         <SosGumb veliki className="mb-3" />
         <div className="grid grid-cols-2 gap-2.5 pb-2">
-          {RUTE.filter((r) => !r.mobilno).map((r) => {
+          <Link
+            href="/kalendar"
+            transitionTypes={smjer(put, "/kalendar")}
+            onClick={() => {
+              oznaci("/kalendar");
+              setVise(false);
+            }}
+            className="col-span-2 flex items-center gap-3.5 rounded-2xl border border-naglasak/50 bg-gradient-to-br from-naglasak-meki to-povrsina-2 p-4 shadow-[0_12px_30px_-14px_rgba(232,169,71,.5)]"
+          >
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-naglasak-meki text-naglasak">
+              <Ikona ime="kalendar" velicina={24} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 font-semibold">
+                Lovni kalendar
+                {!kalendarVidjen && <span className="rounded-full bg-naglasak px-2 py-0.5 text-[10.5px] font-bold tracking-wider text-[#1b1407]">NOVO</span>}
+              </span>
+              <span className="block text-[13px] text-tekst-2">Lovostaj · što se danas smije loviti</span>
+            </span>
+            <Ikona ime="desno" velicina={18} className="text-naglasak" />
+          </Link>
+          {RUTE.filter((r) => !r.mobilno && r.href !== "/kalendar").map((r) => {
             const a = RUTE.indexOf(r) === akt;
             return (
               <Link

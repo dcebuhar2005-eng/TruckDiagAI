@@ -25,6 +25,9 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 - Neograničene fotografije
 - Izvoz za evidenciju (PDF / Excel)
 - Napredna statistika sezone i prognoza aktivnosti divljači
+- **Obavijesti lovnog kalendara** (vlasnik 4. 11. 2026.: PRO) – „sutra se otvara lov na srnjaka”, „za 7 dana se zatvara košuta”; odabir vrsta za koje stižu obavijesti
+- **Lovni kalendar + kvote** (vlasnik 4. 11. 2026.: PRO) – uz vrstu prikaz odstrelnog lista, npr. „srna: otvoreno, iskorišteno 2 od 4”
+- **Podsjetnik na istek dokumenata** (vlasnik 4. 11. 2026.: PRO) – lovačka iskaznica, osiguranje, dozvola za oružje: datum isteka i obavijest prije
 
 ## ❓ Ideje – vlasnik još odlučuje (besplatno ili PRO)
 
@@ -35,7 +38,7 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 ## 🆓 Besplatno zauvijek (osnova)
 
 Jednokratno slanje lovišta (granica + odabrane čeke i točke) prijatelju, dnevnik izlazaka i odstrela, karta s točkama i granicama (i crtanje prstom), vjetar i čeke za vjetar, lovci uživo i alarm
-blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.), **Dolazak divljači – upis** (kartica na Pregledu, karta, točka: gdje, divljač, komada, datum, sat, kamera/uživo, hrana; popis zapisanih i „zadnji dolazak”; vlasnik 28. 10.), **slika s kamere uz dolazak** (datum i sat se preuzmu iz slike; vlasnik 28. 10.), **povremene obavijesti** umjesto podsjetnika za testiranje (Android, vlasnik 30. 10.), **popis objekata na karti** (točke, tragovi, odstrel; pretraga, filtri, udaljenost, vjetar; vlasnik 31. 10.), **značka „Osnivač”** za prve testere (uz ime na Lovcima, kod prijatelja, u pretrazi i na QR kodu; jednokratna zahvala; popis u `lib/osnivaci.ts`; vlasnik 2. 11.), **sličice vrsta točaka** umjesto slova (karta, popisi, legenda; vlasnik 3. 11.).
+blizine, tragovi divljači, dozvole i kvote, statistika, **lokacija iz Google karata**, „Kad u lov?” za danas i sutra, kartica „Prvi koraci” za nove korisnike, **obavijest večer prije** (Android, 20:00, vlasnik 25. 10.), **SOS – hitna pomoć** (112, koordinate, slanje lokacije, uzbuna prijatelja; vlasnik 25. 10.), „Što je novo” nakon objave, **vrsta hrane na prihrani** (ponuđeno ili upisano, npr. kukuruz u zrnu; vlasnik 28. 10.), **Dolazak divljači – upis** (kartica na Pregledu, karta, točka: gdje, divljač, komada, datum, sat, kamera/uživo, hrana; popis zapisanih i „zadnji dolazak”; vlasnik 28. 10.), **slika s kamere uz dolazak** (datum i sat se preuzmu iz slike; vlasnik 28. 10.), **povremene obavijesti** umjesto podsjetnika za testiranje (Android, vlasnik 30. 10.), **popis objekata na karti** (točke, tragovi, odstrel; pretraga, filtri, udaljenost, vjetar; vlasnik 31. 10.), **značka „Osnivač”** za prve testere (uz ime na Lovcima, kod prijatelja, u pretrazi i na QR kodu; jednokratna zahvala; popis u `lib/osnivaci.ts`; vlasnik 2. 11.), **sličice vrsta točaka** umjesto slova (karta, popisi, legenda; vlasnik 3. 11.), **lovni kalendar / lovostaj** (Hrvatska po Pravilniku o lovostaju NN 94/2019; danas se smije loviti, godišnji pregled, detalj vrste; kasnije BiH, Srbija…; vlasnik 4. 11.), **animacije u aplikaciji** (LottieFiles, Lottie Simple License – kvačica, konfete, jelen, GPS, prazno, SOS; vlasnik 4. 11.).
 
 ## Kad krene naplata
 

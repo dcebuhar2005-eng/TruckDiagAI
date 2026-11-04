@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
+import Animacija from "../Animacija";
 import dynamic from "next/dynamic";
 import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -98,7 +99,7 @@ export default function PoljeLokacije({
     <div className="rounded-2xl border border-rub bg-povrsina-2 p-3">
       <div className="flex items-center gap-3">
         <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
-          <Ikona ime="lokacija" />
+          {trazim ? <Animacija ime="lokacija" className="size-9" /> : <Ikona ime="lokacija" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium">{naslov}</div>

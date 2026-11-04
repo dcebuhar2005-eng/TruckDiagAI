@@ -1,6 +1,7 @@
 "use client";
 
 import StoJeNovo from "./StoJeNovo";
+import Slavlje from "./Slavlje";
 import { SosPlutajuci, SosPrijatelja } from "./Sos";
 import NovaLozinka from "./NovaLozinka";
 import PlayObavijest from "./PlayObavijest";
@@ -148,6 +149,7 @@ export default function Ljuska({ children }: { children: ReactNode }) {
       <AnimatePresence>{prikaziUvod && <Uvod key="uvod" />}</AnimatePresence>
       <Urednici />
       <Obavijesti />
+      <Slavlje />
       <AlarmBlizine />
       <NovaVerzija />
       <PitanjeMisljenja korisnik={prijavljen} zauzet={trebaPrijava || prikaziUvod || Boolean(lovId) || oporavak} />
