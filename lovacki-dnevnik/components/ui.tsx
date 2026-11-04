@@ -9,6 +9,7 @@ import {
   useTransform,
   type HTMLMotionProps,
 } from "framer-motion";
+import Animacija, { type ImeAnimacije } from "./Animacija";
 import {
   useEffect,
   useId,
@@ -414,11 +415,14 @@ export function PraznoStanje({
   naslov,
   opis,
   akcija,
+  animacija,
 }: {
   ikona: ImeIkone;
   naslov: string;
   opis: string;
   akcija?: ReactNode;
+  /** Lottie animacija umjesto ikone (npr. „jelen-hod”, „prazno”). */
+  animacija?: ImeAnimacije;
 }) {
   return (
     <motion.div
@@ -427,9 +431,13 @@ export function PraznoStanje({
       transition={mekaOpruga}
       className="kartica flex flex-col items-center px-6 py-12 text-center"
     >
-      <div className="relative mb-4 grid size-16 place-items-center rounded-2xl bg-naglasak-meki text-naglasak">
-        <Ikona ime={ikona} velicina={28} />
-      </div>
+      {animacija ? (
+        <Animacija ime={animacija} className="mb-2 h-36 w-48" />
+      ) : (
+        <div className="relative mb-4 grid size-16 place-items-center rounded-2xl bg-naglasak-meki text-naglasak">
+          <Ikona ime={ikona} velicina={28} />
+        </div>
+      )}
       <h3 className="font-display text-xl font-semibold">{naslov}</h3>
       <p className="mt-1.5 max-w-sm text-sm text-tekst-2">{opis}</p>
       {akcija && <div className="mt-5">{akcija}</div>}

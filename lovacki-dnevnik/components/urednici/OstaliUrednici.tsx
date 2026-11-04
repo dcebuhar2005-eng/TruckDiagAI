@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { slavi } from "../Slavlje";
 import ZnakTocke from "@/components/ZnakTocke";
 import { useState } from "react";
 import { BOJE_LOVISTA, DIVLJAC_PRIJELAZA, PODVRSTE, TIPOVI_DOZVOLA, TIPOVI_TOCAKA, USJEVI, opisPodvrsta, opisUsjeva, podvrsteTocke } from "@/lib/katalog";
@@ -349,6 +350,7 @@ export function TockaUrednik({
     } else {
       db.dodaj("tocke", podaci);
       obavijest(`${TIPOVI_TOCAKA[tip].naziv} je dodana na kartu`);
+      slavi("spremljeno");
     }
     zatvori();
   };

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Animacija from "@/components/Animacija";
 import { useEffect, useMemo, useState } from "react";
 import Ikona from "@/components/Ikona";
 import { Naslov, Ploca, Segmenti, cx, djeteListe, roditeljListe } from "@/components/ui";
@@ -195,7 +196,12 @@ export default function LovniKalendar() {
                 ))}
               </button>
             ))}
-            {!popis.length && <p className="py-4 text-center text-[14px] text-tekst-3">Nema vrste „{upit}”.</p>}
+            {!popis.length && (
+              <div className="flex flex-col items-center py-4 text-center text-[14px] text-tekst-3">
+                <Animacija ime="prazno" className="h-24 w-36" />
+                Nema vrste „{upit}”.
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-tekst-3">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-4 rounded-full bg-mahovina" /> lov dopušten
