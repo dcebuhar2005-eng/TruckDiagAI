@@ -244,8 +244,14 @@ let otvorenihPloca = 0;
 const postaviZakljucavanje = () => {
   // iOS Safari zaključava pomicanje tek kad je i <html> skriven; samo <body> pušta stranicu iza ploče da klizi.
   const v = otvorenihPloca > 0 ? "hidden" : "";
-  document.documentElement.style.overflow = v;
+  const html = document.documentElement;
+  html.style.overflow = v;
   document.body.style.overflow = v;
+  // Dubina: stranica iza ploče se lagano smanji i zaobli (kao na iPhoneu); središte je vidljivi dio.
+  if (otvorenihPloca > 0) {
+    html.style.setProperty("--dubina-y", `${window.scrollY + window.innerHeight / 2}px`);
+    html.dataset.ploca = "";
+  } else delete html.dataset.ploca;
 };
 if (typeof window !== "undefined") {
   // Sigurnost: kod povratka u aplikaciju bez otvorene ploče stranica se uvijek može pomicati.
@@ -387,6 +393,17 @@ export function Naslov({
   opis?: ReactNode;
   akcija?: ReactNode;
 }) {
+  // Kad veliki naslov odlista iz vida, gore se pojavi mala traka s naslovom (kao na iPhoneu).
+  const ref = useRef<HTMLHeadingElement>(null);
+  const [mali, setMali] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const o = new IntersectionObserver(([e]) => setMali(!e.isIntersecting && e.boundingClientRect.top < 0), { threshold: 0 });
+    o.observe(el);
+    return () => o.disconnect();
+  }, []);
+  const klijent = useKlijent();
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -394,13 +411,31 @@ export function Naslov({
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="mb-6 flex flex-wrap items-end gap-4"
     >
+      {klijent &&
+        createPortal(
+          <AnimatePresence>
+            {mali && (
+              <motion.div
+                key="mali-naslov"
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.22, ease: [0.2, 0.9, 0.2, 1] }}
+                className="pointer-events-none fixed inset-x-0 top-0 z-[900] border-b border-rub bg-pozadina/75 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:left-[248px]"
+              >
+                <div className="truncate px-12 py-3 text-center text-[16px] font-semibold">{naslov}</div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
       <div className="min-w-0 flex-1">
         {natpis && (
           <div className="mb-1 text-[12px] font-semibold tracking-[0.16em] text-naglasak uppercase">
             {natpis}
           </div>
         )}
-        <h1 className="font-display text-[30px] md:text-[38px] leading-[1.05] font-semibold tracking-tight">
+        <h1 ref={ref} className="font-display text-[30px] md:text-[38px] leading-[1.05] font-semibold tracking-tight">
           {naslov}
         </h1>
         {opis && <p className="mt-2 max-w-2xl text-[15px] text-tekst-2">{opis}</p>}

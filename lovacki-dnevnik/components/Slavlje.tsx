@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { dodir } from "@/lib/nativno";
 import { useEffect, useState } from "react";
 import Animacija from "./Animacija";
 
@@ -9,6 +10,7 @@ const slusaci = new Set<(v: Vrsta) => void>();
 
 /** Kratka animacija preko ekrana: kvačica nakon spremanja ili konfete (prvi odstrel…). */
 export function slavi(v: Vrsta) {
+  dodir("uspjeh");
   slusaci.forEach((f) => f(v));
 }
 

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import Ikona from "./Ikona";
 import { Gumb, Ploca, cx, obavijest } from "./ui";
 import { konfigurirano, posaljiSos, prekiniSos, useDrustvo } from "@/lib/drustvo";
-import { pratiLokaciju } from "@/lib/nativno";
+import { dodir, pratiLokaciju } from "@/lib/nativno";
 
 type Poz = { lat: number; lng: number; tocnost: number; vrijeme?: number };
 
@@ -31,7 +31,7 @@ export function SosGumb({ className, veliki }: { className?: string; veliki?: bo
   return (
     <>
       <button
-        onClick={() => setOtvoreno(true)}
+        onClick={() => (setOtvoreno(true), dodir("uspjeh"))}
         aria-label="SOS – hitna pomoć"
         className={cx(
           "flex items-center justify-center gap-2 rounded-2xl bg-[#c8372d] font-semibold tracking-wide text-white shadow-[0_10px_28px_-12px_#c8372d] active:scale-[0.98]",
@@ -210,7 +210,7 @@ export function SosPlutajuci({ lovUTijeku }: { lovUTijeku: boolean }) {
   return (
     <>
       <button
-        onClick={() => setOtvoreno(true)}
+        onClick={() => (setOtvoreno(true), dodir("uspjeh"))}
         aria-label="SOS – hitna pomoć"
         className={cx(
           "fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-[1800] grid size-14 place-items-center rounded-full bg-[#c8372d] text-[13px] font-bold tracking-wide text-white shadow-[0_10px_30px_-8px_#c8372d] active:scale-95 lg:bottom-6",

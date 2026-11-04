@@ -344,3 +344,41 @@ html[data-lagano]::view-transition-new(.natrag) { --pomak: -28px; }
     opacity: 1;
   }
 }
+
+/* ---- Profi prijelazi ---- */
+
+/* Stranica iza otvorene ploče (mobitel): smanji se, zaobli i potamni – osjećaj dubine. */
+@media (max-width: 767px) {
+  main {
+    transition:
+      scale 0.5s cubic-bezier(0.2, 0.9, 0.2, 1),
+      border-radius 0.5s cubic-bezier(0.2, 0.9, 0.2, 1),
+      filter 0.5s ease;
+    transform-origin: 50% var(--dubina-y, 50vh);
+  }
+  html[data-ploca] main {
+    scale: 0.93;
+    border-radius: 22px;
+    overflow: hidden;
+    filter: brightness(0.8);
+  }
+}
+
+/* Utiskivanje pod prstom: gumbi i kartice se lagano smanje dok ih držite. */
+@media (hover: none) {
+  :is(button, a, [role="button"], .kartica):not(:disabled):not([data-bez-utiska]):not(.leaflet-container *) {
+    transition: scale 0.18s cubic-bezier(0.2, 0.9, 0.2, 1);
+  }
+  :is(button, a, [role="button"]):not(:disabled):not([data-bez-utiska]):not(.leaflet-container *):active {
+    scale: 0.97;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main,
+  html[data-ploca] main {
+    scale: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+}
