@@ -12,6 +12,7 @@ import KadULov from "@/components/KadULov";
 import PrviKoraci from "@/components/PrviKoraci";
 import { DolasciKartica } from "@/components/Dolasci";
 import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
+import DanasSeSmije from "@/components/DanasSeSmije";
 import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
 import { usePro } from "@/lib/pro";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
@@ -136,6 +137,8 @@ export default function Pregled() {
             <KreniULovKartica baza={baza} />
           </motion.div>
         )}
+
+        <DanasSeSmije />
 
         <PrviKoraci baza={baza} />
 

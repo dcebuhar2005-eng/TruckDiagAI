@@ -10,6 +10,13 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-04",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "📅 Lovni kalendar: što se danas smije loviti, što se uskoro zatvara i cijela lovna godina za svaku vrstu (po Pravilniku o lovostaju). Otvara se u izborniku „Više” ili s Pregleda.",
+    ],
+  },
+  {
     id: "2026-11-03b",
     naslov: "Novo u CroLovcu",
     stavke: [
