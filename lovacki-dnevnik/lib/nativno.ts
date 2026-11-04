@@ -9,7 +9,7 @@
 import { Capacitor, CapacitorHttp, registerPlugin } from "@capacitor/core";
 import type { BackgroundGeolocationPlugin, Location } from "@capacitor-community/background-geolocation";
 import { App } from "@capacitor/app";
-import { Haptics } from "@capacitor/haptics";
+import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
 export const uAplikaciji = () => typeof window !== "undefined" && Capacitor.isNativePlatform();
@@ -346,6 +346,18 @@ export function vibriraj(uzorak: number[]) {
   }
   if (Capacitor.isPluginAvailable("Vibracija")) NativnaVibracija.uzorak({ vremena: uzorak }).catch(() => uzorakPrekoHaptics(uzorak));
   else uzorakPrekoHaptics(uzorak);
+}
+
+/** Kratki „dodir” pod prstom: lagano (prebacivanje kartica) ili uspjeh (spremljeno). iPhone preglednik ga ne podržava. */
+export function dodir(vrsta: "lagano" | "uspjeh" = "lagano") {
+  try {
+    if (uAplikaciji()) {
+      if (vrsta === "uspjeh") Haptics.notification({ type: NotificationType.Success }).catch(() => {});
+      else Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+      return;
+    }
+    if (typeof navigator.vibrate === "function") navigator.vibrate(vrsta === "uspjeh" ? [12, 60, 18] : 8);
+  } catch {}
 }
 
 export function zaustaviVibraciju() {

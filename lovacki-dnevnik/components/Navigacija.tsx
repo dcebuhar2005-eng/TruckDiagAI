@@ -1,6 +1,7 @@
 "use client";
 
 import { SosGumb } from "./Sos";
+import { dodir as haptika } from "@/lib/nativno";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -96,7 +97,7 @@ export default function Navigacija() {
                 key={r.href}
                 href={r.href}
                 transitionTypes={smjer(put, r.href)}
-                onClick={() => oznaci(r.href)}
+                onClick={() => (oznaci(r.href), haptika())}
                 className={cx(
                   "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14.5px] font-medium transition-colors",
                   a ? "text-tekst" : "text-tekst-2 hover:text-tekst",
@@ -156,7 +157,7 @@ export default function Navigacija() {
                 key={r.href}
                 href={r.href}
                 transitionTypes={smjer(put, r.href)}
-                onClick={() => oznaci(r.href)}
+                onClick={() => (oznaci(r.href), haptika())}
                 className="relative flex flex-1 flex-col items-center gap-0.5 rounded-[20px] py-2"
               >
                 <span
