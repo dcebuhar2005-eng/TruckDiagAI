@@ -175,3 +175,4 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - **Odstrel iz izlaska** (5. 11., besplatno, prijedlog vlasnika nakon vlastitog odstrela) – u Novi izlazak odjeljak „Odstrel”: kvačica „Imao sam odstrel” → nakon spremanja otvara se Upiši odstrel s izlazakId, datumom, satom (kraj čekanja), lovištem i mjestom; postojeći povezani odstrel prikazan u izlasku. Fotografije u izlasku više ne pišu „Fotografije odstrela”.
 - **Odstrel uživo + fotke iz lova** (5. 11., besplatno) – u Kreni u lov gumb „Odstrel” (Upiši + fotke) otvara upis odstrela povezan s lovom; u njemu „Fotografije iz ovog lova” (kopija, ne dijeli se s izlaskom) – dodir dodaje fotku odstrelu.
 - **TikTok videi na serveru** (5. 11.) – `public/tiktok/*.mp4` za Metricool zakazivanje (kviz + 5 memeova, 6.–11. 11.). Nakon 11. 11. obrisati.
+- **Glazba u videima** (vlasnik 5. 11.): ubuduće **chill** glazba (glazba_chill), ne „napeto”/„veselo”.
