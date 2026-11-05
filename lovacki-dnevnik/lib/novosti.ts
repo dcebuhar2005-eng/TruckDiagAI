@@ -10,6 +10,13 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-06",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "🇧🇦🇷🇸 Lovni kalendar sada i za BiH (Federacija i Republika Srpska) i Srbiju – po službenim propisima, s napomenama gdje vrijede posebna pravila.",
+    ],
+  },
+  {
     id: "2026-11-05",
     naslov: "Novo u CroLovcu",
     stavke: [
