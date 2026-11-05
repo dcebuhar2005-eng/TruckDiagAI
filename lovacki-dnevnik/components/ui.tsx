@@ -219,7 +219,7 @@ export function Cipovi({
 /* ---------------- Ploča (bottom sheet / dijalog) ---------------- */
 
 const prazno = () => () => {};
-function useKlijent() {
+export function useKlijent() {
   return useSyncExternalStore(prazno, () => true, () => false);
 }
 
