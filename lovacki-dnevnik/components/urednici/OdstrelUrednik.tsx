@@ -103,6 +103,8 @@ export default function OdstrelUrednik({
     };
   }, [kljucFoto]);
 
+  // Fotografije snimljene u ovom lovu (gumb „Fotografija” u Kreni u lov) – mogu se dodati odstrelu (kao kopija).
+  const slikeIzlaska = baza.izlasci.find((i) => i.id === v.izlazakId)?.fotoIds ?? [];
   const krupna = nadiVrstu(v.vrsta)?.skupina === "krupna";
   const izlasciDana = baza.izlasci.filter((i) => i.datum === v.datum);
   // „Tko je odstrijelio” samo u skupnom lovu i pogonu (ili kad je zapis već označen kao tuđi).
@@ -193,6 +195,9 @@ export default function OdstrelUrednik({
       >
         <Odjeljak naslov="Fotografije">
           <Fotografije slike={slike} promjena={setSlike} />
+          {!postojeci && slikeIzlaska.length > 0 && (
+            <SlikeIzLova ids={slikeIzlaska} dodaj={(url) => setSlike((x) => [...x, { url }])} />
+          )}
         </Odjeljak>
 
         {skupni && (
@@ -373,5 +378,51 @@ export default function OdstrelUrednik({
       </Ploca>
       {potvrda.element}
     </>
+  );
+}
+
+/** Sličice fotografija iz lova: dodir dodaje kopiju u fotografije odstrela. */
+function SlikeIzLova({ ids, dodaj }: { ids: string[]; dodaj: (url: string) => void }) {
+  const [slike, setSlike] = useState<{ id: string; url: string }[]>([]);
+  const [dodane, setDodane] = useState<Set<string>>(new Set());
+  const kljuc = ids.join(",");
+  useEffect(() => {
+    let ziv = true;
+    Promise.all(kljuc.split(",").map(async (id) => ({ id, url: (await dohvatiFoto(id).catch(() => undefined)) ?? "" }))).then(
+      (r) => ziv && setSlike(r.filter((x) => x.url)),
+    );
+    return () => {
+      ziv = false;
+    };
+  }, [kljuc]);
+  if (!slike.length) return null;
+  return (
+    <div className="rounded-2xl border border-rub bg-povrsina-2 p-3">
+      <div className="mb-2 text-[13px] font-medium">Fotografije iz ovog lova</div>
+      <div className="skriven-klizac flex gap-2 overflow-x-auto">
+        {slike.map((x) => {
+          const on = dodane.has(x.id);
+          return (
+            <button
+              key={x.id}
+              type="button"
+              disabled={on}
+              onClick={() => {
+                dodaj(x.url);
+                setDodane((d) => new Set(d).add(x.id));
+              }}
+              className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-rub"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={x.url} alt="" className="h-full w-full object-cover" />
+              <span className={cx("absolute inset-0 grid place-items-center text-white", on ? "bg-mahovina/60" : "bg-black/25")}>
+                <Ikona ime={on ? "kvacica" : "plus"} velicina={20} />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-1.5 text-[12px] text-tekst-3">Dodirnite fotografiju da je dodate odstrelu.</div>
+    </div>
   );
 }
