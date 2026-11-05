@@ -341,7 +341,7 @@ function Uzivo({ baza, i }: { baza: Baza; i: Izlazak }) {
         <Radnja
           ikona="meta"
           oznaka="Odstrel"
-          opis="Upiši odstrel"
+          opis="Upiši + fotke"
           onClick={() =>
             otvori({
               tip: "odstrel",

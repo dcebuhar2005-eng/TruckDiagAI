@@ -16,7 +16,7 @@ import { dohvatiPrognozu, opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona from "../Ikona";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { Cipovi, Gumb, Ploca, Polje, cx, obavijest, usePotvrda } from "../ui";
-import { zatvori } from "./kontroler";
+import { otvori, zatvori } from "./kontroler";
 import {
   Koracnik,
   OdabirLovista,
@@ -77,6 +77,9 @@ export default function IzlazakUrednik({
   const [radovi, setRadovi] = useState<Rad[]>(p.radovi ?? []);
   const [pratitelji, setPratitelji] = useState(p.pratitelji ?? "");
   const [ocjena, setOcjena] = useState(p.ocjena ?? 0);
+  // „Imao sam odstrel” – nakon spremanja izlaska odmah se otvara upis odstrela, već povezan s izlaskom.
+  const [odstrelPoslije, setOdstrelPoslije] = useState(false);
+  const povezaniOdstrel = postojeci ? baza.odstrel.filter((o) => o.izlazakId === postojeci.id) : [];
   const [napomena, setNapomena] = useState(p.napomena ?? "");
   const [ucitavam, setUcitavam] = useState(false);
   const potvrda = usePotvrda();
@@ -183,15 +186,23 @@ export default function IzlazakUrednik({
       ocjena: ocjena || undefined,
       napomena: tekst(napomena),
     };
+    let izlazakId: string;
     if (postojeci) {
       db.uredi("izlasci", postojeci.id, podaci);
+      izlazakId = postojeci.id;
       obavijest("Izlazak je ažuriran");
     } else {
-      db.dodaj("izlasci", podaci);
+      izlazakId = db.dodaj("izlasci", podaci).id;
       obavijest("Izlazak je zabilježen");
-      slavi("spremljeno");
+      if (!odstrelPoslije) slavi("spremljeno");
     }
     zatvori();
+    if (odstrelPoslije) {
+      // Odstrel s već popunjenim datumom, satom (kraj čekanja), lovištem i mjestom – povezan s ovim izlaskom.
+      const t = tockaId ? baza.tocke.find((x) => x.id === tockaId) : undefined;
+      const mjesto = t ? { lat: t.lat, lng: t.lng } : lok ? { lat: lok.lat, lng: lok.lng } : {};
+      setTimeout(() => otvori({ tip: "odstrel", pocetno: { izlazakId, datum, vrijeme: tekst(doV) ?? od, lovisteId, ...mjesto } }), 380);
+    }
   };
 
   const obrisi = () =>
@@ -518,8 +529,56 @@ export default function IzlazakUrednik({
           {!radovi.length && <p className="text-sm text-tekst-3">Prihranili ste divljač ili dopunili solište? Dodajte ovdje.</p>}
         </Odjeljak>
 
+        <Odjeljak naslov="Odstrel">
+          {povezaniOdstrel.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => otvori({ tip: "odstrel", id: o.id })}
+              className="flex items-center gap-3 rounded-2xl border border-rub bg-povrsina-2 p-3 text-left"
+            >
+              <span className="grid size-9 place-items-center rounded-xl bg-naglasak-meki text-naglasak">
+                <Ikona ime="meta" velicina={18} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">{o.vrsta}</span>
+                <span className="block text-[12.5px] text-tekst-3">
+                  {o.vrijeme}
+                  {o.masa ? ` · ${o.masa} kg` : ""}
+                </span>
+              </span>
+              <Ikona ime="uredi" velicina={16} className="text-tekst-3" />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setOdstrelPoslije(!odstrelPoslije)}
+            className={cx(
+              "flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors",
+              odstrelPoslije ? "border-naglasak bg-naglasak-meki" : "border-rub bg-povrsina-2",
+            )}
+          >
+            <span
+              className={cx(
+                "grid size-6 shrink-0 place-items-center rounded-lg border-2",
+                odstrelPoslije ? "border-naglasak bg-naglasak text-[#17130a]" : "border-tekst-3",
+              )}
+            >
+              {odstrelPoslije && <Ikona ime="kvacica" velicina={14} />}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">{povezaniOdstrel.length ? "Dodaj još jedan odstrel" : "Imao sam odstrel na ovom izlasku"}</span>
+              <span className="block text-[12.5px] text-tekst-2">
+                {odstrelPoslije
+                  ? "Nakon spremanja otvara se upis odstrela – datum, sat, lovište i mjesto već su popunjeni."
+                  : "Odstrel se upisuje u Odstrel i odmah povezuje s ovim izlaskom."}
+              </span>
+            </span>
+          </button>
+        </Odjeljak>
+
         <Odjeljak naslov="Fotografije">
-          <Fotografije slike={slike} promjena={setSlike} />
+          <Fotografije slike={slike} promjena={setSlike} naslov="Fotografije izlaska" opis="čeka, divljač, krajolik" />
         </Odjeljak>
 
         <Odjeljak naslov="Bilješke">

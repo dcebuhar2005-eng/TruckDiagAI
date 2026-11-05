@@ -10,6 +10,14 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-05",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "🎯 Odstrel iz izlaska: u izlasku označite „Imao sam odstrel” i nakon spremanja odmah se otvara upis odstrela – datum, sat, lovište i mjesto već su popunjeni, a odstrel je povezan s izlaskom.",
+      "📸 U „Kreni u lov” gumb Odstrel sada nudi i fotografije snimljene u tom lovu – jednim dodirom idu u odstrel.",
+    ],
+  },
+  {
     id: "2026-11-04",
     naslov: "Novo u CroLovcu",
     stavke: [

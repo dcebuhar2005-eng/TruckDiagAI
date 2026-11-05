@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import Animacija from "@/components/Animacija";
 import { useEffect, useMemo, useState } from "react";
 import Ikona from "@/components/Ikona";
-import { Naslov, Ploca, Segmenti, cx, djeteListe, roditeljListe } from "@/components/ui";
+import { Naslov, Ploca, Segmenti, cx, djeteListe, roditeljListe, useKlijent } from "@/components/ui";
+import { Kostur } from "@/components/Kostur";
 import {
   DRZAVE,
   KATEGORIJE,
@@ -34,6 +35,14 @@ const MJ_GEN = ["siječnja", "veljače", "ožujka", "travnja", "svibnja", "lipnj
 const dana = (n: number) => (n === 1 ? "1 dan" : `${n} dana`);
 
 export default function LovniKalendar() {
+  // Kalendar ovisi o današnjem datumu – crta se tek u pregledniku (inače se unaprijed pripremljena
+  // stranica s datumom izrade ne poklapa s današnjim i React javlja grešku).
+  const klijent = useKlijent();
+  if (!klijent) return <Kostur />;
+  return <Kalendar />;
+}
+
+function Kalendar() {
   const [drzavaK, setDrzavaK] = useState("hr");
   const [prikaz, setPrikaz] = useState<"danas" | "godina">("danas");
   const [kat, setKat] = useState<Kategorija>("krupna");

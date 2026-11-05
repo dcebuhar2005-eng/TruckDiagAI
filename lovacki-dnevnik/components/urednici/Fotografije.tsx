@@ -14,7 +14,17 @@ export interface Slika {
 
 export const MAKS_SLIKA = 10;
 
-export default function Fotografije({ slike, promjena }: { slike: Slika[]; promjena: (s: Slika[]) => void }) {
+export default function Fotografije({
+  slike,
+  promjena,
+  naslov = "Fotografije odstrela",
+  opis = "trofej, mjesto, markica",
+}: {
+  slike: Slika[];
+  promjena: (s: Slika[]) => void;
+  naslov?: string;
+  opis?: string;
+}) {
   const kamera = useRef<HTMLInputElement>(null);
   const galerija = useRef<HTMLInputElement>(null);
 
@@ -49,8 +59,8 @@ export default function Fotografije({ slike, promjena }: { slike: Slika[]; promj
           <div className="mb-2 grid size-14 place-items-center rounded-2xl bg-naglasak-meki text-naglasak">
             <Ikona ime="kamera" velicina={26} />
           </div>
-          <div className="font-medium">Fotografije odstrela</div>
-          <div className="text-[13px] text-tekst-3">Do {MAKS_SLIKA} slika – trofej, mjesto, markica</div>
+          <div className="font-medium">{naslov}</div>
+          <div className="text-[13px] text-tekst-3">Do {MAKS_SLIKA} slika – {opis}</div>
         </div>
         <div className="grid grid-cols-2 border-t border-rub">
           <motion.button type="button" whileTap={{ scale: 0.97 }} onClick={() => kamera.current?.click()} className="flex items-center justify-center gap-2 py-3.5 text-[14.5px] font-medium text-naglasak">
