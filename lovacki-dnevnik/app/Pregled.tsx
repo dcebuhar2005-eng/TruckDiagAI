@@ -130,6 +130,9 @@ export default function Pregled() {
       </motion.header>
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Novi korisnik: prvi koraci na samom vrhu, prije svega ostalog. */}
+        <PrviKoraci baza={baza} />
+
         {pro && lok ? (
           <DanasULovistu baza={baza} p={p} lat={lok.lat} lng={lok.lng} />
         ) : (
@@ -139,8 +142,6 @@ export default function Pregled() {
         )}
 
         <DanasSeSmije />
-
-        <PrviKoraci baza={baza} />
 
         <BezProfila />
 
