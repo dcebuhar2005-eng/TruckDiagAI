@@ -152,6 +152,19 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - **Izvor dolaska** (30. 10.): utm_* iz oglasa/QR kodova pamti se u `lib/pracenje.ts` (izvor, kampanja; `prvi_izvor` na osobi).
 - **Slika s kamere uz dolazak** (28. 10.): „Dodaj sliku s kamere” – datum i sat iz EXIF-a (`lib/exif.ts`), sličica u popisu i na Pregledu, povećanje dodirom; video samo kao slika zaslona.
 
+## Sljedeće – odabrao vlasnik 6. 11. 2026. (redom)
+
+1. **Kartica lova za dijeljenje** (u izradi) – slika nakon odstrela (fotka, vrsta, datum, CroLovac, „Dobra kob!”) za WhatsApp/Facebook iz detalja odstrela. U Android aplikaciji dijeljenje slike treba dodatke @capacitor/share + @capacitor/filesystem (nova verzija na Playu); u pregledniku/iPhoneu Web Share.
+2. **Priprema za lovački ispit (kviz)** – pitanja o lovostaju generirana iz provjerenih podataka (`lib/lovostaj.ts`, sve države) + provjerena opća pitanja (vrste, oružje, sigurnost, etika).
+3. **Slovenija u lovnom kalendaru** – iz službenog slovenskog propisa o lovnim dobama.
+4. **„Pozovi kolegu”** – osobni link (ref), bez promjene baze.
+5. **Drugi krug glatkih prijelaza** – kartica se rastvori u detalj, karta glatko leti do točke.
+6. **Mail neaktivnim korisnicima (Resend)** – vlasnik sam upisuje Resend ključ; Claude priprema tekst i popis.
+
+Odluka besplatno/PRO za 1.–5. još čeka vlasnika (prijedlog: sve besplatno). **Kalkulator trofeja = PRO** (vlasnik 6. 11.).
+
+Ostale ideje (nisu odabrane, za kasnije): javna stranica s lovostajem (SEO, 4 države), organizacija skupnog lova za društva (osnova besplatno, izvještaji PRO), godišnji izvještaj za društvo (PDF, PRO), „Najbolji dan za lov ovaj tjedan” (PRO), karta lovišta bez signala (PRO), stradala divljač u Dnevniku kao zasebna kartica (ako kolege zatraže).
+
 ## Ideje na čekanju (redom)
 
 - **iPhone obavijesti (web push)** – na iPhoneu zasad nema zakazanih obavijesti (web aplikacija). Vlasnik 25. 10.: **još ne kretati**, kasnije.
