@@ -233,6 +233,8 @@ export interface Postavke {
   dovrsenUvod: boolean;
   /** Učitani su primjeri podataka (prikazuje se ponuda za brisanje). */
   primjer?: boolean;
+  /** Prikazuje upis stradale divljači (promet, vlak…) – neobavezno, isključeno. */
+  stradanja?: boolean;
 }
 
 /** Lovačko oružje – odabire se kod upisa odstrela. */
@@ -260,6 +262,23 @@ export interface Staza {
   createdAt: number;
 }
 
+export type UzrokStradanja = "promet" | "vlak" | "stroj" | "predator" | "nepoznato";
+
+/** Stradala divljač (promet, vlak, stroj…) – neobavezna evidencija, uključuje se u Postavkama. */
+export interface Stradanje {
+  id: ID;
+  datum: string;
+  vrijeme: string;
+  vrsta: string;
+  uzrok: UzrokStradanja;
+  lovisteId?: ID;
+  lat?: number;
+  lng?: number;
+  fotoIds?: string[];
+  napomena?: string;
+  createdAt: number;
+}
+
 export interface Baza {
   verzija: 1;
   lovista: Loviste[];
@@ -269,7 +288,8 @@ export interface Baza {
   dozvole: Dozvola[];
   oruzje: Oruzje[];
   staze: Staza[];
+  stradanja: Stradanje[];
   postavke: Postavke;
 }
 
-export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole" | "oruzje" | "staze";
+export type Kolekcija = "lovista" | "tocke" | "izlasci" | "odstrel" | "dozvole" | "oruzje" | "staze" | "stradanja";

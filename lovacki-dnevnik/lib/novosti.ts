@@ -10,6 +10,18 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-06b",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "📅 Lovni kalendar sada i za 🇸🇮 Sloveniju, a pamti vašu državu (Hrvatska, BiH – Federacija, BiH – Republika Srpska, Slovenija, Srbija) – kartica „Danas se smije loviti” na Pregledu pokazuje upravo nju.",
+      "✨ Glatkije: dodirnuta kartica u Dnevniku i na Pregledu rastvori se u detalj, a karta glatko leti i do odstrela i tragova.",
+      "🤝 Pozovi kolegu: pošaljite osobnu pozivnicu (WhatsApp, Viber…) – kolega vas nakon instalacije odmah može dodati za prijatelja.",
+      "🎓 Lovački ispit: vježbajte za ispit – 10 pitanja iz biologije divljači, sigurnosti, lovačke prakse i lovostaja vaše države (izbornik „Više”).",
+      "📸 Kartica lova: u odstrelu gumb „Podijeli” napravi lijepu sliku (fotka, vrsta, datum) za WhatsApp, Facebook ili Instagram.",
+      "🚗 Stradala divljač: tko vodi evidenciju divljači stradale u prometu, pod vlakom ili strojem, može je uključiti u Postavkama – brzi upis s GPS-om, znak na karti i pregled u statistici.",
+    ],
+  },
+  {
     id: "2026-11-06",
     naslov: "Novo u CroLovcu",
     stavke: [

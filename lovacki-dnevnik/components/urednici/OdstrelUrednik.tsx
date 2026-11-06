@@ -8,6 +8,9 @@ import { DOBNI_RAZREDI, nazivSpola, vrsta as nadiVrstu } from "@/lib/katalog";
 import { datumKratki, isoDatum, isoVrijeme, udaljenostM } from "@/lib/format";
 import { dohvatiFoto, fotografijeOdstrela, obrisiFoto, spremiFoto } from "@/lib/foto";
 import Fotografije, { type Slika } from "./Fotografije";
+import KalkulatorTrofeja from "../KalkulatorTrofeja";
+import { vrstaTrofeja } from "@/lib/cic";
+import { usePro } from "@/lib/pro";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { centarLovista } from "@/lib/upiti";
 import { db, noviId } from "@/lib/store";
@@ -87,6 +90,9 @@ export default function OdstrelUrednik({
   const [slike, setSlike] = useState<Slika[]>([]);
   const [slikeUcitane, setSlikeUcitane] = useState(pocetneFoto.length === 0);
   const potvrda = usePotvrda();
+  const [kalkulator, setKalkulator] = useState(false);
+  // Kalkulator trofeja je PRO (vlasnik 6. 11.).
+  const pro = usePro();
   const postaviV = <K extends keyof typeof v>(k: K, x: (typeof v)[K]) => setV((s) => ({ ...s, [k]: x }));
 
   const kljucFoto = pocetneFoto.join(",");
@@ -270,7 +276,18 @@ export default function OdstrelUrednik({
               >
                 <Red>
                   <Polje oznaka="Trofej (CIC točke)">
-                    <input inputMode="decimal" className="unos brojke" value={v.trofejCic} onChange={(e) => postaviV("trofejCic", e.target.value)} />
+                    <div className="flex gap-2">
+                      <input inputMode="decimal" className="unos brojke min-w-0 flex-1" value={v.trofejCic} onChange={(e) => postaviV("trofejCic", e.target.value)} />
+                      {pro && vrstaTrofeja(v.vrsta, v.spol) && (
+                        <button
+                          type="button"
+                          onClick={() => setKalkulator(true)}
+                          className="shrink-0 rounded-xl border border-naglasak/50 bg-naglasak-meki px-3 text-[13px] font-semibold text-naglasak"
+                        >
+                          Izračunaj
+                        </button>
+                      )}
+                    </div>
                   </Polje>
                   <Polje oznaka="Opis trofeja">
                     <input className="unos" value={v.trofejOpis} onChange={(e) => postaviV("trofejOpis", e.target.value)} placeholder="npr. šesterac" />
@@ -377,6 +394,14 @@ export default function OdstrelUrednik({
         </Odjeljak>
       </Ploca>
       {potvrda.element}
+      {kalkulator && (
+        <KalkulatorTrofeja
+          otvorena={kalkulator}
+          zatvori={() => setKalkulator(false)}
+          vrsta={vrstaTrofeja(v.vrsta, v.spol)}
+          primijeni={(b) => postaviV("trofejCic", b.toString().replace(".", ","))}
+        />
+      )}
     </>
   );
 }

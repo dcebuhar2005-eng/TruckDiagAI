@@ -152,6 +152,19 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - **Izvor dolaska** (30. 10.): utm_* iz oglasa/QR kodova pamti se u `lib/pracenje.ts` (izvor, kampanja; `prvi_izvor` na osobi).
 - **Slika s kamere uz dolazak** (28. 10.): „Dodaj sliku s kamere” – datum i sat iz EXIF-a (`lib/exif.ts`), sličica u popisu i na Pregledu, povećanje dodirom; video samo kao slika zaslona.
 
+## Sljedeće – odabrao vlasnik 6. 11. 2026. (redom)
+
+1. **Kartica lova za dijeljenje** (6. 11., napravljeno; `lib/kartica.ts`, `components/KarticaLova.tsx`, gumb „Podijeli” u detalju odstrela; dodani @capacitor/share + @capacitor/filesystem – za Android aplikaciju treba novi AAB, stara verzija aplikacije pokaže „ažurirajte na Google Playu”) – slika nakon odstrela (fotka, vrsta, datum, CroLovac, „Dobra kob!”) za WhatsApp/Facebook iz detalja odstrela. U Android aplikaciji dijeljenje slike treba dodatke @capacitor/share + @capacitor/filesystem (nova verzija na Playu); u pregledniku/iPhoneu Web Share.
+2. **Priprema za lovački ispit (kviz)** (6. 11., napravljeno: `/ispit`, `lib/ispit.ts` – 27 općih pitanja + pitanja o lovostaju iz kalendara odabrane države; 10 po krugu, najbolji rezultat pamti se na uređaju; u izborniku „Više”) – pitanja o lovostaju generirana iz provjerenih podataka (`lib/lovostaj.ts`, sve države) + provjerena opća pitanja (vrste, oružje, sigurnost, etika).
+3. **Slovenija u lovnom kalendaru** (6. 11., napravljeno: Uredba o določitvi divjadi in lovnih dob, Uradni list RS 101/04 i 81/14; pogađa se po zoni Europe/Ljubljana i jeziku sl) – iz službenog slovenskog propisa o lovnim dobama.
+4. **„Pozovi kolegu”** (6. 11., napravljeno: `lib/pozivnica.ts`, `components/PozoviKolegu.tsx`; link profila + utm_source=pozivnica; pozivnica se pamti prije registracije i nakon prijave nudi dodavanje; `user_metadata.pozvao` u računu; kartica na Pregledu dok < 3 prijatelja, gumb na Lovcima; PostHog `pozivnica_otvorena/poslana`) – osobni link (ref), bez promjene baze.
+5. **Drugi krug glatkih prijelaza** (6. 11., napravljeno: `otvoriIz` u `components/urednici/kontroler.ts` – View Transition „ploca-detalj” iz kartice u ploču na mobitelu, Ploca prop `prijelaz`; bez podrške/„smanji pokrete”/slabiji mobitel/računalo = obično otvaranje; karta flyTo i za odstrel i tragove) – kartica se rastvori u detalj, karta glatko leti do točke.
+6. **Mail neaktivnim korisnicima (Resend)** – vlasnik sam upisuje Resend ključ; Claude priprema tekst i popis.
+
+Vlasnik 6. 11.: 1.–5. **besplatno**. **Kalkulator trofeja = PRO** (vlasnik 6. 11.).
+
+Ostale ideje (nisu odabrane, za kasnije): javna stranica s lovostajem (SEO, 4 države), organizacija skupnog lova za društva (osnova besplatno, izvještaji PRO), godišnji izvještaj za društvo (PDF, PRO), „Najbolji dan za lov ovaj tjedan” (PRO), karta lovišta bez signala (PRO), stradala divljač u Dnevniku kao zasebna kartica (ako kolege zatraže).
+
 ## Ideje na čekanju (redom)
 
 - **iPhone obavijesti (web push)** – na iPhoneu zasad nema zakazanih obavijesti (web aplikacija). Vlasnik 25. 10.: **još ne kretati**, kasnije.
@@ -175,6 +188,11 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - **Odstrel iz izlaska** (5. 11., besplatno, prijedlog vlasnika nakon vlastitog odstrela) – u Novi izlazak odjeljak „Odstrel”: kvačica „Imao sam odstrel” → nakon spremanja otvara se Upiši odstrel s izlazakId, datumom, satom (kraj čekanja), lovištem i mjestom; postojeći povezani odstrel prikazan u izlasku. Fotografije u izlasku više ne pišu „Fotografije odstrela”.
 - **Odstrel uživo + fotke iz lova** (5. 11., besplatno) – u Kreni u lov gumb „Odstrel” (Upiši + fotke) otvara upis odstrela povezan s lovom; u njemu „Fotografije iz ovog lova” (kopija, ne dijeli se s izlaskom) – dodir dodaje fotku odstrelu.
 - **Videi na serveru** (5. 11.): TikTok videi su kopirani u Metricool i maknuti; `public/mreze/` drži samo videe za idući dan, stari se brišu u sljedećoj objavi (Metricool ih već kopira).
+- **Kalendar pamti državu** (6. 11., besplatno): odabir se pamti (`lovacki-dnevnik:kalendar-drzava`), za nove se pogađa po vremenskoj zoni i jeziku (Sarajevo + srpski → RS, Sarajevo → FBiH, Beograd → Srbija); kartica na Pregledu prati odabranu državu.
+- **Molba za ocjenu na Google Playu** (6. 11., besplatno, samo Android aplikacija): nakon 3. izlaska, „Kasnije” → za 14 dana, najviše 2 puta (`components/OcjenaPlay.tsx`).
+- **Stradala divljač** (6. 11., besplatno, prijedlog kolege): neobavezno (Postavke → „Bilježim stradalu divljač”); kolekcija `stradanja` u dnevniku (sinkronizira se kao i ostalo, bez promjene baze), `components/urednici/StradanjeUrednik.tsx`, `lib/stradanja.ts` (uzroci), sloj na karti, kartica u statistici. Bez zapisnika i izvoza – dodati ako se pokaže potreba.
+- **Kalkulator trofeja** (6. 11.; PRO – vlasnik 6. 11., skriven dok PRO nije uključen): `lib/cic.ts` (srnjak, jelen obični, vepar; formule s CIC mjernih listova, provjereno na službenom primjeru jelena 201,33), `components/KalkulatorTrofeja.tsx`, gumb „Izračunaj” u upisu odstrela, medalja u detalju odstrela.
+- **Admin: pretraga korisnika** (6. 11.): po imenu, @korisniku, e-mailu i društvu, bez obzira na kvačice.
 - **Facebook bez linkova u opisu** (vlasnik 5. 11.): u tekstu Facebook objave nema linkova; link ide u prvi komentar.
 - **QR po mreži** (vlasnik 5. 11.): svaki video ima QR za svoju mrežu (TikTok / Facebook / Instagram). Frendovi videi u imenu nose mrežu i idu samo na nju.
 - **Dnevna automatika videa** (vlasnik 5. 11., doslovno: „Da, pokreni dnevne videe i objave bez pitanja”): svaku večer Claude sam napravi videe za sutra (Remotion u `video/`), stavi ih na server (jedna od 2 objave tog dana) i zakaže u Metricoolu: TikTok 10:00 / 12:00 / 18:00, Facebook + Instagram Reel 18:00. Ne pita za svaku objavu; vlasniku pošalje kratku potvrdu.

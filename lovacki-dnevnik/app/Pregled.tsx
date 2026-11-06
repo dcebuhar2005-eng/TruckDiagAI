@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
-import { otvori } from "@/components/urednici/kontroler";
+import { otvori, otvoriIz } from "@/components/urednici/kontroler";
 import VjetarKartica from "@/components/VjetarKartica";
 import CekeDanas from "@/components/CekeDanas";
 import KadULov from "@/components/KadULov";
@@ -13,6 +13,7 @@ import PrviKoraci from "@/components/PrviKoraci";
 import { DolasciKartica } from "@/components/Dolasci";
 import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
 import DanasSeSmije from "@/components/DanasSeSmije";
+import PozoviKolegu from "@/components/PozoviKolegu";
 import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
 import { usePro } from "@/lib/pro";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
@@ -123,9 +124,10 @@ export default function Pregled() {
             Lovna godina <span className="brojke font-medium text-tekst">{lg.oznaka}</span> · {baza.postavke.lokacijaNaziv ?? "Moja lokacija"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <BrzaAkcija ikona="dnevnik" oznaka="Izlazak" onClick={() => otvori({ tip: "izlazak" })} />
           <BrzaAkcija ikona="meta" oznaka="Odstrel" primarna onClick={() => otvori({ tip: "odstrel" })} />
+          {baza.postavke.stradanja && <BrzaAkcija ikona="upozorenje" oznaka="Stradanje" onClick={() => otvori({ tip: "stradanje" })} />}
         </div>
       </motion.header>
 
@@ -142,6 +144,8 @@ export default function Pregled() {
         )}
 
         <DanasSeSmije />
+
+        <PozoviKolegu />
 
         <BezProfila />
 
@@ -226,7 +230,7 @@ export default function Pregled() {
               {aktivnost.map((a) =>
                 a.tip === "izlazak" ? (
                   <li key={a.i.id}>
-                    <button onClick={() => otvori({ tip: "detalj-izlazak", id: a.i.id })} className="relative flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-povrsina-2">
+                    <button onClick={(e) => otvoriIz(e.currentTarget, { tip: "detalj-izlazak", id: a.i.id })} className="relative flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-povrsina-2">
                       <span className="relative grid size-6 shrink-0 place-items-center rounded-full border border-rub-jaki bg-povrsina ml-2">
                         <span className="size-2 rounded-full bg-mahovina" />
                       </span>
@@ -244,7 +248,7 @@ export default function Pregled() {
                   </li>
                 ) : (
                   <li key={a.o.id}>
-                    <button onClick={() => otvori({ tip: "detalj-odstrel", id: a.o.id })} className="relative flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-povrsina-2">
+                    <button onClick={(e) => otvoriIz(e.currentTarget, { tip: "detalj-odstrel", id: a.o.id })} className="relative flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-povrsina-2">
                       <span className="relative ml-2 grid size-6 shrink-0 place-items-center rounded-full" style={{ background: `${bojaVrste(a.o.vrsta)}30`, color: bojaVrste(a.o.vrsta) }}>
                         <Ikona ime="meta" velicina={13} debljina={2.2} />
                       </span>

@@ -382,3 +382,22 @@ html[data-lagano]::view-transition-new(.natrag) { --pomak: -28px; }
     transition: none !important;
   }
 }
+
+/* Kartica se rastvara u ploču s detaljima (otvoriIz u kontroleru) – samo ta dva elementa,
+   ostatak stranice ostaje miran. */
+html[data-vt-ploca]::view-transition-old(root),
+html[data-vt-ploca]::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(ploca-detalj) {
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(ploca-detalj) {
+  animation: 0.18s ease-out both vt-nestani;
+}
+::view-transition-new(ploca-detalj) {
+  animation: 0.3s 0.06s ease-out both vt-pojavi;
+}
+@keyframes vt-nestani { to { opacity: 0; } }
+@keyframes vt-pojavi { from { opacity: 0; } }

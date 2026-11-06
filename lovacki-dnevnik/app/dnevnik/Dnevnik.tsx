@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Ikona from "@/components/Ikona";
 import { Kostur } from "@/components/Kostur";
-import { otvori } from "@/components/urednici/kontroler";
+import { otvori, otvoriIz } from "@/components/urednici/kontroler";
 import { Gumb, Naslov, PraznoStanje, Segmenti } from "@/components/ui";
 import { NACINI_LOVA, bojaVrste, nazivSpola, opisStrijelca, vrsta as nadiVrstu, SKUPINE } from "@/lib/katalog";
 import { izIso, MJESECI_KRATKO, mnozina, trajanjeIzlaska } from "@/lib/format";
@@ -219,7 +219,7 @@ function KarticaIzlaska({ i, baza, red }: { i: Izlazak; baza: Baza; red: number 
   const opazeno = i.opazanja.reduce((s, o) => s + o.broj, 0);
   return (
     <motion.li {...ulaz(red)}>
-      <button onClick={() => otvori({ tip: "detalj-izlazak", id: i.id })} className="kartica flex w-full gap-3.5 p-3.5 text-left transition-colors hover:border-rub-jaki">
+      <button onClick={(e) => otvoriIz(e.currentTarget, { tip: "detalj-izlazak", id: i.id })} className="kartica flex w-full gap-3.5 p-3.5 text-left transition-colors hover:border-rub-jaki">
         <DatumBlok datum={i.datum} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ function KarticaOdstrela({ o, baza, red }: { o: Odstrel; baza: Baza; red: number
   const skupina = nadiVrstu(o.vrsta)?.skupina;
   return (
     <motion.li {...ulaz(red)}>
-      <button onClick={() => otvori({ tip: "detalj-odstrel", id: o.id })} className="kartica relative flex w-full gap-3.5 overflow-hidden p-3.5 text-left transition-colors hover:border-rub-jaki">
+      <button onClick={(e) => otvoriIz(e.currentTarget, { tip: "detalj-odstrel", id: o.id })} className="kartica relative flex w-full gap-3.5 overflow-hidden p-3.5 text-left transition-colors hover:border-rub-jaki">
         <span className="absolute inset-y-0 left-0 w-1" style={{ background: boja }} />
         <DatumBlok datum={o.datum} />
         <div className="min-w-0 flex-1">

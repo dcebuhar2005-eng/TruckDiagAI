@@ -2,6 +2,7 @@
 // Hrvatska: Pravilnik o lovostaju (NN 94/2019) – provjereno 4. 11. 2026., novijih izmjena nema.
 // Srbija: Pravilnik o proglašavanju lovostajem zaštićenih vrsta divljači (Sl. glasnik RS 9/2012 … 6/2026) – provjereno 5. 11. 2026.
 // BiH – Federacija: Pravilnik o vremenu lova lovostajem zaštićene divljači (federalni ministar, 2008.) – provjereno 5. 11. 2026.
+// Slovenija: Uredba o določitvi divjadi in lovnih dob (Uradni list RS 101/04, 81/14) – provjereno 6. 11. 2026.
 // BiH – Republika Srpska: Naredba o vremenu lova lovostajem zaštićene divljači (Sl. glasnik RS 105/2024) – provjereno 5. 11. 2026.
 // Podatke unosimo ručno iz službenog propisa (ne s web-stranica) i jednom godišnje provjerimo.
 
@@ -346,12 +347,102 @@ const RSRP: Vrsta[] = [
   { k: "kokosar", naziv: "Jastreb kokošar", latinski: "Accipiter gentilis", kat: "ptice", ikona: "🦅", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
 ];
 
+// Slovenija – Uredba o določitvi divjadi in lovnih dob (Uradni list RS, št. 101/04 in 81/14), 4. člen.
+// „Lanščak/mladica” = grlo u drugoj godini; odrasli razredi = treća godina i stariji.
+const SLO_DVIJE = "jednogodišnjak (lanščak) = grlo u drugoj godini života";
+const SLOVENIJA: Vrsta[] = [
+  { k: "srna", naziv: "Srna", latinski: "Capreolus capreolus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Srnjak i jednogodišnjak (lanščak)", pravilo: S([[1, 5], [31, 10]]), napomena: SLO_DVIJE },
+    { naziv: "Srna i lanad", pravilo: S([[1, 9], [31, 12]]) },
+    { naziv: "Jednogodišnja srna (mladica)", pravilo: S([[1, 5], [31, 12]]) },
+  ] },
+  { k: "jelen", naziv: "Jelen obični", latinski: "Cervus elaphus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[16, 8], [31, 12]]) },
+    { naziv: "Košuta", pravilo: S([[1, 9], [31, 12]]) },
+    { naziv: "Telad", pravilo: S([[1, 9], [31, 1]]) },
+    { naziv: "Junica i jednogodišnjak (lanščak)", pravilo: S([[1, 7], [31, 1]]), napomena: SLO_DVIJE },
+  ] },
+  { k: "lopatar", naziv: "Jelen lopatar", latinski: "Dama dama", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[16, 8], [31, 12]]) },
+    { naziv: "Košuta", pravilo: S([[1, 9], [31, 12]]) },
+    { naziv: "Telad", pravilo: S([[1, 9], [31, 1]]) },
+    { naziv: "Junica i jednogodišnjak (lanščak)", pravilo: S([[1, 7], [31, 1]]) },
+  ] },
+  { k: "muflon", naziv: "Muflon", latinski: "Ovis aries musimon", kat: "krupna", ikona: "🐏", dijelovi: [
+    { naziv: "Ovan, jednogodišnjaci i janjad", pravilo: S([[1, 8], [28, 2]]) },
+    { naziv: "Ovca", pravilo: S([[1, 8], [31, 12]]) },
+  ] },
+  { k: "divokoza", naziv: "Divokoza (gams)", latinski: "Rupicapra rupicapra", kat: "krupna", ikona: "🐐", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "kozorog", naziv: "Alpski kozorog", latinski: "Capra ibex", kat: "krupna", ikona: "🐐", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "svinja", naziv: "Divlja svinja", latinski: "Sus scrofa", kat: "krupna", ikona: "🐗", dijelovi: [
+    { naziv: "Vepar", pravilo: { tip: "nema" } },
+    { naziv: "Krmača", pravilo: S([[1, 7], [31, 1]]) },
+    { naziv: "Prasad i jednogodišnjaci", pravilo: { tip: "nema" } },
+  ] },
+  { k: "zec", naziv: "Zec", latinski: "Lepus europaeus", kat: "sitna", ikona: "🐇", dijelovi: jedan(S([[1, 10], [15, 12]])) },
+  { k: "kuna-bjelica", naziv: "Kuna bjelica", latinski: "Martes foina", kat: "sitna", ikona: "🦦", dijelovi: jedan(S([[1, 11], [28, 2]])) },
+  { k: "kuna-zlatica", naziv: "Kuna zlatica", latinski: "Martes martes", kat: "sitna", ikona: "🦦", dijelovi: jedan(S([[1, 11], [28, 2]])) },
+  { k: "jazavac", naziv: "Jazavac", latinski: "Meles meles", kat: "sitna", ikona: "🦡", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "lisica", naziv: "Lisica", latinski: "Vulpes vulpes", kat: "sitna", ikona: "🦊", dijelovi: jedan(S([[1, 7], [15, 3]])) },
+  { k: "cagalj", naziv: "Čagalj (šakal)", latinski: "Canis aureus", kat: "sitna", ikona: "🐺", dijelovi: jedan(S([[1, 7], [15, 3]])) },
+  { k: "rakunopas", naziv: "Rakunopas", latinski: "Nyctereutes procyonoides", kat: "sitna", ikona: "🦝", dijelovi: jedan(S([[1, 8], [31, 3]])) },
+  { k: "puh", naziv: "Puh", latinski: "Glis glis", kat: "sitna", ikona: "🐭", dijelovi: jedan(S([[1, 10], [30, 11]])) },
+  { k: "svizac", naziv: "Alpski svizac", latinski: "Marmota marmota", kat: "sitna", ikona: "🐿️", dijelovi: jedan(S([[1, 9], [30, 10]])) },
+  { k: "ondatra", naziv: "Bizamski štakor (pižmovka)", latinski: "Ondatra zibethicus", kat: "sitna", ikona: "🐀", dijelovi: jedan({ tip: "nema" }) },
+  { k: "nutrija", naziv: "Nutrija", latinski: "Myocastor coypus", kat: "sitna", ikona: "🐀", dijelovi: jedan({ tip: "nema" }) },
+  { k: "fazan", naziv: "Fazan", latinski: "Phasianus colchicus", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "trcka", naziv: "Trčka (uzgojena)", latinski: "Perdix perdix", kat: "ptice", ikona: "🐦", dijelovi: [
+    { naziv: "Sve", pravilo: S([[1, 9], [15, 11]]), napomena: "lovi se samo uzgojena trčka" },
+  ] },
+  { k: "gluhara", naziv: "Patka gluhara (mlakarica)", latinski: "Anas platyrhynchos", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [15, 1]])) },
+  { k: "sojka", naziv: "Šojka", latinski: "Garrulus glandarius", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "svraka", naziv: "Svraka", latinski: "Pica pica", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "vrana", naziv: "Siva vrana", latinski: "Corvus cornix", kat: "ptice", ikona: "🐦‍⬛", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+];
+
 export const DRZAVE: Drzava[] = [
   { k: "hr", naziv: "Hrvatska", zastava: "🇭🇷", izvor: "Pravilnik o lovostaju (NN 94/2019)", vrste: HRVATSKA },
   { k: "fbih", naziv: "BiH – Federacija", zastava: "🇧🇦", izvor: "Pravilnik o vremenu lova lovostajem zaštićene divljači (Federacija BiH, 2008.)", vrste: FBIH },
   { k: "rsrp", naziv: "BiH – Republika Srpska", zastava: "🇧🇦", izvor: "Naredba o vremenu lova lovostajem zaštićene divljači (Sl. glasnik Republike Srpske 105/2024)", vrste: RSRP },
+  { k: "si", naziv: "Slovenija", zastava: "🇸🇮", izvor: "Uredba o določitvi divjadi in lovnih dob (Uradni list RS, št. 101/04 in 81/14)", vrste: SLOVENIJA },
   { k: "rs", naziv: "Srbija", zastava: "🇷🇸", izvor: "Pravilnik o proglašavanju lovostajem zaštićenih vrsta divljači (Sl. glasnik RS 9/2012 … 6/2026)", vrste: SRBIJA },
 ];
+
+/* ---------------- Odabrana država ---------------- */
+
+const KLJUC_DRZAVE = "lovacki-dnevnik:kalendar-drzava";
+
+/** Pogodi državu po vremenskoj zoni i jeziku uređaja (BiH: srpski jezik → Republika Srpska). */
+export function pogodiDrzavu(): string {
+  try {
+    const zona = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const jezici = (navigator.languages?.length ? navigator.languages : [navigator.language]).map((j) => j.toLowerCase());
+    const prvi = jezici[0] ?? "";
+    if (zona === "Europe/Belgrade") return "rs";
+    if (zona === "Europe/Sarajevo") return prvi.startsWith("sr") ? "rsrp" : "fbih";
+    if (zona === "Europe/Zagreb") return "hr";
+    if (zona === "Europe/Ljubljana") return "si";
+    if (prvi.startsWith("sr")) return "rs";
+    if (prvi.startsWith("bs")) return "fbih";
+    if (prvi.startsWith("sl")) return "si";
+  } catch {}
+  return "hr";
+}
+
+/** Država koju je korisnik zadnju odabrao u kalendaru (ili pogođena). */
+export function odabranaDrzava(): string {
+  try {
+    const k = localStorage.getItem(KLJUC_DRZAVE);
+    if (k && DRZAVE.some((d) => d.k === k && d.vrste.length)) return k;
+  } catch {}
+  return pogodiDrzavu();
+}
+
+export function spremiDrzavu(k: string) {
+  try {
+    localStorage.setItem(KLJUC_DRZAVE, k);
+  } catch {}
+}
 
 export const KATEGORIJE: { k: Kategorija; naziv: string }[] = [
   { k: "krupna", naziv: "Krupna" },

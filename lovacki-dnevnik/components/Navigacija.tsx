@@ -21,6 +21,7 @@ export const RUTE: { href: string; oznaka: string; ikona: ImeIkone; mobilno: boo
   { href: "/lovista", oznaka: "Lovišta", ikona: "loviste", mobilno: false },
   { href: "/dozvole", oznaka: "Dozvole", ikona: "dozvola", mobilno: false },
   { href: "/statistika", oznaka: "Statistika", ikona: "statistika", mobilno: false },
+  { href: "/ispit", oznaka: "Lovački ispit", ikona: "zvijezda", mobilno: false },
   { href: "/postavke", oznaka: "Postavke", ikona: "postavke", mobilno: false },
 ];
 

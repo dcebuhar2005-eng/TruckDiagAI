@@ -1,5 +1,8 @@
 "use client";
 
+import { NAZIV_MEDALJE, medalja, vrstaTrofeja } from "@/lib/cic";
+import { usePro } from "@/lib/pro";
+
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
@@ -15,6 +18,7 @@ import Ikona, { type ImeIkone } from "../Ikona";
 import { StrelicaVjetra } from "../Vjetar";
 import { Gumb, Ploca, Znacka, cx, djeteListe, roditeljListe } from "../ui";
 import { otvori, zatvori } from "./kontroler";
+import KarticaLova from "../KarticaLova";
 
 function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: string; vrijednost: ReactNode }) {
   return (
@@ -28,8 +32,10 @@ function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: strin
   );
 }
 
-export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
+export function OdstrelDetalj({ baza, otvorena, id, prijelaz }: { baza: Baza; otvorena: boolean; id: string; prijelaz?: boolean }) {
   const o = baza.odstrel.find((x) => x.id === id);
+  const pro = usePro();
+  const [kartica, setKartica] = useState(false);
   const [fotke, setFotke] = useState<string[]>([]);
   const [aktivna, setAktivna] = useState(0);
   const [puniZaslon, setPuniZaslon] = useState<number | null>(null);
@@ -49,6 +55,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
   return (
     <Ploca
       otvorena={otvorena}
+      prijelaz={prijelaz}
       zatvori={zatvori}
       naslov={o.vrsta}
       podnaslov={`${nazivSpola(o.vrsta, o.spol)} · ${datumDugi(o.datum)} u ${o.vrijeme}${o.tudji ? ` · ${opisStrijelca(o)}` : ""}`}
@@ -61,6 +68,9 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
               </Gumb>
             </Link>
           )}
+          <Gumb ikona="strelica" className="flex-1" onClick={() => setKartica(true)}>
+            Podijeli
+          </Gumb>
           <Gumb vrsta="primarni" ikona="uredi" className="flex-1" onClick={() => otvori({ tip: "odstrel", id: o.id })}>
             Uredi
           </Gumb>
@@ -110,7 +120,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         <Podatak ikona="vaga" oznaka="Masa" vrijednost={o.masa ? `${o.masa.toLocaleString("hr-HR")} kg` : "–"} />
-        <Podatak ikona="trofej" oznaka="Trofej" vrijednost={o.trofejCic ? `${o.trofejCic.toLocaleString("hr-HR")} CIC` : "–"} />
+        <Podatak ikona="trofej" oznaka="Trofej" vrijednost={o.trofejCic ? `${o.trofejCic.toLocaleString("hr-HR")} CIC${pro ? opisMedalje(o) : ""}` : "–"} />
         <Podatak ikona="kalendar" oznaka="Dob" vrijednost={o.dob ?? "–"} />
         <Podatak ikona="nisan" oznaka="Udaljenost" vrijednost={o.udaljenost ? `${o.udaljenost} m` : "–"} />
         <Podatak ikona="meta" oznaka="Kalibar" vrijednost={o.kalibar ?? "–"} />
@@ -183,11 +193,20 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
           </motion.div>
         )}
       </AnimatePresence>
+      {kartica && (
+        <KarticaLova
+          odstrel={o}
+          foto={fotke[0]}
+          lovisteNaziv={o.lovisteId ? nazivLovista(baza, o.lovisteId) : undefined}
+          otvorena={kartica}
+          zatvori={() => setKartica(false)}
+        />
+      )}
     </Ploca>
   );
 }
 
-export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
+export function IzlazakDetalj({ baza, otvorena, id, prijelaz }: { baza: Baza; otvorena: boolean; id: string; prijelaz?: boolean }) {
   const i = baza.izlasci.find((x) => x.id === id);
   if (!i) return null;
   const tocka = baza.tocke.find((t) => t.id === i.tockaId);
@@ -203,6 +222,7 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
   return (
     <Ploca
       otvorena={otvorena}
+      prijelaz={prijelaz}
       zatvori={zatvori}
       naslov={datumDugi(i.datum)}
       podnaslov={`${danUTjednu(dan).replace(/^./, (c) => c.toUpperCase())} · ${i.od}${i.do ? `–${i.do}` : ""}${min ? ` · ${Math.floor(min / 60)} h ${min % 60} min` : ""}`}
@@ -476,4 +496,11 @@ function MalaSlika({ id }: { id: string }) {
   if (!url) return <Ikona ime="kamera" velicina={16} className="text-tekst-3" />;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={url} alt="" className="size-10 rounded-lg object-cover" />;
+}
+
+/** „ · 🥈 Srebrna medalja” uz CIC bodove (samo vrste koje kalkulator poznaje). */
+function opisMedalje(o: { vrsta: string; spol: string; trofejCic?: number }) {
+  const v = vrstaTrofeja(o.vrsta, o.spol);
+  const m = v && o.trofejCic ? medalja(v, o.trofejCic) : null;
+  return m ? ` · ${NAZIV_MEDALJE[m]}` : "";
 }

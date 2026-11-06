@@ -272,6 +272,7 @@ export function Ploca({
   children,
   podnozje,
   sirina = 560,
+  prijelaz,
 }: {
   otvorena: boolean;
   zatvori: () => void;
@@ -280,6 +281,8 @@ export function Ploca({
   children: ReactNode;
   podnozje?: ReactNode;
   sirina?: number;
+  /** Otvorena preko View Transitiona (kartica se rastvara u ploču) – bez vlastitog ulaska odozdo. */
+  prijelaz?: boolean;
 }) {
   const klijent = useKlijent();
   const desktop = useDesktop();
@@ -333,8 +336,8 @@ export function Ploca({
             role="dialog"
             aria-modal
             className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] md:rounded-[28px] border border-rub bg-povrsina shadow-jaka"
-            style={{ maxWidth: desktop ? sirina : undefined, y: desktop ? undefined : y }}
-            initial={desktop ? { opacity: 0, scale: 0.94, y: 16 } : { y: "100%" }}
+            style={{ maxWidth: desktop ? sirina : undefined, y: desktop ? undefined : y, viewTransitionName: prijelaz ? "ploca-detalj" : undefined }}
+            initial={prijelaz ? false : desktop ? { opacity: 0, scale: 0.94, y: 16 } : { y: "100%" }}
             animate={desktop ? { opacity: 1, scale: 1, y: 0 } : { y: 0 }}
             exit={desktop ? { opacity: 0, scale: 0.96, y: 10 } : { y: "100%" }}
             transition={mekaOpruga}
