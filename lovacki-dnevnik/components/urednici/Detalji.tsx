@@ -1,5 +1,7 @@
 "use client";
 
+import { NAZIV_MEDALJE, medalja, vrstaTrofeja } from "@/lib/cic";
+
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
@@ -110,7 +112,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         <Podatak ikona="vaga" oznaka="Masa" vrijednost={o.masa ? `${o.masa.toLocaleString("hr-HR")} kg` : "–"} />
-        <Podatak ikona="trofej" oznaka="Trofej" vrijednost={o.trofejCic ? `${o.trofejCic.toLocaleString("hr-HR")} CIC` : "–"} />
+        <Podatak ikona="trofej" oznaka="Trofej" vrijednost={o.trofejCic ? `${o.trofejCic.toLocaleString("hr-HR")} CIC${opisMedalje(o)}` : "–"} />
         <Podatak ikona="kalendar" oznaka="Dob" vrijednost={o.dob ?? "–"} />
         <Podatak ikona="nisan" oznaka="Udaljenost" vrijednost={o.udaljenost ? `${o.udaljenost} m` : "–"} />
         <Podatak ikona="meta" oznaka="Kalibar" vrijednost={o.kalibar ?? "–"} />
@@ -476,4 +478,11 @@ function MalaSlika({ id }: { id: string }) {
   if (!url) return <Ikona ime="kamera" velicina={16} className="text-tekst-3" />;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={url} alt="" className="size-10 rounded-lg object-cover" />;
+}
+
+/** „ · 🥈 Srebrna medalja” uz CIC bodove (samo vrste koje kalkulator poznaje). */
+function opisMedalje(o: { vrsta: string; spol: string; trofejCic?: number }) {
+  const v = vrstaTrofeja(o.vrsta, o.spol);
+  const m = v && o.trofejCic ? medalja(v, o.trofejCic) : null;
+  return m ? ` · ${NAZIV_MEDALJE[m]}` : "";
 }
