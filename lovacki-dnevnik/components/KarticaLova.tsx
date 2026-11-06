@@ -1,22 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { moguDijeliti, nacrtajKarticu, podijeliKarticu } from "@/lib/kartica";
+import { moguDijeliti, nacrtajKarticu, podijeliKarticu, type SadrzajKartice } from "@/lib/kartica";
 import { dogadaj } from "@/lib/pracenje";
-import type { Odstrel } from "@/lib/types";
 import { Gumb, Ploca, obavijest } from "./ui";
 
-/** Pregled kartice lova i dijeljenje (WhatsApp, Facebook, Instagram…). */
+/** Pregled kartice (odstrel ili izlazak) i dijeljenje (WhatsApp, Facebook, Instagram…). */
 export default function KarticaLova({
-  odstrel,
+  sadrzaj,
   foto,
-  lovisteNaziv,
+  ime,
+  tekst,
+  vrsta,
   otvorena,
   zatvori,
 }: {
-  odstrel: Odstrel;
+  sadrzaj: SadrzajKartice;
   foto?: string;
-  lovisteNaziv?: string;
+  /** Ime datoteke slike. */
+  ime: string;
+  /** Tekst uz sliku pri dijeljenju. */
+  tekst: string;
+  /** Za statistiku: „odstrel” ili „izlazak”. */
+  vrsta: string;
   otvorena: boolean;
   zatvori: () => void;
 }) {
@@ -28,7 +34,7 @@ export default function KarticaLova({
   useEffect(() => {
     let ziv = true;
     let u: string | null = null;
-    nacrtajKarticu(odstrel, foto, lovisteNaziv)
+    nacrtajKarticu(sadrzaj, foto)
       .then((b) => {
         if (!ziv) return;
         u = URL.createObjectURL(b);
@@ -40,14 +46,16 @@ export default function KarticaLova({
       ziv = false;
       if (u) URL.revokeObjectURL(u);
     };
-  }, [odstrel, foto, lovisteNaziv]);
+    // Sadržaj se ne mijenja dok je ploča otvorena.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [foto]);
 
   const podijeli = async () => {
     if (!blob) return;
     setRadim(true);
     try {
-      const ok = await podijeliKarticu(blob, `crolovac-${odstrel.datum}.png`, `${odstrel.vrsta} – Dobra kob! 🍀 Zapisano u CroLovcu: https://crolovac.com`);
-      if (ok) dogadaj("kartica_lova_podijeljena", { vrsta: odstrel.vrsta });
+      const ok = await podijeliKarticu(blob, ime, tekst);
+      if (ok) dogadaj("kartica_lova_podijeljena", { vrsta });
     } catch {
       obavijest("Dijeljenje nije uspjelo", "greska");
     } finally {
@@ -59,7 +67,7 @@ export default function KarticaLova({
     <Ploca
       otvorena={otvorena}
       zatvori={zatvori}
-      naslov="Podijeli kartu lova"
+      naslov={vrsta === "izlazak" ? "Podijeli izlazak" : "Podijeli kartu lova"}
       podnaslov="Slika za WhatsApp, Facebook ili Instagram"
       sirina={460}
       podnozje={

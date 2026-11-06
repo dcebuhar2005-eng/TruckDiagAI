@@ -57,5 +57,16 @@ export async function podijeliTekst(tekst: string): Promise<"podijeljeno" | "kop
   return "kopirano";
 }
 
+/** Google Play s oznakom pozivnice (Play je prenosi u statistiku instalacija). */
+export const playPozivnice = (korisnickoIme: string) =>
+  `https://play.google.com/store/apps/details?id=com.crolovac.app&referrer=${encodeURIComponent(`utm_source=pozivnica&utm_medium=link&utm_content=${korisnickoIme}`)}`;
+
 export const tekstPozivnice = (korisnickoIme: string) =>
-  `Lovim s CroLovcem – besplatnom aplikacijom za lovce 🦌 Dnevnik, karta s čekama, vjetar i lovni kalendar. Instaliraj i dodaj me za prijatelja (@${korisnickoIme}): ${linkPozivnice(korisnickoIme)}`;
+  [
+    "Lovim s CroLovcem – besplatnom aplikacijom za lovce 🦌 Dnevnik, karta s čekama, vjetar i lovni kalendar.",
+    "",
+    `▶️ Android (Google Play): ${playPozivnice(korisnickoIme)}`,
+    `📱 iPhone i računalo: ${linkPozivnice(korisnickoIme)}`,
+    "",
+    `Dodaj me za prijatelja – u aplikaciji Lovci → traži @${korisnickoIme}`,
+  ].join("\n");

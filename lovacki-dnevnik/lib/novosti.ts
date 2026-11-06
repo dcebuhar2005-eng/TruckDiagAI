@@ -10,6 +10,11 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-06c",
+    naslov: "Novo u CroLovcu",
+    stavke: ["📸 Podijelite i izlazak: u detalju izlaska gumb sa strelicom napravi sliku (fotka, lovište, što ste vidjeli, odstrel) za WhatsApp, Facebook ili Instagram."],
+  },
+  {
     id: "2026-11-06b",
     naslov: "Novo u CroLovcu",
     stavke: [
