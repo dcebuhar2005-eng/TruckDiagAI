@@ -32,7 +32,7 @@ function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: strin
   );
 }
 
-export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
+export function OdstrelDetalj({ baza, otvorena, id, prijelaz }: { baza: Baza; otvorena: boolean; id: string; prijelaz?: boolean }) {
   const o = baza.odstrel.find((x) => x.id === id);
   const pro = usePro();
   const [kartica, setKartica] = useState(false);
@@ -55,6 +55,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
   return (
     <Ploca
       otvorena={otvorena}
+      prijelaz={prijelaz}
       zatvori={zatvori}
       naslov={o.vrsta}
       podnaslov={`${nazivSpola(o.vrsta, o.spol)} · ${datumDugi(o.datum)} u ${o.vrijeme}${o.tudji ? ` · ${opisStrijelca(o)}` : ""}`}
@@ -205,7 +206,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
   );
 }
 
-export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
+export function IzlazakDetalj({ baza, otvorena, id, prijelaz }: { baza: Baza; otvorena: boolean; id: string; prijelaz?: boolean }) {
   const i = baza.izlasci.find((x) => x.id === id);
   if (!i) return null;
   const tocka = baza.tocke.find((t) => t.id === i.tockaId);
@@ -221,6 +222,7 @@ export function IzlazakDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
   return (
     <Ploca
       otvorena={otvorena}
+      prijelaz={prijelaz}
       zatvori={zatvori}
       naslov={datumDugi(i.datum)}
       podnaslov={`${danUTjednu(dan).replace(/^./, (c) => c.toUpperCase())} · ${i.od}${i.do ? `–${i.do}` : ""}${min ? ` · ${Math.floor(min / 60)} h ${min % 60} min` : ""}`}

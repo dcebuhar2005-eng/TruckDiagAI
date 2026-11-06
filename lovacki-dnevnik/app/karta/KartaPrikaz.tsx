@@ -867,7 +867,13 @@ export default function KartaPrikaz() {
                 position={[o.lat!, o.lng!]}
                 icon={ikonaOdstrela(bojaVrste(o.vrsta))}
                 title={`Odstrel: ${o.vrsta}`}
-                eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "odstrel", id: o.id }) }}
+                eventHandlers={{
+                  click: () => {
+                    if (nacin !== "pregled") return;
+                    setOdabir({ tip: "odstrel", id: o.id });
+                    setCilj({ lat: o.lat!, lng: o.lng!, k: Date.now() });
+                  },
+                }}
               />
             ))}
 
@@ -895,7 +901,13 @@ export default function KartaPrikaz() {
                       position={[t.lat, t.lng]}
                       icon={ikonaTraga(divljacTraga(t.divljac).boja, t.svjez)}
                       title={`Trag: ${znakTraga(t.znak)}`}
-                      eventHandlers={{ click: () => nacin === "pregled" && setOdabir({ tip: "trag", id: i.id, k }) }}
+                      eventHandlers={{
+                        click: () => {
+                          if (nacin !== "pregled") return;
+                          setOdabir({ tip: "trag", id: i.id, k });
+                          setCilj({ lat: t.lat!, lng: t.lng!, k: Date.now() });
+                        },
+                      }}
                     />,
                   ]
                 : [],

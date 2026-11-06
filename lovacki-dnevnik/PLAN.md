@@ -158,7 +158,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 2. **Priprema za lovački ispit (kviz)** (6. 11., napravljeno: `/ispit`, `lib/ispit.ts` – 27 općih pitanja + pitanja o lovostaju iz kalendara odabrane države; 10 po krugu, najbolji rezultat pamti se na uređaju; u izborniku „Više”) – pitanja o lovostaju generirana iz provjerenih podataka (`lib/lovostaj.ts`, sve države) + provjerena opća pitanja (vrste, oružje, sigurnost, etika).
 3. **Slovenija u lovnom kalendaru** (6. 11., napravljeno: Uredba o določitvi divjadi in lovnih dob, Uradni list RS 101/04 i 81/14; pogađa se po zoni Europe/Ljubljana i jeziku sl) – iz službenog slovenskog propisa o lovnim dobama.
 4. **„Pozovi kolegu”** (6. 11., napravljeno: `lib/pozivnica.ts`, `components/PozoviKolegu.tsx`; link profila + utm_source=pozivnica; pozivnica se pamti prije registracije i nakon prijave nudi dodavanje; `user_metadata.pozvao` u računu; kartica na Pregledu dok < 3 prijatelja, gumb na Lovcima; PostHog `pozivnica_otvorena/poslana`) – osobni link (ref), bez promjene baze.
-5. **Drugi krug glatkih prijelaza** – kartica se rastvori u detalj, karta glatko leti do točke.
+5. **Drugi krug glatkih prijelaza** (6. 11., napravljeno: `otvoriIz` u `components/urednici/kontroler.ts` – View Transition „ploca-detalj” iz kartice u ploču na mobitelu, Ploca prop `prijelaz`; bez podrške/„smanji pokrete”/slabiji mobitel/računalo = obično otvaranje; karta flyTo i za odstrel i tragove) – kartica se rastvori u detalj, karta glatko leti do točke.
 6. **Mail neaktivnim korisnicima (Resend)** – vlasnik sam upisuje Resend ključ; Claude priprema tekst i popis.
 
 Vlasnik 6. 11.: 1.–5. **besplatno**. **Kalkulator trofeja = PRO** (vlasnik 6. 11.).

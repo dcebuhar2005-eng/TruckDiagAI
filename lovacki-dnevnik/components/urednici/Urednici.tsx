@@ -66,9 +66,9 @@ export default function Urednici() {
     case "tocka":
       return <TockaUrednik key={k} baza={baza} otvorena={o} id={zadnji.id} pocetno={zadnji.pocetno} />;
     case "detalj-izlazak":
-      return <IzlazakDetalj key={k} baza={baza} otvorena={o} id={zadnji.id} />;
+      return <IzlazakDetalj key={k} baza={baza} otvorena={o} id={zadnji.id} prijelaz={zadnji.prijelaz} />;
     case "detalj-odstrel":
-      return <OdstrelDetalj key={k} baza={baza} otvorena={o} id={zadnji.id} />;
+      return <OdstrelDetalj key={k} baza={baza} otvorena={o} id={zadnji.id} prijelaz={zadnji.prijelaz} />;
     case "dolazak":
       return <DolazakDivljaci key={k} baza={baza} otvorena={o} tockaId={zadnji.tockaId} />;
     case "stradanje":
