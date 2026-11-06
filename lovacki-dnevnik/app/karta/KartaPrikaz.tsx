@@ -1107,6 +1107,19 @@ export default function KartaPrikaz() {
         </div>
       </div>
 
+      {/* Dodir izvan otvorene ploče (slojevi, legenda, karta bez signala) zatvara je. */}
+      {(izbornik || legenda || offlinePanel) && (
+        <div
+          aria-hidden
+          className="absolute inset-0 z-[590]"
+          onPointerDown={() => {
+            setIzbornik(false);
+            setLegenda(false);
+            setOfflinePanel(false);
+          }}
+        />
+      )}
+
       {/* Izbornik slojeva */}
       <AnimatePresence>
         {izbornik && (
@@ -1118,7 +1131,12 @@ export default function KartaPrikaz() {
             style={{ transformOrigin: "top right" }}
             className="absolute top-[max(4.5rem,calc(env(safe-area-inset-top)+4rem))] right-3 z-[600] max-h-[calc(100dvh-10rem)] w-64 overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#0d130e]/90 p-3 text-white shadow-jaka backdrop-blur-xl md:top-20 md:right-5"
           >
-            <div className="mb-2 text-[11px] font-semibold tracking-wider text-white/50 uppercase">Podloga</div>
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-[11px] font-semibold tracking-wider text-white/50 uppercase">Podloga</div>
+              <button onClick={() => setIzbornik(false)} aria-label="Zatvori slojeve" className="-m-1 grid size-8 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white">
+                <Ikona ime="x" velicina={18} />
+              </button>
+            </div>
             <div className="mb-3 grid grid-cols-3 gap-1.5">
               {(Object.keys(PODLOGE) as Podloga[]).map((p) => (
                 <button
