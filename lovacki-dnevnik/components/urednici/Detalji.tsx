@@ -16,9 +16,11 @@ import { centarLovista, mojOdstrel, nazivLovista } from "@/lib/upiti";
 import { opisVremena, smjerVjetra } from "@/lib/vrijeme";
 import Ikona, { type ImeIkone } from "../Ikona";
 import { StrelicaVjetra } from "../Vjetar";
-import { Gumb, Ploca, Znacka, cx, djeteListe, roditeljListe } from "../ui";
+import { Gumb, IkonaGumb, Ploca, Znacka, cx, djeteListe, roditeljListe } from "../ui";
 import { otvori, zatvori } from "./kontroler";
 import KarticaLova from "../KarticaLova";
+import { sadrzajIzlaska, sadrzajOdstrela } from "@/lib/kartica";
+import type { Izlazak } from "@/lib/types";
 
 function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: string; vrijednost: ReactNode }) {
   return (
@@ -195,9 +197,11 @@ export function OdstrelDetalj({ baza, otvorena, id, prijelaz }: { baza: Baza; ot
       </AnimatePresence>
       {kartica && (
         <KarticaLova
-          odstrel={o}
+          sadrzaj={sadrzajOdstrela(o, o.lovisteId ? nazivLovista(baza, o.lovisteId) : undefined)}
           foto={fotke[0]}
-          lovisteNaziv={o.lovisteId ? nazivLovista(baza, o.lovisteId) : undefined}
+          ime={`crolovac-${o.datum}.png`}
+          tekst={`${o.vrsta} – Dobra kob! 🍀 Zapisano u CroLovcu: https://crolovac.com`}
+          vrsta="odstrel"
           otvorena={kartica}
           zatvori={() => setKartica(false)}
         />
@@ -228,6 +232,7 @@ export function IzlazakDetalj({ baza, otvorena, id, prijelaz }: { baza: Baza; ot
       podnaslov={`${danUTjednu(dan).replace(/^./, (c) => c.toUpperCase())} · ${i.od}${i.do ? `–${i.do}` : ""}${min ? ` · ${Math.floor(min / 60)} h ${min % 60} min` : ""}`}
       podnozje={
         <div className="flex gap-2">
+          <PodijeliIzlazak baza={baza} izlazak={i} />
           <Gumb ikona="meta" className="flex-1" onClick={() => otvori({ tip: "odstrel", pocetno: { izlazakId: i.id, datum: i.datum, lovisteId: i.lovisteId, lat: tocka?.lat, lng: tocka?.lng } })}>
             Upiši odstrel
           </Gumb>
@@ -503,4 +508,37 @@ function opisMedalje(o: { vrsta: string; spol: string; trofejCic?: number }) {
   const v = vrstaTrofeja(o.vrsta, o.spol);
   const m = v && o.trofejCic ? medalja(v, o.trofejCic) : null;
   return m ? ` · ${NAZIV_MEDALJE[m]}` : "";
+}
+
+/** Gumb „Podijeli” u detalju izlaska: kartica s prvom fotografijom iz izlaska. */
+function PodijeliIzlazak({ baza, izlazak: i }: { baza: Baza; izlazak: Izlazak }) {
+  const [otvoreno, setOtvoreno] = useState(false);
+  const [foto, setFoto] = useState<string | undefined>();
+  const prva = i.fotoIds?.[0];
+  useEffect(() => {
+    if (!otvoreno || !prva) return;
+    let ziv = true;
+    dohvatiFoto(prva).then((u) => ziv && setFoto(u ?? undefined));
+    return () => {
+      ziv = false;
+    };
+  }, [otvoreno, prva]);
+  const lovisteNaziv = i.lovisteId ? nazivLovista(baza, i.lovisteId) : undefined;
+  const odstrel = baza.odstrel.filter((o) => o.izlazakId === i.id && mojOdstrel(o));
+  return (
+    <>
+      <IkonaGumb ikona="strelica" oznaka="Podijeli izlazak" onClick={() => setOtvoreno(true)} className="h-12 w-12 shrink-0" />
+      {otvoreno && (!prva || foto) && (
+        <KarticaLova
+          sadrzaj={sadrzajIzlaska(i, NACINI_LOVA[i.nacin], lovisteNaziv, odstrel)}
+          foto={foto}
+          ime={`crolovac-izlazak-${i.datum}.png`}
+          tekst={`${NACINI_LOVA[i.nacin]}${lovisteNaziv ? ` – ${lovisteNaziv}` : ""} 🌲 Dobra kob! Zapisano u CroLovcu: https://crolovac.com`}
+          vrsta="izlazak"
+          otvorena={otvoreno}
+          zatvori={() => setOtvoreno(false)}
+        />
+      )}
+    </>
+  );
 }

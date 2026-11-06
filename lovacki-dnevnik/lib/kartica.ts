@@ -9,7 +9,7 @@ import { Directory, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { datumDugi } from "./format";
 import { nazivSpola } from "./katalog";
-import type { Odstrel } from "./types";
+import type { Izlazak, Odstrel } from "./types";
 
 const S = 1080;
 const V = 1350;
@@ -30,8 +30,48 @@ function obitelj(varijabla: string, rezerva: string) {
   return v ? `${v}, ${rezerva}` : rezerva;
 }
 
-/** Nacrta karticu i vrati PNG. `foto` je URL fotografije odstrela (ili prazno). */
-export async function nacrtajKarticu(o: Odstrel, foto: string | undefined, lovisteNaziv?: string): Promise<Blob> {
+export interface SadrzajKartice {
+  /** Mala zlatna oznaka iznad naslova (npr. „SRNJAK”, „IZLAZAK NA ČEKU”). */
+  oznaka: string;
+  naslov: string;
+  /** Redak ispod naslova (datum, masa, lovište…). */
+  crta: string;
+  /** Drugi redak (npr. što je viđeno) – neobavezno. */
+  crta2?: string;
+  /** Znak u sredini kad nema fotografije. */
+  znak: string;
+}
+
+/** Kartica odstrela. */
+export function sadrzajOdstrela(o: Odstrel, lovisteNaziv?: string): SadrzajKartice {
+  return {
+    oznaka: nazivSpola(o.vrsta, o.spol).toUpperCase(),
+    naslov: o.vrsta,
+    crta: [datumDugi(o.datum), o.masa ? `${o.masa.toLocaleString("hr-HR")} kg` : "", lovisteNaziv ?? ""].filter(Boolean).join("  ·  "),
+    znak: o.vrsta === "Divlja svinja" ? "🐗" : "🦌",
+  };
+}
+
+/** Kartica izlaska: način lova, datum i vrijeme, lovište, što je viđeno i odstrel. */
+export function sadrzajIzlaska(i: Izlazak, nacin: string, lovisteNaziv: string | undefined, odstrel: Odstrel[]): SadrzajKartice {
+  const vidjeno = Object.entries(
+    (i.opazanja ?? []).reduce<Record<string, number>>((a, x) => ({ ...a, [x.vrsta]: (a[x.vrsta] ?? 0) + (x.broj || 1) }), {}),
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([v, n]) => `${v} ${n}`);
+  const uspjeh = odstrel.length ? `🎯 ${odstrel.map((o) => o.vrsta).join(", ")}` : "";
+  return {
+    oznaka: nacin.toUpperCase(),
+    naslov: lovisteNaziv ?? "Dan u lovištu",
+    crta: [datumDugi(i.datum), `${i.od}${i.do ? `–${i.do}` : ""}`].join("  ·  "),
+    crta2: [uspjeh, vidjeno.length ? `Viđeno: ${vidjeno.join(", ")}` : ""].filter(Boolean).join("  ·  ") || undefined,
+    znak: odstrel.length ? "🎯" : "🌲",
+  };
+}
+
+/** Nacrta karticu i vrati PNG. `foto` je URL fotografije (ili prazno). */
+export async function nacrtajKarticu(sadrzaj: SadrzajKartice, foto: string | undefined): Promise<Blob> {
   const c = document.createElement("canvas");
   c.width = S;
   c.height = V;
@@ -59,7 +99,7 @@ export async function nacrtajKarticu(o: Odstrel, foto: string | undefined, lovis
     g.fillRect(0, 0, S, V);
     g.font = `260px ${sans}`;
     g.textAlign = "center";
-    g.fillText(o.vrsta === "Divlja svinja" ? "🐗" : "🦌", S / 2, V * 0.42);
+    g.fillText(sadrzaj.znak, S / 2, V * 0.42);
   }
 
   // Zatamnjenje gore i dolje da se tekst čita.
@@ -96,19 +136,22 @@ export async function nacrtajKarticu(o: Odstrel, foto: string | undefined, lovis
 
   // Tekst dolje.
   g.textBaseline = "alphabetic";
-  let y = V - 330;
+  let y = V - (sadrzaj.crta2 ? 384 : 330);
   g.font = `500 38px ${sans}`;
   g.fillStyle = ZLATO;
-  g.fillText(`${nazivSpola(o.vrsta, o.spol).toUpperCase()}`, 72, y);
+  g.fillText(sadrzaj.oznaka, 72, y, S - 144);
   y += 96;
   g.font = `600 92px ${serif}`;
   g.fillStyle = "#ffffff";
-  g.fillText(o.vrsta, 72, y, S - 144);
+  g.fillText(sadrzaj.naslov, 72, y, S - 144);
   y += 64;
-  const crte = [datumDugi(o.datum), o.masa ? `${o.masa.toLocaleString("hr-HR")} kg` : "", lovisteNaziv ?? ""].filter(Boolean).join("  ·  ");
   g.font = `400 36px ${sans}`;
   g.fillStyle = "rgba(255,255,255,.82)";
-  g.fillText(crte, 72, y, S - 144);
+  g.fillText(sadrzaj.crta, 72, y, S - 144);
+  if (sadrzaj.crta2) {
+    y += 54;
+    g.fillText(sadrzaj.crta2, 72, y, S - 144);
+  }
   y += 92;
   g.font = `italic 600 54px ${serif}`;
   g.fillStyle = ZLATO;
