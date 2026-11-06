@@ -1,12 +1,15 @@
 // Lovni kalendar: lovostaj po vrstama divljači i državama.
 // Hrvatska: Pravilnik o lovostaju (NN 94/2019) – provjereno 4. 11. 2026., novijih izmjena nema.
+// Srbija: Pravilnik o proglašavanju lovostajem zaštićenih vrsta divljači (Sl. glasnik RS 9/2012 … 6/2026) – provjereno 5. 11. 2026.
+// BiH – Federacija: Pravilnik o vremenu lova lovostajem zaštićene divljači (federalni ministar, 2008.) – provjereno 5. 11. 2026.
+// BiH – Republika Srpska: Naredba o vremenu lova lovostajem zaštićene divljači (Sl. glasnik RS 105/2024) – provjereno 5. 11. 2026.
 // Podatke unosimo ručno iz službenog propisa (ne s web-stranica) i jednom godišnje provjerimo.
 
 export type Datum = [dan: number, mjesec: number];
 
 /** Pravilo za jedan dio vrste (npr. jelen / košuta / tele). */
 export type Pravilo =
-  | { tip: "lovostaj"; od: Datum; do: Datum }
+  | { tip: "lovostaj"; od: Datum; do: Datum; /** dodatna razdoblja lovostaja (kad vrsta ima dva lova godišnje) */ jos?: { od: Datum; do: Datum }[] }
   | { tip: "nema"; uvjet?: string }
   | { tip: "uvjet"; tekst: string }
   | { tip: "zabrana" }
@@ -20,7 +23,7 @@ export interface Vrsta {
   latinski: string;
   kat: Kategorija;
   ikona: string;
-  dijelovi: { naziv: string; pravilo: Pravilo }[];
+  dijelovi: { naziv: string; pravilo: Pravilo; napomena?: string }[];
 }
 
 export interface Drzava {
@@ -33,6 +36,40 @@ export interface Drzava {
 
 const L = (od: Datum, doD: Datum): Pravilo => ({ tip: "lovostaj", od, do: doD });
 const jedan = (pravilo: Pravilo, naziv = "Sve") => [{ naziv, pravilo }];
+const MJ = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const uDan = ([d, m]: Datum) => MJ.slice(0, m - 1).reduce((a, x) => a + x, 0) + Math.min(d, MJ[m - 1]) - 1;
+const izDana = (i: number): Datum => {
+  let m = 0;
+  while (i >= MJ[m]) i -= MJ[m++];
+  return [i + 1, m + 1];
+};
+/** Lovna sezona kako piše u propisu (kad se SMIJE loviti) → lovostaj. 29. 2. se računa kao kraj veljače. */
+function S(...sezone: [Datum, Datum][]): Pravilo {
+  const otv = new Array<boolean>(365).fill(false);
+  for (const [od, doD] of sezone) {
+    const a = uDan(od);
+    const b = uDan(doD);
+    for (let i = a; ; i = (i + 1) % 365) {
+      otv[i] = true;
+      if (i === b) break;
+    }
+  }
+  const pocetak = otv.indexOf(true);
+  if (pocetak < 0) return { tip: "zabrana" };
+  const zatvoreno: { od: Datum; do: Datum }[] = [];
+  let od: number | null = null;
+  for (let k = 1; k <= 365; k++) {
+    const i = (pocetak + k) % 365;
+    if (!otv[i] && od == null) od = i;
+    if (otv[i] && od != null) {
+      zatvoreno.push({ od: izDana(od), do: izDana((i + 364) % 365) });
+      od = null;
+    }
+  }
+  if (!zatvoreno.length) return { tip: "nema" };
+  const [prvi, ...jos] = zatvoreno;
+  return jos.length ? { tip: "lovostaj", ...prvi, jos } : { tip: "lovostaj", ...prvi };
+}
 const ZENKA = "osim ženke kad je visoko bređa ili vodi mladunčad";
 const ZENKA_SITNA = "osim ženke kad je visoko bređa ili vodi sitnu mladunčad";
 
@@ -103,10 +140,217 @@ const HRVATSKA: Vrsta[] = [
   { k: "sojka", naziv: "Šojka kreštalica", latinski: "Garrulus glandarius", kat: "ptice", ikona: "🐦", dijelovi: jedan(L([1, 3], [31, 7])) },
 ];
 
+const SAMO_STETE = "lovi se samo radi sprječavanja šteta, prema godišnjem planu";
+const ZENKA_RS = "osim ženke dok je visoko bređa, nosi jaja ili odgaja mladunce";
+
+// Srbija – Pravilnik o proglašavanju lovostajem zaštićenih vrsta divljači (Sl. glasnik RS 9/2012 … 6/2026), Prilog.
+const SRBIJA: Vrsta[] = [
+  // Krupna divljač
+  { k: "jelen", naziv: "Jelen obični", latinski: "Cervus elaphus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[1, 8], [15, 2]]) },
+    { naziv: "Košuta i tele", pravilo: S([[1, 8], [15, 2]]) },
+  ] },
+  { k: "lopatar", naziv: "Jelen lopatar", latinski: "Dama dama", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[1, 9], [15, 2]]) },
+    { naziv: "Košuta i jelenče", pravilo: S([[1, 9], [15, 2]]) },
+  ] },
+  { k: "virdzinijski", naziv: "Jelen virdžinijski", latinski: "Odocoileus virginianus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[1, 9], [15, 2]]) },
+    { naziv: "Košuta i tele", pravilo: S([[1, 9], [15, 2]]) },
+  ] },
+  { k: "srna", naziv: "Srna", latinski: "Capreolus capreolus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Srndać", pravilo: S([[15, 4], [30, 9]]) },
+    { naziv: "Srna i lane", pravilo: S([[1, 9], [31, 1]]) },
+  ] },
+  { k: "divokoza", naziv: "Divokoza", latinski: "Rupicapra rupicapra", kat: "krupna", ikona: "🐐", dijelovi: [
+    { naziv: "Divojarac", pravilo: S([[1, 7], [31, 1]]) },
+    { naziv: "Divokoza i divojare", pravilo: S([[1, 9], [31, 1]]) },
+  ] },
+  { k: "muflon", naziv: "Muflon", latinski: "Ovis aries musimon", kat: "krupna", ikona: "🐏", dijelovi: [
+    { naziv: "Muflon", pravilo: { tip: "nema" } },
+    { naziv: "Muflonka i jagnje", pravilo: S([[1, 10], [31, 1]]) },
+  ] },
+  { k: "svinja", naziv: "Divlja svinja", latinski: "Sus scrofa", kat: "krupna", ikona: "🐗", dijelovi: [
+    { naziv: "Vepar", pravilo: { tip: "nema" } },
+    { naziv: "Krmača", pravilo: S([[1, 7], [28, 2]]), napomena: "radi suzbijanja afričke kuge svinja lov krmače moguć i u lovostaju, uz prethodno obavještavanje veterinarskog i lovnog inspektora" },
+    { naziv: "Prase i nazime", pravilo: { tip: "nema" } },
+  ] },
+  { k: "medvjed", naziv: "Mrki medvjed", latinski: "Ursus arctos", kat: "krupna", ikona: "🐻", dijelovi: jedan({ tip: "zabrana" }, "Trajno zaštićen") },
+  { k: "vuk", naziv: "Vuk", latinski: "Canis lupus", kat: "krupna", ikona: "🐺", dijelovi: [
+    { naziv: "Vuk", pravilo: S([[1, 7], [31, 3]]), napomena: "u AP Vojvodini strogo zaštićen" },
+  ] },
+  // Sitna dlakava divljač i zvijeri
+  { k: "zec", naziv: "Zec", latinski: "Lepus europaeus", kat: "sitna", ikona: "🐇", dijelovi: [
+    { naziv: "Zec", pravilo: S([[15, 10], [31, 12]]), napomena: "od 15. 10. prvi (probni) lov; daljnji lov ovisi o analizi uzoraka iz probnog lova" },
+  ] },
+  { k: "lisica", naziv: "Lisica", latinski: "Vulpes vulpes", kat: "sitna", ikona: "🦊", dijelovi: jedan({ tip: "nema" }) },
+  { k: "cagalj", naziv: "Šakal (čagalj)", latinski: "Canis aureus", kat: "sitna", ikona: "🐺", dijelovi: jedan({ tip: "nema" }) },
+  { k: "jazavac", naziv: "Jazavac", latinski: "Meles meles", kat: "sitna", ikona: "🦡", dijelovi: jedan(S([[1, 7], [28, 2]])) },
+  { k: "kuna-bjelica", naziv: "Kuna belica", latinski: "Martes foina", kat: "sitna", ikona: "🦦", dijelovi: jedan(S([[1, 10], [28, 2]])) },
+  { k: "kuna-zlatica", naziv: "Kuna zlatica", latinski: "Martes martes", kat: "sitna", ikona: "🦦", dijelovi: jedan(S([[1, 10], [28, 2]])) },
+  { k: "macka", naziv: "Divlja mačka", latinski: "Felis silvestris", kat: "sitna", ikona: "🐈", dijelovi: [
+    { naziv: "Divlja mačka", pravilo: S([[1, 7], [28, 2]]), napomena: "u AP Vojvodini strogo zaštićena" },
+  ] },
+  { k: "puh", naziv: "Sivi puh", latinski: "Glis glis", kat: "sitna", ikona: "🐭", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "vjeverica", naziv: "Veverica", latinski: "Sciurus vulgaris", kat: "sitna", ikona: "🐿️", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "rakunopas", naziv: "Rakunoliki pas", latinski: "Nyctereutes procyonoides", kat: "sitna", ikona: "🦝", dijelovi: jedan({ tip: "nema" }) },
+  { k: "nutrija", naziv: "Nutrija", latinski: "Myocastor coypus", kat: "sitna", ikona: "🐀", dijelovi: jedan({ tip: "nema" }) },
+  { k: "ondatra", naziv: "Ondatra", latinski: "Ondatra zibethicus", kat: "sitna", ikona: "🐀", dijelovi: jedan({ tip: "nema" }) },
+  { k: "tvor", naziv: "Mrki tvor", latinski: "Mustela putorius", kat: "sitna", ikona: "🦦", dijelovi: jedan({ tip: "zabrana" }, "Lovostaj cijele godine") },
+  { k: "lasica", naziv: "Lasica", latinski: "Mustela nivalis", kat: "sitna", ikona: "🦦", dijelovi: jedan({ tip: "zabrana" }, "Lovostaj cijele godine") },
+  { k: "dabar", naziv: "Dabar", latinski: "Castor fiber", kat: "sitna", ikona: "🦫", dijelovi: jedan({ tip: "zabrana" }, "Trajno zaštićen") },
+  // Pernata divljač
+  { k: "fazan", naziv: "Fazan", latinski: "Phasianus colchicus", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 10], [31, 1]])) },
+  { k: "trcka", naziv: "Poljska jarebica", latinski: "Perdix perdix", kat: "ptice", ikona: "🐦", dijelovi: [
+    { naziv: "Poljska jarebica", pravilo: { tip: "zabrana" }, napomena: "privremeni lovostaj do 14. 10. 2027.; nakon toga lov 15. 10. – 30. 11." },
+  ] },
+  { k: "pucpura", naziv: "Prepelica", latinski: "Coturnix coturnix", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 8], [30, 9]])) },
+  { k: "grlica", naziv: "Grlica", latinski: "Streptopelia turtur", kat: "ptice", ikona: "🕊️", dijelovi: [
+    { naziv: "Grlica", pravilo: { tip: "zabrana" }, napomena: "privremeni lovostaj do 14. 8. 2027.; nakon toga lov 15. 8. – 30. 9." },
+  ] },
+  { k: "gugutka", naziv: "Gugutka", latinski: "Streptopelia decaocto", kat: "ptice", ikona: "🕊️", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "grivnjas", naziv: "Divlji golub grivnaš", latinski: "Columba palumbus", kat: "ptice", ikona: "🕊️", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "bena", naziv: "Šumska šljuka", latinski: "Scolopax rusticola", kat: "ptice", ikona: "🐦", dijelovi: [
+    { naziv: "Šumska šljuka", pravilo: S([[1, 10], [31, 1]]), napomena: "lovostajem zaštićena vrsta na područjima do 500 m nadmorske visine" },
+  ] },
+  { k: "gluhara", naziv: "Patka gluvara", latinski: "Anas platyrhynchos", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "krzulja", naziv: "Patka kržulja", latinski: "Anas crecca", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "zvizdara", naziv: "Patka zviždara", latinski: "Anas penelope", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "pupcanica", naziv: "Patka pupčanica", latinski: "Anas querquedula", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "glavata", naziv: "Patka riđoglava", latinski: "Aythya ferina", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "lisasta", naziv: "Guska lisasta", latinski: "Anser albifrons", kat: "ptice", ikona: "🪿", dijelovi: jedan(S([[1, 10], [28, 2]])) },
+  { k: "glogovnjaca", naziv: "Guska glogovnjača", latinski: "Anser fabalis", kat: "ptice", ikona: "🪿", dijelovi: jedan(S([[1, 10], [28, 2]])) },
+  { k: "liska", naziv: "Crna liska", latinski: "Fulica atra", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "kokica", naziv: "Barska kokica", latinski: "Gallinula chloropus", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "sojka", naziv: "Sojka", latinski: "Garrulus glandarius", kat: "ptice", ikona: "🐦", dijelovi: [{ naziv: "Sve", pravilo: S([[1, 8], [28, 2]]), napomena: SAMO_STETE }] },
+  { k: "gacac", naziv: "Gačac", latinski: "Corvus frugilegus", kat: "ptice", ikona: "🐦‍⬛", dijelovi: [{ naziv: "Sve", pravilo: S([[1, 8], [28, 2]]), napomena: SAMO_STETE }] },
+  { k: "vrana", naziv: "Siva vrana", latinski: "Corvus cornix", kat: "ptice", ikona: "🐦‍⬛", dijelovi: [{ naziv: "Sve", pravilo: { tip: "nema" }, napomena: SAMO_STETE }] },
+  { k: "svraka", naziv: "Svraka", latinski: "Pica pica", kat: "ptice", ikona: "🐦", dijelovi: [{ naziv: "Sve", pravilo: { tip: "nema" }, napomena: SAMO_STETE }] },
+  { k: "kormoran", naziv: "Veliki kormoran", latinski: "Phalacrocorax carbo", kat: "ptice", ikona: "🐦‍⬛", dijelovi: [{ naziv: "Sve", pravilo: { tip: "nema" }, napomena: "samo radi sprječavanja šteta (ribnjaci, uzgajališta), prema godišnjem planu" }] },
+  { k: "caplja", naziv: "Siva čaplja", latinski: "Ardea cinerea", kat: "ptice", ikona: "🐦", dijelovi: [{ naziv: "Sve", pravilo: { tip: "nema" }, napomena: "samo radi sprječavanja šteta (ribnjaci, uzgajališta), prema godišnjem planu" }] },
+  { k: "kokosar", naziv: "Jastreb kokošar", latinski: "Accipiter gentilis", kat: "ptice", ikona: "🦅", dijelovi: [{ naziv: "Sve", pravilo: { tip: "nema" }, napomena: "samo radi sprječavanja šteta (ribnjaci, uzgajališta), prema godišnjem planu" }] },
+  { k: "grivna", naziv: "Jarebica kamenjarka", latinski: "Alectoris graeca", kat: "ptice", ikona: "🐦", dijelovi: jedan({ tip: "zabrana" }, "Trajno zaštićena") },
+  { k: "kokosica", naziv: "Barska šljuka bekasina", latinski: "Gallinago gallinago", kat: "ptice", ikona: "🐦", dijelovi: jedan({ tip: "zabrana" }, "Trajno zaštićena") },
+  { k: "tetrijeb", naziv: "Veliki tetreb", latinski: "Tetrao urogallus", kat: "ptice", ikona: "🐦", dijelovi: jedan({ tip: "zabrana" }, "Trajno zaštićen") },
+  { k: "ljestarka", naziv: "Leštarka", latinski: "Bonasa bonasia", kat: "ptice", ikona: "🐦", dijelovi: jedan({ tip: "zabrana" }, "Trajno zaštićena") },
+];
+
+// BiH – Federacija: Pravilnik o vremenu lova lovostajem zaštićene divljači (2008.), čl. 2.
+const NEZASTICENA_FBIH = "nije lovostajem zaštićena (Zakon o lovstvu FBiH, čl. 17) – lovi se prema planu lovišta";
+const FBIH: Vrsta[] = [
+  { k: "srna", naziv: "Srna", latinski: "Capreolus capreolus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Srndać – nizinska i brdska lovišta", pravilo: S([[1, 5], [30, 9]]) },
+    { naziv: "Srndać – planinska lovišta", pravilo: S([[1, 6], [30, 10]]) },
+    { naziv: "Srna i lane", pravilo: S([[1, 10], [31, 1]]) },
+  ] },
+  { k: "lopatar", naziv: "Jelen lopatar", latinski: "Dama dama", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[16, 9], [31, 1]]) },
+    { naziv: "Košuta i tele", pravilo: S([[16, 9], [31, 1]]) },
+  ] },
+  { k: "divokoza", naziv: "Divokoza", latinski: "Rupicapra rupicapra", kat: "krupna", ikona: "🐐", dijelovi: jedan(S([[1, 9], [31, 12]])) },
+  { k: "kozorog", naziv: "Kozorog", latinski: "Capra ibex", kat: "krupna", ikona: "🐐", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "muflon", naziv: "Muflon", latinski: "Ovis aries musimon", kat: "krupna", ikona: "🐏", dijelovi: [
+    { naziv: "Muflon", pravilo: S([[1, 9], [31, 1]]) },
+    { naziv: "Muflonka i janje", pravilo: { tip: "nema" } },
+  ] },
+  { k: "svinja", naziv: "Divlja svinja", latinski: "Sus scrofa", kat: "krupna", ikona: "🐗", dijelovi: [
+    { naziv: "Vepar i nazime", pravilo: { tip: "nema" } },
+    { naziv: "Krmača i prase", pravilo: S([[1, 8], [31, 12]]) },
+  ] },
+  { k: "medvjed", naziv: "Mrki medvjed", latinski: "Ursus arctos", kat: "krupna", ikona: "🐻", dijelovi: [
+    { naziv: "Medvjed", pravilo: S([[1, 10], [31, 12]], [[1, 3], [15, 5]]), napomena: "lovostajem zaštićen na uzgojnim područjima; odstrel prema planu gospodarenja" },
+  ] },
+  { k: "vuk", naziv: "Vuk", latinski: "Canis lupus", kat: "krupna", ikona: "🐺", dijelovi: [
+    { naziv: "Mužjak", pravilo: { tip: "nema" } },
+    { naziv: "Ženka i mladi", pravilo: S([[1, 7], [28, 2]]) },
+  ] },
+  { k: "zec", naziv: "Zec", latinski: "Lepus europaeus", kat: "sitna", ikona: "🐇", dijelovi: jedan(S([[1, 10], [31, 12]])) },
+  { k: "kuna-bjelica", naziv: "Kuna bjelica", latinski: "Martes foina", kat: "sitna", ikona: "🦦", dijelovi: jedan(S([[1, 10], [28, 2]])) },
+  { k: "kuna-zlatica", naziv: "Kuna zlatica", latinski: "Martes martes", kat: "sitna", ikona: "🦦", dijelovi: jedan(S([[1, 11], [28, 2]])) },
+  { k: "lisica", naziv: "Lisica", latinski: "Vulpes vulpes", kat: "sitna", ikona: "🦊", dijelovi: jedan({ tip: "uvjet", tekst: NEZASTICENA_FBIH }) },
+  { k: "cagalj", naziv: "Čagalj", latinski: "Canis aureus", kat: "sitna", ikona: "🐺", dijelovi: jedan({ tip: "uvjet", tekst: NEZASTICENA_FBIH }) },
+  { k: "jazavac", naziv: "Jazavac", latinski: "Meles meles", kat: "sitna", ikona: "🦡", dijelovi: jedan({ tip: "uvjet", tekst: NEZASTICENA_FBIH }) },
+  { k: "tetrijeb", naziv: "Veliki tetrijeb", latinski: "Tetrao urogallus", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 3], [31, 5]]), "Mužjak") },
+  { k: "ljestarka", naziv: "Lještarka", latinski: "Bonasa bonasia", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[16, 8], [31, 10]]), "Mužjak") },
+  { k: "fazan", naziv: "Fazan – gnjetao", latinski: "Phasianus spp.", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 10], [15, 1]])) },
+  { k: "grivna", naziv: "Jarebica kamenjarka", latinski: "Alectoris graeca", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 9], [31, 12]])) },
+  { k: "trcka", naziv: "Jarebica poljska – trčka", latinski: "Perdix perdix", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 9], [31, 12]])) },
+  { k: "pucpura", naziv: "Prepelica", latinski: "Coturnix coturnix", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "bena", naziv: "Šljuka šumska", latinski: "Scolopax rusticola", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 10], [1, 3]])) },
+  { k: "kokosica", naziv: "Bekasina", latinski: "Gallinago gallinago", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 10], [1, 3]])) },
+  { k: "golubovi", naziv: "Golubovi", latinski: "Columba spp.", kat: "ptice", ikona: "🕊️", dijelovi: jedan(S([[1, 8], [31, 1]])) },
+  { k: "grlica", naziv: "Grlica", latinski: "Streptopelia turtur", kat: "ptice", ikona: "🕊️", dijelovi: jedan(S([[1, 8], [31, 1]])) },
+  { k: "guske", naziv: "Guske divlje", latinski: "Anser spp.", kat: "ptice", ikona: "🪿", dijelovi: jedan(S([[1, 9], [31, 1]])) },
+  { k: "patke", naziv: "Patke divlje", latinski: "Anas spp.", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [1, 3]])) },
+  { k: "liska", naziv: "Liska crna", latinski: "Fulica atra", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 9], [31, 1]])) },
+];
+
+// BiH – Republika Srpska: Naredba o vremenu lova lovostajem zaštićene divljači (Sl. glasnik RS 105/2024).
+const RSRP: Vrsta[] = [
+  { k: "srna", naziv: "Srna", latinski: "Capreolus capreolus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Srndać", pravilo: S([[1, 5], [30, 9]]) },
+    { naziv: "Srna i lane", pravilo: S([[1, 10], [31, 1]]) },
+  ] },
+  { k: "jelen", naziv: "Jelen obični", latinski: "Cervus elaphus", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[1, 9], [31, 1]]) },
+    { naziv: "Košuta i tele", pravilo: S([[16, 9], [31, 1]]) },
+  ] },
+  { k: "lopatar", naziv: "Jelen lopatar", latinski: "Dama dama", kat: "krupna", ikona: "🦌", dijelovi: [
+    { naziv: "Jelen", pravilo: S([[1, 9], [31, 1]]) },
+    { naziv: "Košuta i tele", pravilo: S([[16, 9], [31, 1]]) },
+  ] },
+  { k: "divokoza", naziv: "Divokoza", latinski: "Rupicapra rupicapra", kat: "krupna", ikona: "🐐", dijelovi: [
+    { naziv: "Divojarac", pravilo: S([[1, 8], [31, 1]]) },
+    { naziv: "Divokoza i jare", pravilo: S([[1, 9], [31, 12]]) },
+  ] },
+  { k: "muflon", naziv: "Muflon", latinski: "Ovis aries musimon", kat: "krupna", ikona: "🐏", dijelovi: [
+    { naziv: "Muflon", pravilo: { tip: "nema" } },
+    { naziv: "Ovca i jagnje", pravilo: S([[1, 9], [31, 1]]) },
+  ] },
+  { k: "svinja", naziv: "Divlja svinja", latinski: "Sus scrofa", kat: "krupna", ikona: "🐗", dijelovi: [
+    { naziv: "Vepar i nazime", pravilo: { tip: "nema" } },
+    { naziv: "Krmača i prase", pravilo: S([[1, 7], [15, 1]]) },
+  ] },
+  { k: "medvjed", naziv: "Mrki medvjed", latinski: "Ursus arctos", kat: "krupna", ikona: "🐻", dijelovi: jedan(S([[1, 10], [15, 5]])) },
+  { k: "vuk", naziv: "Vuk", latinski: "Canis lupus", kat: "krupna", ikona: "🐺", dijelovi: [
+    { naziv: "Mužjak", pravilo: { tip: "nema" } },
+    { naziv: "Ženka i mladi", pravilo: S([[1, 7], [28, 2]]) },
+  ] },
+  { k: "zec", naziv: "Zec", latinski: "Lepus europaeus", kat: "sitna", ikona: "🐇", dijelovi: jedan(S([[1, 10], [5, 12]])) },
+  { k: "macka", naziv: "Divlja mačka", latinski: "Felis silvestris", kat: "sitna", ikona: "🐈", dijelovi: jedan(S([[1, 7], [28, 2]])) },
+  { k: "dabar", naziv: "Dabar", latinski: "Castor fiber", kat: "sitna", ikona: "🦫", dijelovi: jedan(S([[1, 8], [31, 3]])) },
+  { k: "puh", naziv: "Veliki puh", latinski: "Glis glis", kat: "sitna", ikona: "🐭", dijelovi: jedan(S([[15, 8], [1, 12]])) },
+  { k: "lisica", naziv: "Lisica", latinski: "Vulpes vulpes", kat: "sitna", ikona: "🦊", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "cagalj", naziv: "Šakal (čagalj)", latinski: "Canis aureus", kat: "sitna", ikona: "🐺", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "jazavac", naziv: "Jazavac", latinski: "Meles meles", kat: "sitna", ikona: "🦡", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "kuna-bjelica", naziv: "Kuna bjelica", latinski: "Martes foina", kat: "sitna", ikona: "🦦", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "kuna-zlatica", naziv: "Kuna zlatica", latinski: "Martes martes", kat: "sitna", ikona: "🦦", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "tvor", naziv: "Tvor", latinski: "Mustela putorius", kat: "sitna", ikona: "🦦", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "rakunopas", naziv: "Rakunopas", latinski: "Nyctereutes procyonoides", kat: "sitna", ikona: "🦝", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "nutrija", naziv: "Nutrija", latinski: "Myocastor coypus", kat: "sitna", ikona: "🐀", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "tetrijeb", naziv: "Veliki tetrijeb", latinski: "Tetrao urogallus", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 3], [20, 5]]), "Mužjak") },
+  { k: "ljestarka", naziv: "Lještarka", latinski: "Bonasa bonasia", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 9], [31, 12]]), "Mužjak") },
+  { k: "fazan", naziv: "Fazan", latinski: "Phasianus spp.", kat: "ptice", ikona: "🐦", dijelovi: [
+    { naziv: "Iz slobodne prirode", pravilo: S([[15, 9], [5, 1]]) },
+    { naziv: "Iz vještačkog uzgoja", pravilo: S([[15, 9], [31, 3]]) },
+  ] },
+  { k: "grivna", naziv: "Jarebica kamenjarka", latinski: "Alectoris graeca", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 9], [5, 1]])) },
+  { k: "trcka", naziv: "Jarebica poljska", latinski: "Perdix perdix", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[15, 9], [5, 1]])) },
+  { k: "pucpura", naziv: "Prepelica", latinski: "Coturnix coturnix", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "sljuke", naziv: "Šljuke (šumska, bekasina, kozica)", latinski: "Scolopacidae", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 8], [28, 2]])) },
+  { k: "golubovi", naziv: "Golubovi (divlji, grivnjaš) i grlica", latinski: "Columbidae", kat: "ptice", ikona: "🕊️", dijelovi: jedan(S([[1, 8], [31, 12]])) },
+  { k: "patke", naziv: "Patke (gluvara, kržulja) i divlja guska", latinski: "Anatidae", kat: "ptice", ikona: "🦆", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "liska", naziv: "Crna liska", latinski: "Fulica atra", kat: "ptice", ikona: "🐦", dijelovi: jedan(S([[1, 9], [28, 2]])) },
+  { k: "vrane", naziv: "Vrane, svraka, čavka, gačac, šojka", latinski: "Corvidae", kat: "ptice", ikona: "🐦‍⬛", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "caplja", naziv: "Siva čaplja i veliki kormoran", latinski: "Ardea cinerea, Phalacrocorax carbo", kat: "ptice", ikona: "🐦", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+  { k: "kokosar", naziv: "Jastreb kokošar", latinski: "Accipiter gentilis", kat: "ptice", ikona: "🦅", dijelovi: jedan({ tip: "nema", uvjet: ZENKA_RS }) },
+];
+
 export const DRZAVE: Drzava[] = [
   { k: "hr", naziv: "Hrvatska", zastava: "🇭🇷", izvor: "Pravilnik o lovostaju (NN 94/2019)", vrste: HRVATSKA },
-  { k: "ba", naziv: "BiH", zastava: "🇧🇦", vrste: [] },
-  { k: "rs", naziv: "Srbija", zastava: "🇷🇸", vrste: [] },
+  { k: "fbih", naziv: "BiH – Federacija", zastava: "🇧🇦", izvor: "Pravilnik o vremenu lova lovostajem zaštićene divljači (Federacija BiH, 2008.)", vrste: FBIH },
+  { k: "rsrp", naziv: "BiH – Republika Srpska", zastava: "🇧🇦", izvor: "Naredba o vremenu lova lovostajem zaštićene divljači (Sl. glasnik Republike Srpske 105/2024)", vrste: RSRP },
+  { k: "rs", naziv: "Srbija", zastava: "🇷🇸", izvor: "Pravilnik o proglašavanju lovostajem zaštićenih vrsta divljači (Sl. glasnik RS 9/2012 … 6/2026)", vrste: SRBIJA },
 ];
 
 export const KATEGORIJE: { k: Kategorija; naziv: string }[] = [
@@ -122,10 +366,12 @@ export function dopusteno(p: Pravilo, dan: Date): boolean {
   if (p.tip === "nema" || p.tip === "uvjet") return true;
   if (p.tip === "zabrana" || p.tip === "plan") return false;
   const x = (dan.getMonth() + 1) * 100 + dan.getDate();
-  const a = vrijednost(p.od);
-  const b = vrijednost(p.do);
-  const uLovostaju = a <= b ? x >= a && x <= b : x >= a || x <= b;
-  return !uLovostaju;
+  const u = (r: { od: Datum; do: Datum }) => {
+    const a = vrijednost(r.od);
+    const b = vrijednost(r.do);
+    return a <= b ? x >= a && x <= b : x >= a || x <= b;
+  };
+  return ![p, ...(p.jos ?? [])].some(u);
 }
 
 /** Ima li pravilo uopće promjenu tijekom godine (lovostaj s datumima). */
@@ -168,15 +414,26 @@ export function opisLova(p: Pravilo): string {
     case "plan":
       return "samo prema planu gospodarenja";
     default: {
-      const od = new Date(2001, p.do[1] - 1, p.do[0] + 1);
-      const doD = new Date(2001, p.od[1] - 1, p.od[0] - 1);
-      return `lov ${kratkiDatum(od)} – ${kratkiDatum(doD)}`;
+      // otvorena razdoblja: prođi godinu od dana nakon kraja prvog lovostaja
+      const start = new Date(2001, p.do[1] - 1, p.do[0] + 1);
+      const dijelovi: string[] = [];
+      let od: Date | null = null;
+      for (let i = 0; i <= 365; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const otv = i < 365 && dopusteno(p, d);
+        if (otv && !od) od = d;
+        if (!otv && od) {
+          dijelovi.push(`${kratkiDatum(od)} – ${kratkiDatum(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1))}`);
+          od = null;
+        }
+      }
+      return `lov ${dijelovi.join(" i ")}`;
     }
   }
 }
 
 export function opisLovostaja(p: Pravilo): string | null {
-  return imaDatume(p) ? `lovostaj ${kratkiDatum(p.od)} – ${kratkiDatum(p.do)}` : null;
+  return imaDatume(p) ? `lovostaj ${[p, ...(p.jos ?? [])].sort((a, b) => vrijednost(a.od) - vrijednost(b.od)).map((r) => `${kratkiDatum(r.od)} – ${kratkiDatum(r.do)}`).join(" i ")}` : null;
 }
 
 /** Lovna godina počinje 1. 4. – vraća godinu početka (npr. 2026 za 2026./27.). */

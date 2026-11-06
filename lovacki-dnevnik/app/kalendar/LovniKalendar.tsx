@@ -253,6 +253,7 @@ function Kalendar() {
                   </div>
                   <div className="mt-1 text-[13.5px] text-tekst-2">{opisLova(x.pravilo)}</div>
                   {lovostaj && <div className="text-[12.5px] text-tekst-3">{lovostaj}</div>}
+                  {x.napomena && <div className="mt-1 text-[12.5px] text-tekst-2">ℹ️ {x.napomena}</div>}
                   {imaDatume(x.pravilo) && n != null && dan && (
                     <div className={cx("mt-1 text-[12.5px]", otv && n <= 30 ? "text-naglasak" : "text-tekst-3")}>
                       {otv ? `Zadnji dan lova: ${kratkiDatum(dan)} (još ${dana(n)})` : `Lov se otvara ${kratkiDatum(dan)} (za ${dana(n)})`}
