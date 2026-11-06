@@ -155,13 +155,13 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 ## Sljedeće – odabrao vlasnik 6. 11. 2026. (redom)
 
 1. **Kartica lova za dijeljenje** (6. 11., napravljeno; `lib/kartica.ts`, `components/KarticaLova.tsx`, gumb „Podijeli” u detalju odstrela; dodani @capacitor/share + @capacitor/filesystem – za Android aplikaciju treba novi AAB, stara verzija aplikacije pokaže „ažurirajte na Google Playu”) – slika nakon odstrela (fotka, vrsta, datum, CroLovac, „Dobra kob!”) za WhatsApp/Facebook iz detalja odstrela. U Android aplikaciji dijeljenje slike treba dodatke @capacitor/share + @capacitor/filesystem (nova verzija na Playu); u pregledniku/iPhoneu Web Share.
-2. **Priprema za lovački ispit (kviz)** – pitanja o lovostaju generirana iz provjerenih podataka (`lib/lovostaj.ts`, sve države) + provjerena opća pitanja (vrste, oružje, sigurnost, etika).
+2. **Priprema za lovački ispit (kviz)** (6. 11., napravljeno: `/ispit`, `lib/ispit.ts` – 27 općih pitanja + pitanja o lovostaju iz kalendara odabrane države; 10 po krugu, najbolji rezultat pamti se na uređaju; u izborniku „Više”) – pitanja o lovostaju generirana iz provjerenih podataka (`lib/lovostaj.ts`, sve države) + provjerena opća pitanja (vrste, oružje, sigurnost, etika).
 3. **Slovenija u lovnom kalendaru** – iz službenog slovenskog propisa o lovnim dobama.
 4. **„Pozovi kolegu”** – osobni link (ref), bez promjene baze.
 5. **Drugi krug glatkih prijelaza** – kartica se rastvori u detalj, karta glatko leti do točke.
 6. **Mail neaktivnim korisnicima (Resend)** – vlasnik sam upisuje Resend ključ; Claude priprema tekst i popis.
 
-Odluka besplatno/PRO za 1.–5. još čeka vlasnika (prijedlog: sve besplatno). **Kalkulator trofeja = PRO** (vlasnik 6. 11.).
+Vlasnik 6. 11.: 1.–5. **besplatno**. **Kalkulator trofeja = PRO** (vlasnik 6. 11.).
 
 Ostale ideje (nisu odabrane, za kasnije): javna stranica s lovostajem (SEO, 4 države), organizacija skupnog lova za društva (osnova besplatno, izvještaji PRO), godišnji izvještaj za društvo (PDF, PRO), „Najbolji dan za lov ovaj tjedan” (PRO), karta lovišta bez signala (PRO), stradala divljač u Dnevniku kao zasebna kartica (ako kolege zatraže).
 
