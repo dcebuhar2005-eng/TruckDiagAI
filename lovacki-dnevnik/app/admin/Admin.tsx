@@ -46,6 +46,14 @@ const PRAVA_ADRESA = "hunt-jade.vercel.app";
 /** Broj korisnika po stranici u popisu. */
 const PO_STRANICI = 10;
 
+/** Mala slova, bez kvačica – „Čebuhar” se nađe i kao „cebuhar”. */
+const bezKvacica = (t: string) =>
+  t
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d");
+
 interface Statistika {
   korisnika: number;
   racuna_u_projektu: number;
@@ -74,6 +82,7 @@ export default function Admin() {
   const [s, setS] = useState<Statistika | null>(null);
   const [misljenja, setMisljenja] = useState<Misljenje[] | null>(null);
   const [stranica, setStranica] = useState(0);
+  const [upit, setUpit] = useState("");
   const [verzije, setVerzije] = useState<Map<string, VerzijaKorisnika>>(new Map());
   const [greska, setGreska] = useState<string | null>(null);
   const [ucitavam, setUcitavam] = useState(false);
@@ -153,9 +162,13 @@ export default function Admin() {
     );
   if (!s) return <Kostur />;
 
-  const brojStranica = Math.max(1, Math.ceil(s.popis.length / PO_STRANICI));
+  const trazi = bezKvacica(upit.trim());
+  const popis = trazi
+    ? s.popis.filter((k) => bezKvacica([k.ime, k.korisnicko_ime, k.email, k.drustvo].filter(Boolean).join(" ")).includes(trazi))
+    : s.popis;
+  const brojStranica = Math.max(1, Math.ceil(popis.length / PO_STRANICI));
   const trenutna = Math.min(stranica, brojStranica - 1);
-  const naStranici = s.popis.slice(trenutna * PO_STRANICI, (trenutna + 1) * PO_STRANICI);
+  const naStranici = popis.slice(trenutna * PO_STRANICI, (trenutna + 1) * PO_STRANICI);
 
   return (
     <div>
@@ -233,7 +246,24 @@ export default function Admin() {
         )}
 
         <motion.section variants={djeteListe} className="kartica overflow-hidden">
-          <h2 className="p-5 pb-3 text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">Korisnici ({s.popis.length})</h2>
+          <div className="flex flex-wrap items-center gap-3 p-5 pb-3">
+            <h2 className="text-[13px] font-semibold tracking-[0.12em] text-tekst-3 uppercase">
+              Korisnici ({trazi ? `${popis.length} od ${s.popis.length}` : s.popis.length})
+            </h2>
+            <div className="relative ml-auto w-full sm:w-72">
+              <Ikona ime="pretraga" velicina={16} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-tekst-3" />
+              <input
+                type="search"
+                className="unos h-9 pl-9 text-[14px]"
+                placeholder="Traži ime, @korisnika, e-mail, društvo…"
+                value={upit}
+                onChange={(e) => {
+                  setUpit(e.target.value);
+                  setStranica(0);
+                }}
+              />
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-[13.5px]">
               <thead className="text-[11.5px] tracking-wide text-tekst-3 uppercase">
@@ -247,6 +277,13 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody>
+                {trazi && popis.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-5 py-6 text-center text-tekst-3">
+                      Nema korisnika za „{upit.trim()}”.
+                    </td>
+                  </tr>
+                )}
                 {naStranici.map((k) => {
                   const zadnje = [k.zadnja_prijava, k.zadnja_izmjena].filter(Boolean).sort().pop();
                   return (
@@ -279,7 +316,7 @@ export default function Admin() {
               <span className="brojke text-center text-[13px] leading-tight whitespace-nowrap text-tekst-2">
                 Stranica {trenutna + 1} / {brojStranica}
                 <span className="block text-[11.5px] text-tekst-3">
-                  {trenutna * PO_STRANICI + 1}–{Math.min((trenutna + 1) * PO_STRANICI, s.popis.length)} od {s.popis.length}
+                  {trenutna * PO_STRANICI + 1}–{Math.min((trenutna + 1) * PO_STRANICI, popis.length)} od {popis.length}
                 </span>
               </span>
               <Gumb velicina="sm" onClick={() => setStranica(trenutna + 1)} disabled={trenutna >= brojStranica - 1}>

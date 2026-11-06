@@ -5,16 +5,17 @@ import { motion } from "framer-motion";
 import { useMemo } from "react";
 import Ikona from "./Ikona";
 import { djeteListe } from "./ui";
-import { DRZAVE, kratkiDatum, uskoroZatvara, vrstaOtvorena } from "@/lib/lovostaj";
+import { DRZAVE, kratkiDatum, odabranaDrzava, uskoroZatvara, vrstaOtvorena } from "@/lib/lovostaj";
 
 const PRIKAZ = 6;
 // Najčešća divljač ide prva.
-const NAJCESCE = ["jelen", "srna", "svinja", "zec", "fazan", "lopatar", "muflon", "divokoza", "gluhara", "bena", "trcka", "lisica", "cagalj"];
+const NAJCESCE = ["jelen", "srna", "svinja", "zec", "fazan", "lopatar", "muflon", "divokoza", "gluhara", "patke", "bena", "sljuke", "trcka", "lisica", "cagalj"];
 
-/** Pregled: što se danas smije loviti (Hrvatska) – vodi u Lovni kalendar. */
+/** Pregled: što se danas smije loviti (u državi odabranoj u kalendaru) – vodi u Lovni kalendar. */
 export default function DanasSeSmije() {
   const danas = useMemo(() => new Date(), []);
-  const vrste = DRZAVE[0].vrste;
+  const drzava = useMemo(() => DRZAVE.find((d) => d.k === odabranaDrzava()) ?? DRZAVE[0], []);
+  const vrste = drzava.vrste;
   // Najprije krupna divljač, pa ostalo.
   const otvorene = vrste.filter((v) => vrstaOtvorena(v, danas) && v.dijelovi.some((x) => x.pravilo.tip !== "zabrana"));
   const red = (k: string) => {
@@ -36,6 +37,9 @@ export default function DanasSeSmije() {
             <Ikona ime="kalendar" velicina={19} />
           </span>
           <span className="font-semibold">Danas se smije loviti</span>
+          <span title={drzava.naziv} className="text-[15px]">
+            {drzava.zastava}
+          </span>
           <span className="ml-auto flex items-center gap-0.5 text-[13.5px] font-medium text-naglasak">
             Kalendar <Ikona ime="desno" velicina={15} />
           </span>

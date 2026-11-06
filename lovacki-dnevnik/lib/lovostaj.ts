@@ -353,6 +353,40 @@ export const DRZAVE: Drzava[] = [
   { k: "rs", naziv: "Srbija", zastava: "🇷🇸", izvor: "Pravilnik o proglašavanju lovostajem zaštićenih vrsta divljači (Sl. glasnik RS 9/2012 … 6/2026)", vrste: SRBIJA },
 ];
 
+/* ---------------- Odabrana država ---------------- */
+
+const KLJUC_DRZAVE = "lovacki-dnevnik:kalendar-drzava";
+
+/** Pogodi državu po vremenskoj zoni i jeziku uređaja (BiH: srpski jezik → Republika Srpska). */
+export function pogodiDrzavu(): string {
+  try {
+    const zona = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const jezici = (navigator.languages?.length ? navigator.languages : [navigator.language]).map((j) => j.toLowerCase());
+    const prvi = jezici[0] ?? "";
+    if (zona === "Europe/Belgrade") return "rs";
+    if (zona === "Europe/Sarajevo") return prvi.startsWith("sr") ? "rsrp" : "fbih";
+    if (zona === "Europe/Zagreb") return "hr";
+    if (prvi.startsWith("sr")) return "rs";
+    if (prvi.startsWith("bs")) return "fbih";
+  } catch {}
+  return "hr";
+}
+
+/** Država koju je korisnik zadnju odabrao u kalendaru (ili pogođena). */
+export function odabranaDrzava(): string {
+  try {
+    const k = localStorage.getItem(KLJUC_DRZAVE);
+    if (k && DRZAVE.some((d) => d.k === k && d.vrste.length)) return k;
+  } catch {}
+  return pogodiDrzavu();
+}
+
+export function spremiDrzavu(k: string) {
+  try {
+    localStorage.setItem(KLJUC_DRZAVE, k);
+  } catch {}
+}
+
 export const KATEGORIJE: { k: Kategorija; naziv: string }[] = [
   { k: "krupna", naziv: "Krupna" },
   { k: "sitna", naziv: "Sitna" },

@@ -8,6 +8,8 @@ import { Naslov, Ploca, Segmenti, cx, djeteListe, roditeljListe, useKlijent } fr
 import { Kostur } from "@/components/Kostur";
 import {
   DRZAVE,
+  odabranaDrzava,
+  spremiDrzavu,
   KATEGORIJE,
   type Kategorija,
   type Vrsta,
@@ -43,7 +45,7 @@ export default function LovniKalendar() {
 }
 
 function Kalendar() {
-  const [drzavaK, setDrzavaK] = useState("hr");
+  const [drzavaK, setDrzavaK] = useState(odabranaDrzava);
   const [prikaz, setPrikaz] = useState<"danas" | "godina">("danas");
   const [kat, setKat] = useState<Kategorija>("krupna");
   const [upit, setUpit] = useState("");
@@ -79,7 +81,11 @@ function Kalendar() {
             <button
               key={d.k}
               disabled={!ima}
-              onClick={() => setDrzavaK(d.k)}
+              onClick={() => {
+                setDrzavaK(d.k);
+                spremiDrzavu(d.k);
+                dogadaj("kalendar_drzava", { drzava: d.k });
+              }}
               className={cx(
                 "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13.5px] whitespace-nowrap transition-colors",
                 d.k === drzavaK ? "border-naglasak/60 bg-naglasak-meki font-semibold text-naglasak" : "border-rub bg-povrsina-2 text-tekst-2",

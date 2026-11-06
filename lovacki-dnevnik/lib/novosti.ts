@@ -10,6 +10,13 @@ export interface Novost {
 
 export const NOVOSTI: Novost[] = [
   {
+    id: "2026-11-06b",
+    naslov: "Novo u CroLovcu",
+    stavke: [
+      "📅 Lovni kalendar pamti vašu državu (Hrvatska, BiH – Federacija, BiH – Republika Srpska, Srbija), a kartica „Danas se smije loviti” na Pregledu pokazuje upravo nju.",
+    ],
+  },
+  {
     id: "2026-11-06",
     naslov: "Novo u CroLovcu",
     stavke: [
