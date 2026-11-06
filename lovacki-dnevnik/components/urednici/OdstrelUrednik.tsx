@@ -10,6 +10,7 @@ import { dohvatiFoto, fotografijeOdstrela, obrisiFoto, spremiFoto } from "@/lib/
 import Fotografije, { type Slika } from "./Fotografije";
 import KalkulatorTrofeja from "../KalkulatorTrofeja";
 import { vrstaTrofeja } from "@/lib/cic";
+import { usePro } from "@/lib/pro";
 import PoljeLokacije from "../lokacija/PoljeLokacije";
 import { centarLovista } from "@/lib/upiti";
 import { db, noviId } from "@/lib/store";
@@ -90,6 +91,8 @@ export default function OdstrelUrednik({
   const [slikeUcitane, setSlikeUcitane] = useState(pocetneFoto.length === 0);
   const potvrda = usePotvrda();
   const [kalkulator, setKalkulator] = useState(false);
+  // Kalkulator trofeja je PRO (vlasnik 6. 11.).
+  const pro = usePro();
   const postaviV = <K extends keyof typeof v>(k: K, x: (typeof v)[K]) => setV((s) => ({ ...s, [k]: x }));
 
   const kljucFoto = pocetneFoto.join(",");
@@ -275,7 +278,7 @@ export default function OdstrelUrednik({
                   <Polje oznaka="Trofej (CIC točke)">
                     <div className="flex gap-2">
                       <input inputMode="decimal" className="unos brojke min-w-0 flex-1" value={v.trofejCic} onChange={(e) => postaviV("trofejCic", e.target.value)} />
-                      {vrstaTrofeja(v.vrsta, v.spol) && (
+                      {pro && vrstaTrofeja(v.vrsta, v.spol) && (
                         <button
                           type="button"
                           onClick={() => setKalkulator(true)}

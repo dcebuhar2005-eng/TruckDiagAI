@@ -14,7 +14,6 @@ export const NOVOSTI: Novost[] = [
     naslov: "Novo u CroLovcu",
     stavke: [
       "📅 Lovni kalendar pamti vašu državu (Hrvatska, BiH – Federacija, BiH – Republika Srpska, Srbija), a kartica „Danas se smije loviti” na Pregledu pokazuje upravo nju.",
-      "🏆 Kalkulator trofeja: u upisu odstrela srnjaka, jelena ili vepra gumb „Izračunaj” daje CIC bodove i medalju po službenim CIC formulama.",
       "🚗 Stradala divljač: tko vodi evidenciju divljači stradale u prometu, pod vlakom ili strojem, može je uključiti u Postavkama – brzi upis s GPS-om, znak na karti i pregled u statistici.",
     ],
   },

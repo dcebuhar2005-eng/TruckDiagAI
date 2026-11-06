@@ -25,6 +25,7 @@ Zasad ih **ne vidi nitko, ni administrator** (vlasnik 24. 10. 2026.): `PRO_PRIKA
 - Neograničene fotografije
 - Izvoz za evidenciju (PDF / Excel)
 - Napredna statistika sezone i prognoza aktivnosti divljači
+- **Kalkulator trofeja** (vlasnik 6. 11. 2026.: PRO) – CIC bodovi i medalja za srnjaka, jelena običnog i vepra; gumb „Izračunaj” u upisu odstrela, medalja u detalju odstrela. Gotovo u kodu (`lib/cic.ts`, `components/KalkulatorTrofeja.tsx`), skriveno dok je PRO_PRIKAZ = false.
 - **Obavijesti lovnog kalendara** (vlasnik 4. 11. 2026.: PRO) – „sutra se otvara lov na srnjaka”, „za 7 dana se zatvara košuta”; odabir vrsta za koje stižu obavijesti
 - **Lovni kalendar + kvote** (vlasnik 4. 11. 2026.: PRO) – uz vrstu prikaz odstrelnog lista, npr. „srna: otvoreno, iskorišteno 2 od 4”
 - **Podsjetnik na istek dokumenata** (vlasnik 4. 11. 2026.: PRO) – lovačka iskaznica, osiguranje, dozvola za oružje: datum isteka i obavijest prije

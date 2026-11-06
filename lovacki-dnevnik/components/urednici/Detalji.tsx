@@ -1,6 +1,7 @@
 "use client";
 
 import { NAZIV_MEDALJE, medalja, vrstaTrofeja } from "@/lib/cic";
+import { usePro } from "@/lib/pro";
 
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -32,6 +33,7 @@ function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: strin
 
 export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
   const o = baza.odstrel.find((x) => x.id === id);
+  const pro = usePro();
   const [fotke, setFotke] = useState<string[]>([]);
   const [aktivna, setAktivna] = useState(0);
   const [puniZaslon, setPuniZaslon] = useState<number | null>(null);
@@ -112,7 +114,7 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
 
       <motion.div variants={roditeljListe} initial="skriveno" animate="vidljivo" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         <Podatak ikona="vaga" oznaka="Masa" vrijednost={o.masa ? `${o.masa.toLocaleString("hr-HR")} kg` : "–"} />
-        <Podatak ikona="trofej" oznaka="Trofej" vrijednost={o.trofejCic ? `${o.trofejCic.toLocaleString("hr-HR")} CIC${opisMedalje(o)}` : "–"} />
+        <Podatak ikona="trofej" oznaka="Trofej" vrijednost={o.trofejCic ? `${o.trofejCic.toLocaleString("hr-HR")} CIC${pro ? opisMedalje(o) : ""}` : "–"} />
         <Podatak ikona="kalendar" oznaka="Dob" vrijednost={o.dob ?? "–"} />
         <Podatak ikona="nisan" oznaka="Udaljenost" vrijednost={o.udaljenost ? `${o.udaljenost} m` : "–"} />
         <Podatak ikona="meta" oznaka="Kalibar" vrijednost={o.kalibar ?? "–"} />
