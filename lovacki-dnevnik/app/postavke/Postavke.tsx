@@ -148,6 +148,7 @@ function Obrazac({ baza }: { baza: Baza }) {
           <ObavijestiUAplikaciji />
           <VecerPrije />
           <Povremene />
+          <StradalaDivljac />
         </Sekcija>
 
         <Sekcija ikona="stit" naslov="Podaci i sigurnosna kopija" opis={konfigurirano ? "Dnevnik je spremljen na uređaju i u vašem privatnom računu." : "Svi podaci čuvaju se isključivo na ovom uređaju."}>
@@ -491,6 +492,28 @@ function VecerPrije() {
       />
       <p className="mt-2 text-[13px] text-tekst-3">
         U 20:00 javi kad je sutra dobar termin za lov i na kojoj je čeki vjetar dobar. Samo kad se isplati – inače šuti.
+      </p>
+    </div>
+  );
+}
+
+function StradalaDivljac() {
+  const baza = useBaza();
+  const ukljuceno = Boolean(baza?.postavke.stradanja);
+  return (
+    <div className="mt-4 border-t border-rub pt-4">
+      <div className="mb-2 text-[14px] font-medium">Bilježim stradalu divljač</div>
+      <Segmenti
+        vrijednost={ukljuceno ? "da" : "ne"}
+        promjena={(v: string) => db.postavke({ stradanja: v === "da" })}
+        opcije={[
+          { vrijednost: "da", oznaka: "Uključeno" },
+          { vrijednost: "ne", oznaka: "Isključeno" },
+        ]}
+      />
+      <p className="mt-2 text-[13px] text-tekst-3">
+        Za lovce koji vode evidenciju divljači stradale u prometu, pod vlakom ili strojem. Dodaje gumb „Stradanje” na Pregledu, znakove na karti i
+        pregled u statistici.
       </p>
     </div>
   );

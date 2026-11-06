@@ -177,6 +177,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 - **Videi na serveru** (5. 11.): TikTok videi su kopirani u Metricool i maknuti; `public/mreze/` drži samo videe za idući dan, stari se brišu u sljedećoj objavi (Metricool ih već kopira).
 - **Kalendar pamti državu** (6. 11., besplatno): odabir se pamti (`lovacki-dnevnik:kalendar-drzava`), za nove se pogađa po vremenskoj zoni i jeziku (Sarajevo + srpski → RS, Sarajevo → FBiH, Beograd → Srbija); kartica na Pregledu prati odabranu državu.
 - **Molba za ocjenu na Google Playu** (6. 11., besplatno, samo Android aplikacija): nakon 3. izlaska, „Kasnije” → za 14 dana, najviše 2 puta (`components/OcjenaPlay.tsx`).
+- **Stradala divljač** (6. 11., besplatno, prijedlog kolege): neobavezno (Postavke → „Bilježim stradalu divljač”); kolekcija `stradanja` u dnevniku (sinkronizira se kao i ostalo, bez promjene baze), `components/urednici/StradanjeUrednik.tsx`, `lib/stradanja.ts` (uzroci), sloj na karti, kartica u statistici. Bez zapisnika i izvoza – dodati ako se pokaže potreba.
 - **Admin: pretraga korisnika** (6. 11.): po imenu, @korisniku, e-mailu i društvu, bez obzira na kvačice.
 - **Facebook bez linkova u opisu** (vlasnik 5. 11.): u tekstu Facebook objave nema linkova; link ide u prvi komentar.
 - **QR po mreži** (vlasnik 5. 11.): svaki video ima QR za svoju mrežu (TikTok / Facebook / Instagram). Frendovi videi u imenu nose mrežu i idu samo na nju.

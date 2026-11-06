@@ -20,6 +20,7 @@ const OdstrelDetalj = dynamic(() => ucitajDetalje().then((m) => m.OdstrelDetalj)
 const DozvolaUrednik = dynamic(() => ucitajOstale().then((m) => m.DozvolaUrednik));
 const LovisteUrednik = dynamic(() => ucitajOstale().then((m) => m.LovisteUrednik));
 const TockaUrednik = dynamic(() => ucitajOstale().then((m) => m.TockaUrednik));
+const StradanjeUrednik = dynamic(() => import("./StradanjeUrednik"));
 const DolazakDivljaci = dynamic(() => import("../Dolasci").then((m) => m.DolazakDivljaci));
 
 /** Jedno mjesto koje prikazuje sve obrasce i detalje kao klizne ploče. */
@@ -70,5 +71,7 @@ export default function Urednici() {
       return <OdstrelDetalj key={k} baza={baza} otvorena={o} id={zadnji.id} />;
     case "dolazak":
       return <DolazakDivljaci key={k} baza={baza} otvorena={o} tockaId={zadnji.tockaId} />;
+    case "stradanje":
+      return <StradanjeUrednik key={k} baza={baza} otvorena={o} id={zadnji.id} />;
   }
 }

@@ -12,7 +12,8 @@ export type Zahtjev =
   | { tip: "tocka"; id?: string; pocetno?: Partial<Tocka> }
   | { tip: "detalj-izlazak"; id: string }
   | { tip: "detalj-odstrel"; id: string }
-  | { tip: "dolazak"; tockaId?: string };
+  | { tip: "dolazak"; tockaId?: string }
+  | { tip: "stradanje"; id?: string };
 
 let trenutni: (Zahtjev & { kljuc: number }) | null = null;
 const slusaci = new Set<() => void>();

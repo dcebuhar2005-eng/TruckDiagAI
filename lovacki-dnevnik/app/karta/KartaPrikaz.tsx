@@ -27,6 +27,7 @@ import {
 import Ikona, { type ImeIkone } from "@/components/Ikona";
 import { poRedu, sazetakDolazaka } from "@/components/Dolasci";
 import { otvori } from "@/components/urednici/kontroler";
+import { uzrok } from "@/lib/stradanja";
 import { Gumb, cx, obavijest, opruga } from "@/components/ui";
 import { DIVLJAC_PRIJELAZA, RADOVI, TIPOVI_TOCAKA, bojaVrste, divljacTraga, nazivSpola, opisVrsteTocke, opisPrijelaza, opisUsjeva, znakTraga } from "@/lib/katalog";
 import { datumKratki, metri, povrsinaHa, sat, udaljenostM } from "@/lib/format";
@@ -254,6 +255,16 @@ function ikonaOdstrela(boja: string) {
   });
 }
 
+/** Stradala divljač: tamni krug s ikonom uzroka (auto, vlak…). */
+function ikonaStradanja(znak: string) {
+  return L.divIcon({
+    className: "",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    html: `<div class="oznaka-karte" style="width:24px;height:24px;display:grid;place-items:center;border-radius:999px;background:#1c1c1c;border:2px solid #e5484d;box-shadow:0 3px 8px rgba(0,0,0,.45);font-size:12px;line-height:1">${znak}</div>`,
+  });
+}
+
 function ikonaTraga(boja: string, svjez?: boolean) {
   return L.divIcon({
     className: "",
@@ -465,7 +476,7 @@ export default function KartaPrikaz() {
   const [okret, setOkret] = useState(0);
   const [karta, setKarta] = useState<L.Map | null>(null);
   const pro = usePro();
-  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, staze: true, tocke: true, odstrel: true, tragovi: true, miris: true, lovci: true });
+  const [slojevi, setSlojevi] = useState({ sluzbena: false, lovista: true, staze: true, tocke: true, odstrel: true, stradanja: true, tragovi: true, miris: true, lovci: true });
   const drustvo = useDrustvo();
   const [izbornik, setIzbornik] = useState(false);
   const [legenda, setLegendaStanje] = useState(false);
@@ -860,6 +871,20 @@ export default function KartaPrikaz() {
               />
             ))}
 
+        {slojevi.stradanja &&
+          baza.postavke.stradanja &&
+          (baza.stradanja ?? [])
+            .filter((x) => x.lat != null && x.lng != null)
+            .map((x) => (
+              <Marker
+                key={`s-${x.id}`}
+                position={[x.lat!, x.lng!]}
+                icon={ikonaStradanja(uzrok(x.uzrok).ikona)}
+                title={`Stradala divljač: ${x.vrsta} (${uzrok(x.uzrok).naziv.toLowerCase()})`}
+                eventHandlers={{ click: () => nacin === "pregled" && otvori({ tip: "stradanje", id: x.id }) }}
+              />
+            ))}
+
         {slojevi.tragovi &&
           baza.izlasci.flatMap((i) =>
             (i.tragovi ?? []).flatMap((t, k) =>
@@ -1101,13 +1126,14 @@ export default function KartaPrikaz() {
                 ["staze", "Uvezene staze (GPX/KML)"],
                 ["tocke", "Čeke i točke"],
                 ["odstrel", "Mjesta odstrela"],
+                ["stradanja", "Stradala divljač"],
                 ["tragovi", "Tragovi divljači"],
                 ["miris", "Zona mirisa (vjetar)"],
                 ["lovci", "Prijatelji u lovu"],
               ] as [keyof typeof slojevi, string][]
             )
               // Uvoz staza je PRO funkcija – bez PRO-a se sloj ni ne nudi.
-              .filter(([k]) => pro || k !== "staze")
+              .filter(([k]) => (pro || k !== "staze") && (baza.postavke.stradanja || k !== "stradanja"))
               .map(([k, n]) => (
               <button key={k} onClick={() => setSlojevi((s) => ({ ...s, [k]: !s[k] }))} className="flex w-full items-center justify-between rounded-lg px-1 py-2 text-[14px] hover:bg-white/5">
                 {n}

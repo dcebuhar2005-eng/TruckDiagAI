@@ -14,6 +14,7 @@ import { useBaza } from "@/lib/store";
 import type { Baza, VrstaLova, VrstaRada } from "@/lib/types";
 import { danaOd, jeLov, mojOdstrel, nazivLovista, opisDana, zadnjeDopune } from "@/lib/upiti";
 import { imaTip } from "@/lib/vjetarCeke";
+import { UZROCI, uzrok } from "@/lib/stradanja";
 
 const SMJEROVI8 = ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"];
 // Mjeseci lovne godine: travanj → ožujak
@@ -102,12 +103,18 @@ export default function Statistika() {
       .filter((t) => imaTip(t, "hraniliste") || imaTip(t, "soliste") || imaTip(t, "pojiliste"))
       .map((t) => ({ t, z: dopune.get(t.id) }))
       .sort((a, b) => (a.z?.datum ?? "").localeCompare(b.z?.datum ?? ""));
-    return { izlasci, sviIzlasci, obilazaka, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, hrane, mjesta };
+    const stradanja = (baza.stradanja ?? []).filter((x) => uGodini(x.datum));
+    const stradanjaPoVrsti = Object.entries(
+      stradanja.reduce<Record<string, number>>((a, x) => ({ ...a, [x.vrsta]: (a[x.vrsta] ?? 0) + 1 }), {}),
+    ).sort((a, b) => b[1] - a[1]);
+    const stradanjaPoUzroku = UZROCI.map((u) => ({ ...u, n: stradanja.filter((x) => x.uzrok === u.k).length })).filter((u) => u.n > 0);
+
+    return { izlasci, sviIzlasci, obilazaka, odstrel, minuta, masa, poMjesecu, poVrsti, poSatu, ruza, poNacinu, trofeji, skupine, radovi, hrane, mjesta, stradanja, stradanjaPoVrsti, stradanjaPoUzroku };
   }, [baza, godina]);
 
   if (!baza || !p) return <Kostur />;
 
-  const imaPodataka = baza.izlasci.length + baza.odstrel.length > 0;
+  const imaPodataka = baza.izlasci.length + baza.odstrel.length > 0 || (baza.postavke.stradanja && (baza.stradanja ?? []).length > 0);
 
   return (
     <div>
@@ -197,6 +204,45 @@ export default function Statistika() {
                   <Prazno />
                 )}
               </Okvir>
+
+              {baza.postavke.stradanja && (
+                <Okvir naslov="Stradala divljač" opis="Promet, vlak, strojevi… – odvojeno od odstrela" sirina="xl:col-span-3 md:col-span-2">
+                  {p.stradanja.length ? (
+                    <div className="grid gap-4">
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.stradanjaPoVrsti.map(([v, n]) => (
+                          <span key={v} className="rounded-full bg-opasnost-meka px-2.5 py-1 text-[13px] font-medium text-opasnost">
+                            {v} <span className="brojke font-semibold">{n}</span>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-tekst-2">
+                        {p.stradanjaPoUzroku.map((u) => (
+                          <span key={u.k}>
+                            {u.ikona} {u.naziv}: <span className="brojke font-semibold text-tekst">{u.n}</span>
+                          </span>
+                        ))}
+                      </div>
+                      <ul className="grid gap-1">
+                        {p.stradanja.slice(0, 5).map((x) => (
+                          <li key={x.id}>
+                            <button
+                              onClick={() => otvori({ tip: "stradanje", id: x.id })}
+                              className="flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-[13.5px] hover:bg-povrsina-2"
+                            >
+                              <span>{uzrok(x.uzrok).ikona}</span>
+                              <span className="flex-1 truncate">{x.vrsta}</span>
+                              <span className="brojke text-tekst-3">{datumKratki(x.datum)}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <Prazno />
+                  )}
+                </Okvir>
+              )}
 
               <Okvir naslov="Vjetar pri izlascima" opis="Smjer odakle je puhao; ispunjeno = izlazak s odstrelom" sirina="xl:col-span-3">
                 <RuzaVjetrova ruza={p.ruza} />

@@ -123,9 +123,10 @@ export default function Pregled() {
             Lovna godina <span className="brojke font-medium text-tekst">{lg.oznaka}</span> · {baza.postavke.lokacijaNaziv ?? "Moja lokacija"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <BrzaAkcija ikona="dnevnik" oznaka="Izlazak" onClick={() => otvori({ tip: "izlazak" })} />
           <BrzaAkcija ikona="meta" oznaka="Odstrel" primarna onClick={() => otvori({ tip: "odstrel" })} />
+          {baza.postavke.stradanja && <BrzaAkcija ikona="upozorenje" oznaka="Stradanje" onClick={() => otvori({ tip: "stradanje" })} />}
         </div>
       </motion.header>
 
