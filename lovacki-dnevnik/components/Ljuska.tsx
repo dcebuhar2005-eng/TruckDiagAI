@@ -5,11 +5,12 @@ import Slavlje from "./Slavlje";
 import { SosPlutajuci, SosPrijatelja } from "./Sos";
 import NovaLozinka from "./NovaLozinka";
 import PlayObavijest from "./PlayObavijest";
+import { obrisiPozivnicu, procitajPozivnicu, zapamtiPozivnicu } from "@/lib/pozivnica";
 import OcjenaPlay from "./OcjenaPlay";
 import ZahvalaOsnivacu from "./Osnivac";
 import SvHubert from "./SvHubert";
 import { AnimatePresence, MotionConfig } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { konfigurirano, pokreniDrustvo, useDrustvo } from "@/lib/drustvo";
 import { pokreniSinkronizaciju, useSinkronizacija } from "@/lib/sinkronizacija";
@@ -38,6 +39,8 @@ export default function Ljuska({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     pratiGreske();
+    // Otvoreno s pozivnice („Pozovi kolegu”) – zapamti tko je pozvao, i prije registracije.
+    zapamtiPozivnicu();
     pokreniPracenje();
     pokreniDrustvo();
     registrirajSW();
@@ -115,6 +118,17 @@ export default function Ljuska({ children }: { children: ReactNode }) {
     if (uvodZavrsen) oznaciUvodGotov();
   }, [uvodZavrsen]);
   const prikaziUvod = !javno && !!baza && spremnoZaUvod && !baza.postavke.dovrsenUvod && !sinkronizacija.imaOblak && !uvodVecProsao && !drustvo.oporavakLozinke;
+
+  // Pozvan prije registracije: nakon prijave (i uvoda) ponudi dodavanje lovca koji je pozvao.
+  const putanja = usePathname();
+  const ruter = useRouter();
+  useEffect(() => {
+    if (!prijavljen || !drustvo.profil || prikaziUvod || putanja === "/lovci") return;
+    const ki = procitajPozivnicu();
+    if (!ki) return;
+    if (ki === drustvo.profil.korisnicko_ime) return obrisiPozivnicu();
+    ruter.push(`/lovci?dodaj=${encodeURIComponent(ki)}`);
+  }, [prijavljen, drustvo.profil, prikaziUvod, putanja, ruter]);
 
   useEffect(() => {
     if (!tema) return;

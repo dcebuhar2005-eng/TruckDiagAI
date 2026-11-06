@@ -1,5 +1,7 @@
 "use client";
 
+import { GumbPozovi } from "@/components/PozoviKolegu";
+import { obrisiPozivnicu, procitajPozivnicu } from "@/lib/pozivnica";
 import { SosGumb } from "@/components/Sos";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -271,6 +273,7 @@ function Glavno() {
         }
         akcija={
           <div className="flex gap-2">
+            <GumbPozovi />
             <Gumb velicina="sm" ikona="korisnik" onClick={() => setQr(true)}>
               Moj QR kod
             </Gumb>
@@ -725,9 +728,13 @@ function DodajIzPoveznice() {
   const [radim, setRadim] = useState(false);
 
   useEffect(() => {
-    const ki = new URLSearchParams(window.location.search).get("dodaj")?.trim().toLowerCase().replace(/^@/, "");
+    // Iz poveznice ili zapamćene pozivnice (pozvan prije registracije).
+    const ki = (new URLSearchParams(window.location.search).get("dodaj") ?? procitajPozivnicu() ?? "").trim().toLowerCase().replace(/^@/, "");
     if (!ki) return;
-    const ocisti = () => window.history.replaceState(null, "", "/lovci");
+    const ocisti = () => {
+      obrisiPozivnicu();
+      window.history.replaceState(null, "", "/lovci");
+    };
     if (ki === d.profil?.korisnicko_ime) {
       obavijest("To je vaš QR kod – neka ga skenira prijatelj", "info");
       return ocisti();

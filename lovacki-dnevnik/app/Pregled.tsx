@@ -13,6 +13,7 @@ import PrviKoraci from "@/components/PrviKoraci";
 import { DolasciKartica } from "@/components/Dolasci";
 import DanasULovistu, { KreniULovKartica } from "@/components/DanasULovistu";
 import DanasSeSmije from "@/components/DanasSeSmije";
+import PozoviKolegu from "@/components/PozoviKolegu";
 import { AktivnostDivljaci, SvjetloDanas } from "@/components/PregledOsnovni";
 import { usePro } from "@/lib/pro";
 import { tockaZaVjetar } from "@/lib/vjetarCeke";
@@ -143,6 +144,8 @@ export default function Pregled() {
         )}
 
         <DanasSeSmije />
+
+        <PozoviKolegu />
 
         <BezProfila />
 

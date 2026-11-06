@@ -8,6 +8,7 @@ import { useSyncExternalStore } from "react";
 import { oglasiSos, ponistiBlizinu, postavkeBlizine, pripremiZvuk, provjeriBlizinu } from "./blizina";
 import { udaljenostM } from "./format";
 import { fetchZaSupabase, pratiLokaciju, uAplikaciji } from "./nativno";
+import { procitajPozivnicu } from "./pozivnica";
 import { dogadaj } from "./pracenje";
 import { OSNIVACI } from "./osnivaci";
 import { postaviVlasnika } from "./store";
@@ -148,13 +149,15 @@ export function useDrustvo() {
 /* ---------------- Prijava ---------------- */
 
 export async function registracija(email: string, lozinka: string) {
+  // Tko je pozvao (osobni link „Pozovi kolegu”) – zapisuje se u podatke računa.
+  const pozvao = procitajPozivnicu();
   const { data, error } = await sb().auth.signUp({
     email,
     password: lozinka,
-    options: { emailRedirectTo: window.location.origin + "/" },
+    options: { emailRedirectTo: window.location.origin + "/", ...(pozvao ? { data: { pozvao } } : {}) },
   });
   if (error) throw prevedi(error.message);
-  dogadaj("registracija");
+  dogadaj("registracija", pozvao ? { pozvao: true } : undefined);
   return { trebaPotvrda: !data.session };
 }
 
