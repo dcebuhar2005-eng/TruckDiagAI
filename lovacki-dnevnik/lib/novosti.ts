@@ -14,6 +14,7 @@ export const NOVOSTI: Novost[] = [
     naslov: "Novo u CroLovcu",
     stavke: [
       "📅 Lovni kalendar pamti vašu državu (Hrvatska, BiH – Federacija, BiH – Republika Srpska, Srbija), a kartica „Danas se smije loviti” na Pregledu pokazuje upravo nju.",
+      "📸 Kartica lova: u odstrelu gumb „Podijeli” napravi lijepu sliku (fotka, vrsta, datum) za WhatsApp, Facebook ili Instagram.",
       "🚗 Stradala divljač: tko vodi evidenciju divljači stradale u prometu, pod vlakom ili strojem, može je uključiti u Postavkama – brzi upis s GPS-om, znak na karti i pregled u statistici.",
     ],
   },

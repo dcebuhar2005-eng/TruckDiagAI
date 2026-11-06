@@ -18,6 +18,7 @@ import Ikona, { type ImeIkone } from "../Ikona";
 import { StrelicaVjetra } from "../Vjetar";
 import { Gumb, Ploca, Znacka, cx, djeteListe, roditeljListe } from "../ui";
 import { otvori, zatvori } from "./kontroler";
+import KarticaLova from "../KarticaLova";
 
 function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: string; vrijednost: ReactNode }) {
   return (
@@ -34,6 +35,7 @@ function Podatak({ ikona, oznaka, vrijednost }: { ikona: ImeIkone; oznaka: strin
 export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: boolean; id: string }) {
   const o = baza.odstrel.find((x) => x.id === id);
   const pro = usePro();
+  const [kartica, setKartica] = useState(false);
   const [fotke, setFotke] = useState<string[]>([]);
   const [aktivna, setAktivna] = useState(0);
   const [puniZaslon, setPuniZaslon] = useState<number | null>(null);
@@ -65,6 +67,9 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
               </Gumb>
             </Link>
           )}
+          <Gumb ikona="strelica" className="flex-1" onClick={() => setKartica(true)}>
+            Podijeli
+          </Gumb>
           <Gumb vrsta="primarni" ikona="uredi" className="flex-1" onClick={() => otvori({ tip: "odstrel", id: o.id })}>
             Uredi
           </Gumb>
@@ -187,6 +192,15 @@ export function OdstrelDetalj({ baza, otvorena, id }: { baza: Baza; otvorena: bo
           </motion.div>
         )}
       </AnimatePresence>
+      {kartica && (
+        <KarticaLova
+          odstrel={o}
+          foto={fotke[0]}
+          lovisteNaziv={o.lovisteId ? nazivLovista(baza, o.lovisteId) : undefined}
+          otvorena={kartica}
+          zatvori={() => setKartica(false)}
+        />
+      )}
     </Ploca>
   );
 }

@@ -154,7 +154,7 @@ Kasnije: Stripe (naplata, kad postoji obrt), Gmail i Google Sheets (ponude druš
 
 ## Sljedeće – odabrao vlasnik 6. 11. 2026. (redom)
 
-1. **Kartica lova za dijeljenje** (u izradi) – slika nakon odstrela (fotka, vrsta, datum, CroLovac, „Dobra kob!”) za WhatsApp/Facebook iz detalja odstrela. U Android aplikaciji dijeljenje slike treba dodatke @capacitor/share + @capacitor/filesystem (nova verzija na Playu); u pregledniku/iPhoneu Web Share.
+1. **Kartica lova za dijeljenje** (6. 11., napravljeno; `lib/kartica.ts`, `components/KarticaLova.tsx`, gumb „Podijeli” u detalju odstrela; dodani @capacitor/share + @capacitor/filesystem – za Android aplikaciju treba novi AAB, stara verzija aplikacije pokaže „ažurirajte na Google Playu”) – slika nakon odstrela (fotka, vrsta, datum, CroLovac, „Dobra kob!”) za WhatsApp/Facebook iz detalja odstrela. U Android aplikaciji dijeljenje slike treba dodatke @capacitor/share + @capacitor/filesystem (nova verzija na Playu); u pregledniku/iPhoneu Web Share.
 2. **Priprema za lovački ispit (kviz)** – pitanja o lovostaju generirana iz provjerenih podataka (`lib/lovostaj.ts`, sve države) + provjerena opća pitanja (vrste, oružje, sigurnost, etika).
 3. **Slovenija u lovnom kalendaru** – iz službenog slovenskog propisa o lovnim dobama.
 4. **„Pozovi kolegu”** – osobni link (ref), bez promjene baze.
